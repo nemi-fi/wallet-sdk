@@ -214,7 +214,7 @@ export function createEip1193ProviderFromAccounts(accounts: Wallet[]) {
             simulatedTxPromise = account.simulateTx(
               txRequest,
               true, // simulatePublic
-              account.getAddress(),
+              undefined,
               false, // skipTxValidation
             );
           }
