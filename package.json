@@ -1,0 +1,73 @@
+{
+  "name": "@shieldswap/wallet-sdk",
+  "version": "0.67.0",
+  "type": "module",
+  "main": "src/exports/index.ts",
+  "module": "src/exports/index.ts",
+  "exports": {
+    ".": {
+      "import": "./src/exports/index.ts"
+    },
+    "./*": {
+      "import": "./src/exports/*.js"
+    }
+  },
+  "publishConfig": {
+    "main": "dist/exports/index.js",
+    "module": "dist/exports/index.js",
+    "types": "dist/exports/index.d.ts",
+    "exports": {
+      ".": {
+        "import": "./dist/exports/index.js",
+        "types": "./dist/exports/index.d.ts"
+      },
+      "./*": {
+        "import": "./dist/exports/*.js",
+        "types": "./dist/exports/*.d.ts"
+      }
+    },
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "dev": "pnpm _chore && tsc -w",
+    "build": "pnpm _chore && rm -rf dist && tsc",
+    "test": "pnpm test:unit && pnpm test:lint",
+    "test:unit": "vitest run",
+    "test:lint": "tsc --noEmit --emitDeclarationOnly false && prettier --check .",
+    "test:lint:fix": "prettier --write .",
+    "prepublishOnly": "pnpm test && pnpm build",
+    "_chore": "pnpm i"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.11",
+    "prettier": "^3.2.5",
+    "react": "^18.3.1",
+    "typescript": "^5.5.2",
+    "vitest": "^1.1.1"
+  },
+  "dependencies": {
+    "@aztec/aztec.js": "catalog:",
+    "@aztec/circuit-types": "catalog:",
+    "@aztec/circuits.js": "catalog:",
+    "@aztec/foundation": "catalog:",
+    "@walletconnect/modal-sign-html": "^2.6.2",
+    "@walletconnect/utils": "^2.11.2",
+    "ox": "^0.6.5",
+    "svelte": "catalog:",
+    "svelte-persisted-store": "^0.11.0",
+    "ts-essentials": "^9.4.1",
+    "ufo": "^1.5.4"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  }
+}
