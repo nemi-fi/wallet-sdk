@@ -9,8 +9,12 @@ import {
 } from "@aztec/aztec.js";
 import type { PXE, TxSimulationResult } from "@aztec/circuit-types";
 import { GasSettings } from "@aztec/circuits.js";
-import { FunctionType } from "@aztec/foundation/abi";
-import { jsonStringify } from "@aztec/foundation/json-rpc";
+import {
+  encodeArguments,
+  FunctionType,
+  type ABIParameter,
+  type FunctionAbi,
+} from "@aztec/foundation/abi";
 import { assert } from "ts-essentials";
 import type { IntentAction } from "../contract.js";
 import { decodeFunctionCall, encodeFunctionCall, serde } from "../serde.js";
@@ -225,10 +229,23 @@ export function createEip1193ProviderFromAccounts(accounts: Wallet[]) {
 
           const results: string[] = [];
 
-          unconstrainedResults.forEach(([result, index]) => {
-            // TODO: this should be encoded as a hex string
-            results[index] = jsonStringify(result as any);
-          });
+          for (const [result, index] of unconstrainedResults) {
+            // TODO: remove encoding logic when fixed https://github.com/AztecProtocol/aztec-packages/issues/11275
+            let returnTypes = deserializedCalls[index]!.returnTypes;
+            if (returnTypes.length === 1 && returnTypes[0]?.kind === "tuple") {
+              returnTypes = returnTypes[0]!.fields;
+            }
+            const paramsAbi: ABIParameter[] = returnTypes.map((type, i) => ({
+              type,
+              name: `result${i}`,
+              visibility: "public",
+            }));
+            const encoded = encodeArguments(
+              { parameters: paramsAbi } as FunctionAbi,
+              Array.isArray(result) ? result : [result],
+            );
+            results[index] = await serde.FrArray.serialize(encoded);
+          }
           if (simulatedTx) {
             for (const [call, callIndex, resultIndex] of indexedCalls) {
               // As account entrypoints are private, for private functions we retrieve the return values from the first nested call

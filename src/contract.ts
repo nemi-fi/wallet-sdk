@@ -10,11 +10,8 @@ import {
   decodeFromAbi,
   encodeArguments,
   FunctionSelector,
-  FunctionType,
   type FunctionAbi,
 } from "@aztec/foundation/abi";
-import { jsonParseWithSchema } from "@aztec/foundation/json-rpc";
-import { AbiDecodedSchema } from "@aztec/foundation/schemas";
 import type { Eip1193Account } from "./exports/eip1193.js";
 import { serde } from "./serde.js";
 
@@ -135,10 +132,6 @@ class ContractFunctionInteraction {
       throw new Error(`invalid results length: ${results.length}`);
     }
     const result = results[0]!;
-    if (this.functionAbi.functionType == FunctionType.UNCONSTRAINED) {
-      // TODO: this should be encoded as a hex string
-      return jsonParseWithSchema(result, AbiDecodedSchema);
-    }
     return decodeFromAbi(
       this.functionAbi.returnTypes,
       await serde.FrArray.deserialize(result),
