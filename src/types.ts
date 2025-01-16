@@ -1,24 +1,23 @@
-import type { AbiType } from "@aztec/foundation/abi";
-
 export type SerializedFunctionCall = {
-  selector: string;
-  name: string;
-  type: string;
-  isStatic: boolean;
+  /** `AztecAddress` of the contract */
   to: string;
+  // TODO: replace selector and args with encoded `data` similar to Ethereum?
+  /** `FunctionSelector` of the contract method */
+  selector: string;
+  /** `Fr[]` */
   args: string[];
-  returnTypes: AbiType[];
 };
 
 export type RpcRequestMap = {
   /**
-   * Requests the user to connect 1 or more accounts to the app.
-   * @returns the list of `CompleteAddress`es of the connected accounts. The first one must be the currently selected account.
+   * Requests the user to connect 1 or more accounts to the app. Should trigger a confirmation popup/modal.
+   * @returns `CompleteAddress[]` of the connected accounts. The first one must be the currently selected account.
    */
   aztec_requestAccounts: () => string[];
 
   /**
-   * @returns the list of `CompleteAddress`es of the previously connected accounts. The first one must be the currently selected account.
+   * Must **NOT** trigger a confirmation popup/modal.
+   * @returns `CompleteAddress[]` of the previously connected accounts. The first one must be the currently selected account.
    */
   aztec_accounts: () => string[];
 
@@ -29,12 +28,13 @@ export type RpcRequestMap = {
   aztec_sendTransaction: (request: {
     /** `AztecAddress` of the account that will send the transaction */
     from: string;
-    /** List of `FunctionCall`s to be executed in the transaction */
-    // TODO: use `FunctionCall.toString` and `FunctionCall.fromString` to serialize/deserialize
+    /** `FunctionCall[]` to be executed in the transaction */
     calls: SerializedFunctionCall[];
     /** Authentication witnesses required for the transaction */
     authWitnesses: {
+      /** `AztecAddress` */
       caller: string;
+      /** `FunctionCall` */
       // TODO: rename to `call`?
       action: SerializedFunctionCall;
     }[];
@@ -49,8 +49,7 @@ export type RpcRequestMap = {
   aztec_call: (request: {
     /** `AztecAddress` of the account that will the call will be simulated from */
     from: string;
-    /** List of `FunctionCall`s to be simulated */
-    // TODO: use `FunctionCall.toString` and `FunctionCall.fromString` to serialize/deserialize
+    /** `FunctionCall[]` to be simulated */
     calls: SerializedFunctionCall[];
   }) => string[];
 };
@@ -59,10 +58,6 @@ export type RpcRequest<M extends keyof RpcRequestMap> = {
   method: M;
   params: Parameters<RpcRequestMap[M]>;
 };
-
-export type OnRpcConfirmationRequest<
-  K extends keyof RpcRequestMap = keyof RpcRequestMap,
-> = (request: RpcRequest<K>, controller: AbortController) => unknown;
 
 export type RpcEventsMap = {
   /**
