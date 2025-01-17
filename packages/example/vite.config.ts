@@ -27,7 +27,6 @@ export default defineConfig({
 	},
 	base: "/",
 	optimizeDeps: {
-		include: ["@aztec/bb.js"],
 		esbuildOptions: {
 			target: "esnext",
 			sourcemap: true,

@@ -10,9 +10,8 @@ import { Contract } from "@shieldswap/wallet-sdk/eip1193";
 import { useWalletContext } from "@shieldswap/wallet-sdk";
 import { PXE_URL } from "./App";
 
-const pxe = createPXEClient(PXE_URL);
-
 export function Example() {
+	const pxe = createPXEClient(PXE_URL);
 	const { account, sdk } = useWalletContext();
 
 	const [tokenContract, setTokenContract] =

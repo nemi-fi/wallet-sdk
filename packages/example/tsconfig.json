@@ -20,9 +20,6 @@
 		"skipLibCheck": true,
 		"jsx": "react-jsx"
 	},
-	// "paths": {
-	// 	"@obsidion/wallet-sdk/*": ["../packages/wallet-sdk/dist/*"]
-	// },
 	"include": ["src", "src/**/*.json"],
 	"exclude": ["node_modules", "trash"]
 }
