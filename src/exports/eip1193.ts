@@ -9,11 +9,15 @@ import {
 } from "@aztec/aztec.js";
 import type { PXE, TxSimulationResult } from "@aztec/circuit-types";
 import { GasSettings } from "@aztec/circuits.js";
-import { FunctionType } from "@aztec/foundation/abi";
-import { jsonStringify } from "@aztec/foundation/json-rpc";
+import {
+  encodeArguments,
+  FunctionType,
+  type ABIParameter,
+  type FunctionAbi,
+} from "@aztec/foundation/abi";
 import { assert } from "ts-essentials";
 import type { IntentAction } from "../contract.js";
-import { serde } from "../serde.js";
+import { decodeFunctionCall, encodeFunctionCall, serde } from "../serde.js";
 import type {
   Eip1193Provider,
   RpcRequestMap,
@@ -56,13 +60,11 @@ export class Eip1193Account {
         params: [
           {
             from: this.address.toString(),
-            calls: await Promise.all(
-              txRequest.calls.map((x) => serde.FunctionCall.serialize(x)),
-            ),
+            calls: await Promise.all(txRequest.calls.map(encodeFunctionCall)),
             authWitnesses: await Promise.all(
               (txRequest?.authWitnesses ?? []).map(async (x) => ({
                 caller: x.caller.toString(),
-                action: await serde.FunctionCall.serialize(x.action),
+                action: await encodeFunctionCall(x.action),
               })),
             ),
           },
@@ -73,16 +75,17 @@ export class Eip1193Account {
   }
 
   // TODO: rename to either `call` or `view` or `readContract` or something more descriptive
-  async simulateTransaction(txRequest: TransactionRequest): Promise<string[]> {
+  async simulateTransaction(
+    txRequest: Pick<TransactionRequest, "calls">,
+  ): Promise<string[]> {
     return await this.provider.request({
       method: "aztec_call",
       params: [
         {
           from: this.address.toString(),
           calls: await Promise.all(
-            txRequest.calls.map((x) => serde.FunctionCall.serialize(x)),
+            txRequest.calls.map((x) => encodeFunctionCall(x)),
           ),
-          // TODO: pass `authWitnesses`?
         },
       ],
     });
@@ -124,11 +127,11 @@ export function createEip1193ProviderFromAccounts(accounts: Wallet[]) {
           const authWitRequests: IntentAction[] = await Promise.all(
             request.authWitnesses.map(async (authWitness) => ({
               caller: AztecAddress.fromString(authWitness.caller),
-              action: await serde.FunctionCall.deserialize(authWitness.action),
+              action: await decodeFunctionCall(account, authWitness.action),
             })),
           );
           const calls = await Promise.all(
-            request.calls.map((x) => serde.FunctionCall.deserialize(x)),
+            request.calls.map((x) => decodeFunctionCall(account, x)),
           );
 
           // approve auth witnesses
@@ -139,7 +142,7 @@ export function createEip1193ProviderFromAccounts(accounts: Wallet[]) {
           // sign the tx
           const txRequest = await account.createTxExecutionRequest({
             calls,
-            fee: await getFee(account),
+            fee: await getDefaultFee(account),
           });
           const simulatedTx = await account.simulateTx(
             txRequest,
@@ -158,7 +161,7 @@ export function createEip1193ProviderFromAccounts(accounts: Wallet[]) {
         aztec_call: async (request) => {
           const account = getAccount(request.from);
           const deserializedCalls = await Promise.all(
-            request.calls.map((x) => serde.FunctionCall.deserialize(x)),
+            request.calls.map((x) => decodeFunctionCall(account, x)),
           );
           const { indexedCalls, unconstrained } = deserializedCalls.reduce<{
             /** Keep track of the number of private calls to retrieve the return values */
@@ -209,12 +212,12 @@ export function createEip1193ProviderFromAccounts(accounts: Wallet[]) {
           if (indexedCalls.length !== 0) {
             const txRequest = await account.createTxExecutionRequest({
               calls: indexedCalls.map(([call]) => call),
-              fee: await getFee(account),
+              fee: await getDefaultFee(account),
             });
             simulatedTxPromise = account.simulateTx(
               txRequest,
               true, // simulatePublic
-              account.getAddress(),
+              undefined, // TODO: use account.getAddress() when fixed https://github.com/AztecProtocol/aztec-packages/issues/11278
               false, // skipTxValidation
             );
           }
@@ -226,10 +229,23 @@ export function createEip1193ProviderFromAccounts(accounts: Wallet[]) {
 
           const results: string[] = [];
 
-          unconstrainedResults.forEach(([result, index]) => {
-            // TODO: this should be encoded as a hex string
-            results[index] = jsonStringify(result as any);
-          });
+          for (const [result, index] of unconstrainedResults) {
+            // TODO: remove encoding logic when fixed https://github.com/AztecProtocol/aztec-packages/issues/11275
+            let returnTypes = deserializedCalls[index]!.returnTypes;
+            if (returnTypes.length === 1 && returnTypes[0]?.kind === "tuple") {
+              returnTypes = returnTypes[0]!.fields;
+            }
+            const paramsAbi: ABIParameter[] = returnTypes.map((type, i) => ({
+              type,
+              name: `result${i}`,
+              visibility: "public",
+            }));
+            const encoded = encodeArguments(
+              { parameters: paramsAbi } as FunctionAbi,
+              Array.isArray(result) ? result : [result],
+            );
+            results[index] = await serde.FrArray.serialize(encoded);
+          }
           if (simulatedTx) {
             for (const [call, callIndex, resultIndex] of indexedCalls) {
               // As account entrypoints are private, for private functions we retrieve the return values from the first nested call
@@ -261,7 +277,9 @@ export function createEip1193ProviderFromAccounts(accounts: Wallet[]) {
     },
   };
 
-  async function getFee(aztecNode: Pick<AztecNode, "getCurrentBaseFees">) {
+  async function getDefaultFee(
+    aztecNode: Pick<AztecNode, "getCurrentBaseFees">,
+  ) {
     return {
       gasSettings: GasSettings.default({
         maxFeesPerGas: await aztecNode.getCurrentBaseFees(),
