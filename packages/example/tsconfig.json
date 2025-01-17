@@ -1,0 +1,28 @@
+{
+	"compilerOptions": {
+		"outDir": "dist",
+		"tsBuildInfoFile": ".tsbuildinfo",
+		"target": "es2020",
+		"lib": ["esnext", "dom", "DOM.Iterable"],
+		"module": "ESNext",
+		"moduleResolution": "Bundler",
+		"strict": true,
+		"declaration": true,
+		"allowSyntheticDefaultImports": true,
+		"allowJs": true,
+		"esModuleInterop": true,
+		"downlevelIteration": true,
+		"inlineSourceMap": true,
+		"declarationMap": true,
+		"importHelpers": true,
+		"resolveJsonModule": true,
+		"composite": true,
+		"skipLibCheck": true,
+		"jsx": "react-jsx"
+	},
+	// "paths": {
+	// 	"@obsidion/wallet-sdk/*": ["../packages/wallet-sdk/dist/*"]
+	// },
+	"include": ["src", "src/**/*.json"],
+	"exclude": ["node_modules", "trash"]
+}

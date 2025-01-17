@@ -11,8 +11,7 @@ import {
 import { assert, type AsyncOrSync } from "ts-essentials";
 import type { Eip1193Account } from "./exports/eip1193.js";
 import type {
-  RpcRequest,
-  RpcRequestMap,
+  OnRpcConfirmationRequest,
   TypedEip1193Provider,
 } from "./types.js";
 import {
@@ -214,7 +213,3 @@ export type MyWalletConnectOptions = Omit<
 > & {
   metadata?: WalletConnectModalSignOptions["metadata"];
 };
-
-export type OnRpcConfirmationRequest<
-  K extends keyof RpcRequestMap = keyof RpcRequestMap,
-> = (request: RpcRequest<K>, controller: AbortController) => unknown;
