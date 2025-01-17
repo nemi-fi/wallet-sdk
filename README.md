@@ -35,11 +35,11 @@ export const WALLET_URL = "http://localhost:5173"; // change it to your wallet u
 
 const App = () => {
 	return (
-		<>
-				<WalletProvider pxeUrl={PXE_URL} walletUrl={WALLET_URL}>
-							<YourComponent />
-				</WalletProvider>
-		</>
+          <>
+            <WalletProvider pxeUrl={PXE_URL} walletUrl={WALLET_URL}>
+		<YourComponent />
+            </WalletProvider>
+         </>
 	);
 };
 
@@ -56,10 +56,10 @@ const YourComponent = () => {
 	const { account, sdk } = useWalletContext();
 
 	return (
-		<div>
-			<p>Your Component</p>
-			<button onClick={() => sdk?.connect()}>Connect</button>
-		</div>
+           <div>
+              <p>Your Component</p>
+              <button onClick={() => sdk?.connect()}>Connect</button>
+           </div>
 	);
 };
 
