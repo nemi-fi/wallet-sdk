@@ -1,25 +1,25 @@
 export type SerializedFunctionCall = {
   /** `AztecAddress` of the contract */
-  to: string
+  to: string;
   // TODO: replace selector and args with encoded `data` similar to Ethereum?
   /** `FunctionSelector` of the contract method */
-  selector: string
+  selector: string;
   /** `Fr[]` */
-  args: string[]
-}
+  args: string[];
+};
 
 export type RpcRequestMap = {
   /**
    * Requests the user to connect 1 or more accounts to the app. Should trigger a confirmation popup/modal.
    * @returns `CompleteAddress[]` of the connected accounts. The first one must be the currently selected account.
    */
-  aztec_requestAccounts: () => string[]
+  aztec_requestAccounts: () => string[];
 
   /**
    * Must **NOT** trigger a confirmation popup/modal.
    * @returns `CompleteAddress[]` of the previously connected accounts. The first one must be the currently selected account.
    */
-  aztec_accounts: () => string[]
+  aztec_accounts: () => string[];
 
   /**
    * Sends a transaction to the blockchain from `request.from` account.
@@ -27,18 +27,18 @@ export type RpcRequestMap = {
    */
   aztec_sendTransaction: (request: {
     /** `AztecAddress` of the account that will send the transaction */
-    from: string
+    from: string;
     /** `FunctionCall[]` to be executed in the transaction */
-    calls: SerializedFunctionCall[]
+    calls: SerializedFunctionCall[];
     /** Authentication witnesses required for the transaction */
     authWitnesses: {
       /** `AztecAddress` */
-      caller: string
+      caller: string;
       /** `FunctionCall` */
       // TODO: rename to `call`?
-      action: SerializedFunctionCall
-    }[]
-  }) => string
+      action: SerializedFunctionCall;
+    }[];
+  }) => string;
 
   // TODO: add aztec_estimateGas
 
@@ -48,33 +48,33 @@ export type RpcRequestMap = {
    */
   aztec_call: (request: {
     /** `AztecAddress` of the account that will the call will be simulated from */
-    from: string
+    from: string;
     /** `FunctionCall[]` to be simulated */
-    calls: SerializedFunctionCall[]
-  }) => string[]
-}
+    calls: SerializedFunctionCall[];
+  }) => string[];
+};
 
 export type RpcRequest<M extends keyof RpcRequestMap> = {
-  method: M
-  params: Parameters<RpcRequestMap[M]>
-}
+  method: M;
+  params: Parameters<RpcRequestMap[M]>;
+};
 
 export type RpcEventsMap = {
   /**
    * Emitted when the user changes the selected account in wallet UI. It is the `CompleteAddress` of the new selected account.
    */
-  accountsChanged: [string]
-}
+  accountsChanged: [string];
+};
 
 export interface Eip1193Provider {
   request(request: {
-    method: string
-    params?: unknown[] | Record<string, unknown>
-  }): Promise<unknown>
+    method: string;
+    params?: unknown[] | Record<string, unknown>;
+  }): Promise<unknown>;
 }
 
 export interface TypedEip1193Provider {
   request<M extends keyof RpcRequestMap>(
     request: RpcRequest<M>,
-  ): Promise<ReturnType<RpcRequestMap[M]>>
+  ): Promise<ReturnType<RpcRequestMap[M]>>;
 }

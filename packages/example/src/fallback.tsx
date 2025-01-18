@@ -1,8 +1,8 @@
-import { toast, ToastContent, ToastOptions } from "react-toastify"
+import { toast, ToastContent, ToastOptions } from "react-toastify";
 
 interface ConfirmToastProps {
-  onConfirm: () => void
-  onCancel: () => void
+  onConfirm: () => void;
+  onCancel: () => void;
 }
 
 const ConfirmToast: React.FC<ConfirmToastProps> = ({ onConfirm, onCancel }) => (
@@ -35,23 +35,23 @@ const ConfirmToast: React.FC<ConfirmToastProps> = ({ onConfirm, onCancel }) => (
       </button>
     </div>
   </div>
-)
+);
 
 export const fallbackOpenPopup: any = async (openPopup: any) => {
   return new Promise<Window | null>((resolve) => {
     const handleConfirm = () => {
-      resolve(openPopup())
-      toast.dismiss(toastId)
-    }
+      resolve(openPopup());
+      toast.dismiss(toastId);
+    };
 
     const handleCancel = () => {
-      resolve(null)
-      toast.dismiss(toastId)
-    }
+      resolve(null);
+      toast.dismiss(toastId);
+    };
 
     const toastContent: ToastContent = (
       <ConfirmToast onConfirm={handleConfirm} onCancel={handleCancel} />
-    )
+    );
 
     const toastOptions: ToastOptions = {
       autoClose: false,
@@ -59,8 +59,8 @@ export const fallbackOpenPopup: any = async (openPopup: any) => {
       draggable: false,
       // Optional: Customize the toast's appearance
       style: { minWidth: "300px" },
-    }
+    };
 
-    const toastId = toast(toastContent, toastOptions)
-  })
-}
+    const toastId = toast(toastContent, toastOptions);
+  });
+};

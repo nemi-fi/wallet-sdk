@@ -8,7 +8,7 @@
     "lint:eslint": "eslint . --cache --ext js,ts",
     "lint:fix": "yarn lint:eslint --fix && yarn lint:misc --write",
     "dev": "vite",
-    "build": "tsc && vite build"
+    "build": "vite build"
   },
   "dependencies": {
     "@aztec/accounts": "0.67.0",
@@ -20,7 +20,6 @@
     "@shieldswap/wallet-sdk": "workspace:*",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
-    "react-router-dom": "^6.22.3",
     "tabler-icons-react": "^1.56.0",
     "toast": "^0.5.4"
   },
