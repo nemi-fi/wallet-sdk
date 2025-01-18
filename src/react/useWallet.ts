@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { PopupWalletSdk } from "../../popup.js";
-import type { Eip1193Account } from "../eip1193.js";
 import { createPXEClient } from "@aztec/aztec.js";
-import { DEFAULT_PXE_URL } from "../../utils.js";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { Eip1193Account } from "../exports/eip1193.js";
+import { PopupWalletSdk } from "../popup.js";
+import { DEFAULT_PXE_URL } from "../utils.js";
 
 export function useWallet(
   pxeUrl: string | undefined,

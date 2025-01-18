@@ -1,8 +1,8 @@
-import { createContext, ReactNode, useContext } from "react";
-import { useWallet } from "./useWallet";
-import { DEFAULT_WALLET_URL } from "../../utils";
-import { Eip1193Account } from "../eip1193.js";
-import { PopupWalletSdk } from "../../popup.js";
+import { createContext, type ReactNode, useContext } from "react";
+import type { Eip1193Account } from "../exports/eip1193.js";
+import type { PopupWalletSdk } from "../popup.js";
+import { DEFAULT_WALLET_URL } from "../utils.js";
+import { useWallet } from "./useWallet.js";
 
 const WalletContext = createContext<
   | { account: Eip1193Account | undefined; sdk: PopupWalletSdk | undefined }

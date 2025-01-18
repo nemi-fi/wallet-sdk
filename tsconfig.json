@@ -11,7 +11,7 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "verbatimModuleSyntax": true,
-    "maxNodeModuleJsDepth": 1,
+    "jsx": "react-jsx",
 
     // lib
     "sourceMap": true,
