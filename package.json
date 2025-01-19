@@ -50,10 +50,10 @@
     "vitest": "^1.1.1"
   },
   "dependencies": {
-    "@aztec/aztec.js": "@aztec/aztec.js@0.67.0",
-    "@aztec/circuit-types": "@aztec/circuit-types@0.67.0",
-    "@aztec/circuits.js": "@aztec/circuits.js@0.67.0",
-    "@aztec/foundation": "@aztec/foundation@0.67.0",
+    "@aztec/aztec.js": "0.67.0",
+    "@aztec/circuit-types": "^0.67.0",
+    "@aztec/circuits.js": "0.67.0",
+    "@aztec/foundation": "0.67.0",
     "@walletconnect/modal-sign-html": "^2.6.2",
     "@walletconnect/utils": "^2.11.2",
     "ox": "^0.6.5",
