@@ -13,7 +13,7 @@ export type RpcRequestMap = {
    * Requests the user to connect 1 or more accounts to the app. Should trigger a confirmation popup/modal.
    * @returns `CompleteAddress[]` of the connected accounts. The first one must be the currently selected account.
    */
-  aztec_requestAccounts: () => string[];
+  aztec_requestAccounts: (request: { reOwnUri?: string }) => string[];
 
   /**
    * Must **NOT** trigger a confirmation popup/modal.

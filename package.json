@@ -55,6 +55,7 @@
     "@aztec/circuits.js": "0.67.0",
     "@aztec/foundation": "0.67.0",
     "@walletconnect/modal-sign-html": "^2.6.2",
+    "@walletconnect/universal-provider": "^2.17.4",
     "@walletconnect/utils": "^2.11.2",
     "ox": "^0.6.5",
     "svelte": "^5.17.4",
