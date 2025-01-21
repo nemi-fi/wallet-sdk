@@ -29,7 +29,7 @@ import {
   UniversalProviderOpts,
 } from "@walletconnect/universal-provider";
 
-export class ReOwnPopupWalletSdk implements TypedEip1193Provider {
+export class ReownPopupWalletSdk implements TypedEip1193Provider {
   readonly #pxe: () => AsyncOrSync<PXE>;
 
   readonly #communicator: Communicator;
@@ -153,6 +153,17 @@ export class ReOwnPopupWalletSdk implements TypedEip1193Provider {
     });
   }
 
+  // New helper to send reownUri to the popup
+  private async sendReownUriToPopup(uri: string) {
+    // Ensure the popup is loaded and accessible
+    const popup = await this.#communicator.waitForPopupLoaded();
+    // Send a custom message with the reownUri
+    popup.postMessage(
+      { event: "SetReownUri", reownUri: uri },
+      this.walletUrl + "/sign",
+    );
+  }
+
   /**
    * Opens a WalletConnect modal and connects to the user's wallet.
    *
@@ -172,14 +183,16 @@ export class ReOwnPopupWalletSdk implements TypedEip1193Provider {
       },
     });
     const uri = await this.getReownProviderUri(provider);
+    await this.sendReownUriToPopup(uri);
+
     const result = await this.request({
       method: "aztec_requestAccounts",
-      params: [{ reOwnUri: uri }],
+      params: [],
     });
     const [address] = result;
     assert(address, "No accounts found");
 
-    const session = await sessionPromise;
+    await sessionPromise;
 
     const { CompleteAddress } = await import("@aztec/aztec.js");
     const account = await accountFromCompleteAddress(

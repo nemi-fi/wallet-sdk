@@ -84,7 +84,7 @@ export class PopupWalletSdk implements TypedEip1193Provider {
     const { CompleteAddress } = await import("@aztec/aztec.js");
     const result = await this.request({
       method: "aztec_requestAccounts",
-      params: [{}],
+      params: [],
     });
     const [address] = result;
     assert(address, "No accounts found");
