@@ -39,10 +39,7 @@ export class Eip1193Account {
     readonly aztecNode: Pick<
       AztecNode,
       // methods used in `SentTx`
-      | "getTxEffect"
-      | "getTxReceipt"
-      | "getUnencryptedLogs"
-      | "getProvenBlockNumber"
+      "getTxEffect" | "getTxReceipt" | "getPublicLogs" | "getProvenBlockNumber"
     >,
   ) {
     this.provider = provider as TypedEip1193Provider;
