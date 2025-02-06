@@ -53,23 +53,30 @@ export async function decodeFunctionCall(pxe: PXE, fc: SerializedFunctionCall) {
   const selector = FunctionSelector.fromString(fc.selector);
   const args = fc.args.map((x) => Fr.fromHexString(x));
 
-  const instance = await pxe.getContractInstance(to);
-  if (!instance) {
+  const instance = await pxe.getContractMetadata(to);
+  if (!instance.contractInstance) {
     // TODO(security): can leak privacy by fingerprinting what contracts are added to user's PXE
     throw new Error(`no contract instance found for ${to}`);
   }
-  const contractArtifact = await pxe.getContractArtifact(
-    instance.contractClassId,
+  const contractArtifact = await pxe.getContractClassMetadata(
+    instance.contractInstance.contractClassId,
+    true, // includeArtifact
   );
-  if (!contractArtifact) {
+  if (!contractArtifact.artifact) {
     // TODO(security): can leak privacy by fingerprinting what contracts are added to user's PXE
     throw new Error(`no contract artifact found for ${to}`);
   }
-  const artifact = contractArtifact.functions.find((f) =>
-    FunctionSelector.fromNameAndParameters(f.name, f.parameters).equals(
-      selector,
-    ),
-  );
+  const artifact = (
+    await Promise.all(
+      contractArtifact.artifact.functions.map(async (f) => {
+        const s = await FunctionSelector.fromNameAndParameters(
+          f.name,
+          f.parameters,
+        );
+        return s.equals(selector) ? f : undefined;
+      }),
+    )
+  ).find((f) => f != null);
   if (!artifact) {
     // TODO(security): can leak privacy by fingerprinting what contracts are added to user's PXE
     throw new Error(`no function artifact found for ${to}`);

@@ -51,23 +51,27 @@ export class Eip1193Account {
   }
 
   // TODO: return a promise that resolves to `SentTxWithHash`
-  sendTransaction(txRequest: TransactionRequest): SentTx {
-    const txHashPromise = (async () =>
-      this.provider.request({
+  sendTransaction(
+    txRequest: TransactionRequest | Promise<TransactionRequest>,
+  ): SentTx {
+    const txHashPromise = (async () => {
+      const txRequest_ = await txRequest;
+      return this.provider.request({
         method: "aztec_sendTransaction",
         params: [
           {
             from: this.address.toString(),
-            calls: await Promise.all(txRequest.calls.map(encodeFunctionCall)),
+            calls: await Promise.all(txRequest_.calls.map(encodeFunctionCall)),
             authWitnesses: await Promise.all(
-              (txRequest?.authWitnesses ?? []).map(async (x) => ({
+              (txRequest_?.authWitnesses ?? []).map(async (x) => ({
                 caller: x.caller.toString(),
                 action: await encodeFunctionCall(x.action),
               })),
             ),
           },
         ],
-      }))().then((x) => TxHash.fromString(x));
+      });
+    })().then((x) => TxHash.fromString(x));
 
     return new SentTx(this.aztecNode as unknown as PXE, txHashPromise);
   }
@@ -96,8 +100,6 @@ export class Eip1193Account {
     const provider = createEip1193ProviderFromAccounts([account]);
     return new this(account.getAddress(), provider, account);
   }
-  /** @deprecated TODO: remove this alias */
-  static fromAztecAccount = this.fromAztec.bind(this);
 }
 
 export type TransactionRequest = {

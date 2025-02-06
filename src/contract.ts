@@ -50,8 +50,8 @@ export class ContractBase<T extends AztecContract> {
             );
           },
           {
-            get selector() {
-              return FunctionSelector.fromNameAndParameters(
+            async selector() {
+              return await FunctionSelector.fromNameAndParameters(
                 f.name,
                 f.parameters,
               );
@@ -90,13 +90,12 @@ export class Contract<T extends AztecContract> extends ContractBase<T> {
       static async at(address: AztecAddress, account: Eip1193Account) {
         return await Contract.at<T>(address, artifact, account);
       }
+
+      static deploy(...args: Parameters<(typeof original)["deploy"]>) {
+        return original.deploy(...args);
+      }
     };
-    return Object.assign(ContractClass, {
-      /**
-       * @deprecated use only for deploying contracts until deploy over wallet RPC is implemented
-       */
-      original,
-    });
+    return ContractClass;
   }
 }
 export namespace Contract {
@@ -106,8 +105,8 @@ export namespace Contract {
 }
 
 class ContractFunctionInteraction {
-  readonly #call: () => FunctionCall;
-  readonly #txRequest: () => Required<TransactionRequest>;
+  readonly #call: () => Promise<FunctionCall>;
+  readonly #txRequest: () => Promise<Required<TransactionRequest>>;
 
   constructor(
     address: AztecAddress,
@@ -116,11 +115,11 @@ class ContractFunctionInteraction {
     args: unknown[],
     options: SendOptions | undefined,
   ) {
-    this.#call = lazyValue(() => {
+    this.#call = lazyValue(async () => {
       return {
         name: this.functionAbi.name,
         args: encodeArguments(this.functionAbi, args),
-        selector: FunctionSelector.fromNameAndParameters(
+        selector: await FunctionSelector.fromNameAndParameters(
           this.functionAbi.name,
           this.functionAbi.parameters,
         ),
@@ -130,9 +129,9 @@ class ContractFunctionInteraction {
         returnTypes: this.functionAbi.returnTypes,
       };
     });
-    this.#txRequest = lazyValue(() => {
+    this.#txRequest = lazyValue(async () => {
       return {
-        calls: [this.#call()],
+        calls: [await this.#call()],
         authWitnesses: options?.authWitnesses ?? [],
       };
     });
@@ -143,7 +142,9 @@ class ContractFunctionInteraction {
   }
 
   async simulate() {
-    const results = await this.account.simulateTransaction(this.#txRequest());
+    const results = await this.account.simulateTransaction(
+      await this.#txRequest(),
+    );
     if (results.length !== 1) {
       throw new Error(`invalid results length: ${results.length}`);
     }
@@ -154,8 +155,8 @@ class ContractFunctionInteraction {
     );
   }
 
-  request(): FunctionCall {
-    return this.#call();
+  async request(): Promise<FunctionCall> {
+    return await this.#call();
   }
 }
 
@@ -188,5 +189,5 @@ type SendOptions = {
 type ContractMethod<T extends AztecContract, K extends keyof T["methods"]> = ((
   ...args: [...Parameters<T["methods"][K]>, options?: SendOptions]
 ) => ContractFunctionInteraction) & {
-  selector: FunctionSelector;
+  selector(): Promise<FunctionSelector>;
 };
