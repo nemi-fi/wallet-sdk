@@ -92,7 +92,7 @@ export class ReownWalletSdk implements TypedEip1193Provider {
         await accountFromCompleteAddress(
           this,
           await this.#pxe(),
-          CompleteAddress.fromString(newAddress),
+          await CompleteAddress.fromString(newAddress),
         ),
       );
     });

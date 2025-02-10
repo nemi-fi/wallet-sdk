@@ -24,7 +24,7 @@ export class PopupWalletSdk implements TypedEip1193Provider {
   #pendingRequestsCount = 0;
 
   readonly #connectedAccountCompleteAddress = persisted<string | null>(
-    "shield-wallet-connected-complete-address",
+    "aztec-wallet-connected-complete-address",
     null,
   );
   readonly #account = writable<Eip1193Account | undefined>(undefined);
@@ -65,7 +65,7 @@ export class PopupWalletSdk implements TypedEip1193Provider {
         ? await accountFromCompleteAddress(
             this,
             await this.#pxe(),
-            CompleteAddress.fromString(completeAddress),
+            await CompleteAddress.fromString(completeAddress),
           )
         : undefined;
       if (thisAccountId !== accountId) {
@@ -91,7 +91,7 @@ export class PopupWalletSdk implements TypedEip1193Provider {
     const account = await accountFromCompleteAddress(
       this,
       await this.#pxe(),
-      CompleteAddress.fromString(address),
+      await CompleteAddress.fromString(address),
     );
     this.#connectedAccountCompleteAddress.set(address);
     return account;
