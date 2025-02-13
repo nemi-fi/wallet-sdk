@@ -1,4 +1,6 @@
 import { type PXE } from "@aztec/aztec.js";
+import type { UniversalProviderOpts } from "@walletconnect/universal-provider";
+import { persisted } from "svelte-persisted-store";
 import {
   get,
   readonly,
@@ -7,6 +9,8 @@ import {
   type Writable,
 } from "svelte/store";
 import { assert, type AsyncOrSync } from "ts-essentials";
+import { joinURL } from "ufo";
+import { Communicator, type FallbackOpenPopup } from "./Communicator.js";
 import type { Eip1193Account } from "./exports/eip1193.js";
 import type {
   RpcRequest,
@@ -21,13 +25,6 @@ import {
   lazyValue,
   resolvePxe,
 } from "./utils.js";
-import { Communicator, type FallbackOpenPopup } from "./Communicator.js";
-import { joinURL } from "ufo";
-import { persisted } from "svelte-persisted-store";
-import {
-  UniversalProvider,
-  type UniversalProviderOpts,
-} from "@walletconnect/universal-provider";
 
 export class ReownPopupWalletSdk implements TypedEip1193Provider {
   readonly #pxe: () => AsyncOrSync<PXE>;
@@ -107,6 +104,9 @@ export class ReownPopupWalletSdk implements TypedEip1193Provider {
   }
 
   #getReownProvider = lazyValue(async () => {
+    const { UniversalProvider } = await import(
+      "@walletconnect/universal-provider"
+    );
     const provider = await UniversalProvider.init({
       ...this.#options,
     });
