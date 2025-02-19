@@ -44,14 +44,14 @@ export type RpcRequestMap = {
 
   /**
    * Reads blockchain state.
-   * @returns an array of return values of the calls ABI encoded as hex strings
+   * @returns an array of return values (each being `Fr[]`) of the calls
    */
   aztec_call: (request: {
     /** `AztecAddress` of the account that will the call will be simulated from */
     from: string;
     /** `FunctionCall[]` to be simulated */
     calls: SerializedFunctionCall[];
-  }) => string[];
+  }) => string[][];
 };
 
 export type RpcRequest<M extends keyof RpcRequestMap> = {

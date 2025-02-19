@@ -56,7 +56,6 @@
     "@aztec/foundation": "0.76.2",
     "@walletconnect/modal-sign-html": "^2.6.2",
     "@walletconnect/utils": "^2.11.2",
-    "ox": "^0.6.5",
     "svelte": "^5.17.3",
     "svelte-persisted-store": "^0.11.0",
     "ts-essentials": "^9.4.1",
