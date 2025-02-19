@@ -18,7 +18,7 @@ import type {
 import {
   CAIP,
   METHODS_NOT_REQUIRING_CONFIRMATION,
-  accountFromCompleteAddress,
+  accountFromAddress,
   lazyValue,
   resolvePxe,
 } from "./utils.js";
@@ -82,17 +82,17 @@ export class ReownWalletSdk implements TypedEip1193Provider {
       this.#account.set(undefined);
     });
     web3modal.onSessionEvent(async (e) => {
-      const { CompleteAddress } = await import("@aztec/aztec.js");
+      const { AztecAddress } = await import("@aztec/aztec.js");
       const { event } = e.params;
       if (event.name !== "accountsChanged") {
         return;
       }
       const newAddress = event.data[0];
       this.#account.set(
-        await accountFromCompleteAddress(
+        await accountFromAddress(
           this,
           await this.#pxe(),
-          await CompleteAddress.fromString(newAddress),
+          AztecAddress.fromString(newAddress),
         ),
       );
     });
@@ -129,11 +129,7 @@ export class ReownWalletSdk implements TypedEip1193Provider {
       this.#account.set(undefined);
       return undefined;
     }
-    const account = await accountFromCompleteAddress(
-      this,
-      await this.#pxe(),
-      address,
-    );
+    const account = await accountFromAddress(this, await this.#pxe(), address);
     this.#account.set(account);
     return account;
   }
@@ -166,8 +162,8 @@ export class ReownWalletSdk implements TypedEip1193Provider {
     if (address == null) {
       return undefined;
     }
-    const { CompleteAddress } = await import("@aztec/aztec.js");
-    return CompleteAddress.fromString(address);
+    const { AztecAddress } = await import("@aztec/aztec.js");
+    return AztecAddress.fromString(address);
   }
 
   async #getSession() {

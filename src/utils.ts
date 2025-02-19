@@ -1,4 +1,4 @@
-import type { CompleteAddress, PXE } from "@aztec/aztec.js";
+import type { AztecAddress, PXE } from "@aztec/aztec.js";
 import type { AsyncOrSync } from "ts-essentials";
 import type { Eip1193Provider, RpcRequestMap } from "./types.js";
 
@@ -31,13 +31,13 @@ export function lazyValue<T>(fn: () => T) {
   };
 }
 
-export async function accountFromCompleteAddress(
+export async function accountFromAddress(
   provider: Eip1193Provider,
   pxe: PXE,
-  address: CompleteAddress,
+  address: AztecAddress,
 ) {
   const { Eip1193Account } = await import("./exports/eip1193.js");
-  return new Eip1193Account(address.address, provider, pxe);
+  return new Eip1193Account(address, provider, pxe);
 }
 
 export function resolvePxe(getPxe: PXE | (() => AsyncOrSync<PXE>)) {

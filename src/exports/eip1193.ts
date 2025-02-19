@@ -264,10 +264,10 @@ export function createEip1193ProviderFromAccounts(accounts: Wallet[]) {
           return results;
         },
         aztec_requestAccounts: async () => {
-          return accounts.map((a) => a.getCompleteAddress().toString());
+          return accounts.map((a) => a.getAddress().toString());
         },
         aztec_accounts: async () => {
-          return accounts.map((a) => a.getCompleteAddress().toString());
+          return accounts.map((a) => a.getAddress().toString());
         },
       };
 
