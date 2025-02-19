@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import type { PopupWalletSdk } from "../popup.js";
-import type { ReownWalletSdk } from "../reown.js";
 import type { Eip1193Account } from "./eip1193.js";
 
-export function useAccount(wallet: PopupWalletSdk | ReownWalletSdk) {
+export function useAccount(wallet: Pick<PopupWalletSdk, "accountObservable">) {
   const [account, setAccount] = useState<Eip1193Account | undefined>(undefined);
 
   useEffect(() => {

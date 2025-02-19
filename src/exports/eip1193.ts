@@ -17,6 +17,7 @@ import {
   type FunctionAbi,
 } from "@aztec/foundation/abi";
 import { assert } from "ts-essentials";
+import type { MinimalAztecNode } from "../base.js";
 import type { IntentAction } from "../contract.js";
 import { decodeFunctionCall, encodeFunctionCall, serde } from "../serde.js";
 import type {
@@ -36,11 +37,7 @@ export class Eip1193Account {
     readonly address: AztecAddress,
     provider: Eip1193Provider,
     /** Aztec node to fetch public data */
-    readonly aztecNode: Pick<
-      AztecNode,
-      // methods used in `SentTx`
-      "getTxEffect" | "getTxReceipt" | "getPublicLogs" | "getProvenBlockNumber"
-    >,
+    readonly aztecNode: MinimalAztecNode,
   ) {
     this.provider = provider as TypedEip1193Provider;
   }
@@ -73,7 +70,7 @@ export class Eip1193Account {
       });
     })().then((x) => TxHash.fromString(x));
 
-    return new SentTx(this.aztecNode as unknown as PXE, txHashPromise);
+    return new SentTx(this.aztecNode as PXE, txHashPromise);
   }
 
   // TODO: rename to either `call` or `view` or `readContract` or something more descriptive

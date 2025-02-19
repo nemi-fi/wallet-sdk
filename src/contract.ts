@@ -1,8 +1,8 @@
 import {
-  DeployMethod,
   type AztecAddress,
   type Contract as AztecContract,
   type ContractArtifact,
+  type DeployMethod,
   type FunctionCall,
   type Wallet,
 } from "@aztec/aztec.js";

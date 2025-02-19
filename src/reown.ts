@@ -1,4 +1,3 @@
-import type { PXE } from "@aztec/aztec.js";
 import type { WalletConnectModalSignOptions } from "@walletconnect/modal-sign-html";
 import { getSdkError } from "@walletconnect/utils";
 import {
@@ -8,7 +7,8 @@ import {
   type Readable,
   type Writable,
 } from "svelte/store";
-import { assert, type AsyncOrSync } from "ts-essentials";
+import { assert } from "ts-essentials";
+import { BaseWalletSdk, type AztecNodeInput } from "./base.js";
 import type { Eip1193Account } from "./exports/eip1193.js";
 import type {
   RpcRequest,
@@ -20,13 +20,15 @@ import {
   METHODS_NOT_REQUIRING_CONFIRMATION,
   accountFromAddress,
   lazyValue,
-  resolvePxe,
 } from "./utils.js";
 
 /**
  * @deprecated Use PopupWalletSdk instead.
  */
-export class ReownWalletSdk implements TypedEip1193Provider {
+export class ReownWalletSdk
+  extends BaseWalletSdk
+  implements TypedEip1193Provider
+{
   readonly #account: Writable<Eip1193Account | undefined> = writable(undefined);
 
   readonly accountObservable: Readable<Eip1193Account | undefined> = readonly(
@@ -40,8 +42,6 @@ export class ReownWalletSdk implements TypedEip1193Provider {
     return get(this.#account);
   }
 
-  readonly #pxe: () => AsyncOrSync<PXE>;
-
   readonly #options: ConstructorParameters<
     typeof import("@walletconnect/modal-sign-html").WalletConnectModalSign
   >[0];
@@ -50,14 +50,14 @@ export class ReownWalletSdk implements TypedEip1193Provider {
 
   constructor(
     options: MyWalletConnectOptions,
-    pxe: (() => AsyncOrSync<PXE>) | PXE,
+    aztecNode: AztecNodeInput,
     onRequest: OnRpcConfirmationRequest,
   ) {
+    super(aztecNode);
     this.#options = {
       ...options,
       metadata: options.metadata ?? DEFAULT_METADATA,
     };
-    this.#pxe = resolvePxe(pxe);
     this.#onRequest = onRequest ?? (() => {});
   }
 
@@ -91,7 +91,7 @@ export class ReownWalletSdk implements TypedEip1193Provider {
       this.#account.set(
         await accountFromAddress(
           this,
-          await this.#pxe(),
+          await this.aztecNode(),
           AztecAddress.fromString(newAddress),
         ),
       );
@@ -129,7 +129,11 @@ export class ReownWalletSdk implements TypedEip1193Provider {
       this.#account.set(undefined);
       return undefined;
     }
-    const account = await accountFromAddress(this, await this.#pxe(), address);
+    const account = await accountFromAddress(
+      this,
+      await this.aztecNode(),
+      address,
+    );
     this.#account.set(account);
     return account;
   }

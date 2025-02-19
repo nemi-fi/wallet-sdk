@@ -1,5 +1,5 @@
-import type { AztecAddress, PXE } from "@aztec/aztec.js";
-import type { AsyncOrSync } from "ts-essentials";
+import type { AztecAddress } from "@aztec/aztec.js";
+import type { AztecNodeInput, MinimalAztecNode } from "./base.js";
 import type { Eip1193Provider, RpcRequestMap } from "./types.js";
 
 const CAIP_PREFIX = "aztec";
@@ -33,19 +33,21 @@ export function lazyValue<T>(fn: () => T) {
 
 export async function accountFromAddress(
   provider: Eip1193Provider,
-  pxe: PXE,
+  aztecNode: MinimalAztecNode,
   address: AztecAddress,
 ) {
   const { Eip1193Account } = await import("./exports/eip1193.js");
-  return new Eip1193Account(address, provider, pxe);
+  return new Eip1193Account(address, provider, aztecNode);
 }
 
-export function resolvePxe(getPxe: PXE | (() => AsyncOrSync<PXE>)) {
-  const getPxe2 = typeof getPxe === "function" ? getPxe : () => getPxe;
+export function resolveAztecNode(getAztecNode: AztecNodeInput) {
+  const getAztecNodeFn =
+    typeof getAztecNode === "function" ? getAztecNode : () => getAztecNode;
   return lazyValue(async () => {
     const { waitForPXE } = await import("@aztec/aztec.js");
-    const pxe = await getPxe2();
-    await waitForPXE(pxe);
-    return pxe;
+    const aztecNode = await getAztecNodeFn();
+    // TODO: don't wait
+    await waitForPXE(aztecNode as any);
+    return aztecNode;
   });
 }
