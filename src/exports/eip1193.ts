@@ -1,5 +1,6 @@
 import {
   AztecAddress,
+  Fr,
   NoFeePaymentMethod,
   SentTx,
   TxHash,
@@ -17,8 +18,9 @@ import {
   type FunctionAbi,
 } from "@aztec/foundation/abi";
 import { assert } from "ts-essentials";
+import type { MinimalAztecNode } from "../base.js";
 import type { IntentAction } from "../contract.js";
-import { decodeFunctionCall, encodeFunctionCall, serde } from "../serde.js";
+import { decodeFunctionCall, encodeFunctionCall } from "../serde.js";
 import type {
   Eip1193Provider,
   RpcRequestMap,
@@ -36,11 +38,7 @@ export class Eip1193Account {
     readonly address: AztecAddress,
     provider: Eip1193Provider,
     /** Aztec node to fetch public data */
-    readonly aztecNode: Pick<
-      AztecNode,
-      // methods used in `SentTx`
-      "getTxEffect" | "getTxReceipt" | "getPublicLogs" | "getProvenBlockNumber"
-    >,
+    readonly aztecNode: MinimalAztecNode,
   ) {
     this.provider = provider as TypedEip1193Provider;
   }
@@ -73,14 +71,14 @@ export class Eip1193Account {
       });
     })().then((x) => TxHash.fromString(x));
 
-    return new SentTx(this.aztecNode as unknown as PXE, txHashPromise);
+    return new SentTx(this.aztecNode as PXE, txHashPromise);
   }
 
   // TODO: rename to either `call` or `view` or `readContract` or something more descriptive
   async simulateTransaction(
     txRequest: Pick<TransactionRequest, "calls">,
-  ): Promise<string[]> {
-    return await this.provider.request({
+  ): Promise<Fr[][]> {
+    const results = await this.provider.request({
       method: "aztec_call",
       params: [
         {
@@ -91,6 +89,8 @@ export class Eip1193Account {
         },
       ],
     });
+
+    return results.map((result) => result.map((x) => new Fr(BigInt(x))));
   }
 
   /**
@@ -227,7 +227,7 @@ export function createEip1193ProviderFromAccounts(accounts: Wallet[]) {
             simulatedTxPromise,
           ]);
 
-          const results: string[] = [];
+          const results: Fr[][] = [];
 
           for (const [result, index] of unconstrainedResults) {
             // TODO: remove encoding logic when fixed https://github.com/AztecProtocol/aztec-packages/issues/11275
@@ -244,7 +244,7 @@ export function createEip1193ProviderFromAccounts(accounts: Wallet[]) {
               { parameters: paramsAbi } as FunctionAbi,
               Array.isArray(result) ? result : [result],
             );
-            results[index] = await serde.FrArray.serialize(encoded);
+            results[index] = encoded;
           }
           if (simulatedTx) {
             for (const [call, callIndex, resultIndex] of indexedCalls) {
@@ -255,19 +255,17 @@ export function createEip1193ProviderFromAccounts(accounts: Wallet[]) {
                 call.type == FunctionType.PRIVATE
                   ? simulatedTx.getPrivateReturnValues()?.nested?.[resultIndex]
                       ?.values
-                  : simulatedTx.getPublicReturnValues()?.[resultIndex]?.values;
-              results[callIndex] = await serde.FrArray.serialize(
-                rawReturnValues ?? [],
-              );
+                  : simulatedTx.getPublicReturnValues()[resultIndex]?.values;
+              results[callIndex] = rawReturnValues ?? [];
             }
           }
-          return results;
+          return results.map((result) => result.map((x) => x.toString()));
         },
         aztec_requestAccounts: async () => {
-          return accounts.map((a) => a.getCompleteAddress().toString());
+          return accounts.map((a) => a.getAddress().toString());
         },
         aztec_accounts: async () => {
-          return accounts.map((a) => a.getCompleteAddress().toString());
+          return accounts.map((a) => a.getAddress().toString());
         },
       };
 

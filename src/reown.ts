@@ -1,4 +1,3 @@
-import type { PXE } from "@aztec/aztec.js";
 import type { WalletConnectModalSignOptions } from "@walletconnect/modal-sign-html";
 import { getSdkError } from "@walletconnect/utils";
 import {
@@ -8,7 +7,8 @@ import {
   type Readable,
   type Writable,
 } from "svelte/store";
-import { assert, type AsyncOrSync } from "ts-essentials";
+import { assert } from "ts-essentials";
+import { BaseWalletSdk, type AztecNodeInput } from "./base.js";
 import type { Eip1193Account } from "./exports/eip1193.js";
 import type {
   RpcRequest,
@@ -18,15 +18,17 @@ import type {
 import {
   CAIP,
   METHODS_NOT_REQUIRING_CONFIRMATION,
-  accountFromCompleteAddress,
+  accountFromAddress,
   lazyValue,
-  resolvePxe,
 } from "./utils.js";
 
 /**
  * @deprecated Use PopupWalletSdk instead.
  */
-export class ReownWalletSdk implements TypedEip1193Provider {
+export class ReownWalletSdk
+  extends BaseWalletSdk
+  implements TypedEip1193Provider
+{
   readonly #account: Writable<Eip1193Account | undefined> = writable(undefined);
 
   readonly accountObservable: Readable<Eip1193Account | undefined> = readonly(
@@ -40,8 +42,6 @@ export class ReownWalletSdk implements TypedEip1193Provider {
     return get(this.#account);
   }
 
-  readonly #pxe: () => AsyncOrSync<PXE>;
-
   readonly #options: ConstructorParameters<
     typeof import("@walletconnect/modal-sign-html").WalletConnectModalSign
   >[0];
@@ -50,14 +50,14 @@ export class ReownWalletSdk implements TypedEip1193Provider {
 
   constructor(
     options: MyWalletConnectOptions,
-    pxe: (() => AsyncOrSync<PXE>) | PXE,
+    aztecNode: AztecNodeInput,
     onRequest: OnRpcConfirmationRequest,
   ) {
+    super(aztecNode);
     this.#options = {
       ...options,
       metadata: options.metadata ?? DEFAULT_METADATA,
     };
-    this.#pxe = resolvePxe(pxe);
     this.#onRequest = onRequest ?? (() => {});
   }
 
@@ -82,17 +82,17 @@ export class ReownWalletSdk implements TypedEip1193Provider {
       this.#account.set(undefined);
     });
     web3modal.onSessionEvent(async (e) => {
-      const { CompleteAddress } = await import("@aztec/aztec.js");
+      const { AztecAddress } = await import("@aztec/aztec.js");
       const { event } = e.params;
       if (event.name !== "accountsChanged") {
         return;
       }
       const newAddress = event.data[0];
       this.#account.set(
-        await accountFromCompleteAddress(
+        await accountFromAddress(
           this,
-          await this.#pxe(),
-          await CompleteAddress.fromString(newAddress),
+          await this.aztecNode(),
+          AztecAddress.fromString(newAddress),
         ),
       );
     });
@@ -129,9 +129,9 @@ export class ReownWalletSdk implements TypedEip1193Provider {
       this.#account.set(undefined);
       return undefined;
     }
-    const account = await accountFromCompleteAddress(
+    const account = await accountFromAddress(
       this,
-      await this.#pxe(),
+      await this.aztecNode(),
       address,
     );
     this.#account.set(account);
@@ -166,8 +166,8 @@ export class ReownWalletSdk implements TypedEip1193Provider {
     if (address == null) {
       return undefined;
     }
-    const { CompleteAddress } = await import("@aztec/aztec.js");
-    return CompleteAddress.fromString(address);
+    const { AztecAddress } = await import("@aztec/aztec.js");
+    return AztecAddress.fromString(address);
   }
 
   async #getSession() {

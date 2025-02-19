@@ -1,8 +1,8 @@
 import {
-  DeployMethod,
   type AztecAddress,
   type Contract as AztecContract,
   type ContractArtifact,
+  type DeployMethod,
   type FunctionCall,
   type Wallet,
 } from "@aztec/aztec.js";
@@ -13,7 +13,6 @@ import {
   type FunctionAbi,
 } from "@aztec/foundation/abi";
 import type { Eip1193Account, TransactionRequest } from "./exports/eip1193.js";
-import { serde } from "./serde.js";
 import { lazyValue } from "./utils.js";
 
 // TODO: consider changing the API to be more viem-like. I.e., use `contract.write.methodName` and `contract.read.methodName`
@@ -149,10 +148,7 @@ class ContractFunctionInteraction {
       throw new Error(`invalid results length: ${results.length}`);
     }
     const result = results[0]!;
-    return decodeFromAbi(
-      this.functionAbi.returnTypes,
-      await serde.FrArray.deserialize(result),
-    );
+    return decodeFromAbi(this.functionAbi.returnTypes, result);
   }
 
   async request(): Promise<FunctionCall> {

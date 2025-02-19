@@ -1,4 +1,3 @@
-import { type PXE } from "@aztec/aztec.js";
 import type { UniversalProviderOpts } from "@walletconnect/universal-provider";
 import { persisted } from "svelte-persisted-store";
 import {
@@ -8,8 +7,9 @@ import {
   type Readable,
   type Writable,
 } from "svelte/store";
-import { assert, type AsyncOrSync } from "ts-essentials";
+import { assert } from "ts-essentials";
 import { joinURL } from "ufo";
+import { BaseWalletSdk, type AztecNodeInput } from "./base.js";
 import { Communicator, type FallbackOpenPopup } from "./Communicator.js";
 import type { Eip1193Account } from "./exports/eip1193.js";
 import type {
@@ -21,18 +21,18 @@ import {
   CAIP,
   DEFAULT_WALLET_URL,
   METHODS_NOT_REQUIRING_CONFIRMATION,
-  accountFromCompleteAddress,
+  accountFromAddress,
   lazyValue,
-  resolvePxe,
 } from "./utils.js";
 
-export class ReownPopupWalletSdk implements TypedEip1193Provider {
-  readonly #pxe: () => AsyncOrSync<PXE>;
-
+export class ReownPopupWalletSdk
+  extends BaseWalletSdk
+  implements TypedEip1193Provider
+{
   readonly #communicator: Communicator;
   #pendingRequestsCount = 0;
 
-  readonly #connectedAccountCompleteAddress = persisted<string | null>(
+  readonly #connectedAccountAddress = persisted<string | null>(
     "aztec-wallet-connected-complete-address",
     null,
   );
@@ -46,7 +46,7 @@ export class ReownPopupWalletSdk implements TypedEip1193Provider {
   readonly walletUrl: string;
 
   constructor(
-    pxe: (() => AsyncOrSync<PXE>) | PXE,
+    aztecNode: AztecNodeInput,
     wcOptions: UniversalProviderOpts,
     params: {
       /**
@@ -58,12 +58,12 @@ export class ReownPopupWalletSdk implements TypedEip1193Provider {
       walletUrl?: string;
     } = {},
   ) {
+    super(aztecNode);
     this.#options = {
       ...wcOptions,
       metadata: wcOptions.metadata ?? DEFAULT_METADATA,
       projectId: wcOptions.projectId,
     };
-    this.#pxe = resolvePxe(pxe);
 
     this.walletUrl = params.walletUrl ?? DEFAULT_WALLET_URL;
     this.#communicator = new Communicator({
@@ -72,20 +72,20 @@ export class ReownPopupWalletSdk implements TypedEip1193Provider {
     });
 
     let accountId = 0;
-    this.#connectedAccountCompleteAddress.subscribe(async (completeAddress) => {
+    this.#connectedAccountAddress.subscribe(async (completeAddress) => {
       if (typeof window === "undefined") {
         return;
       }
 
       const thisAccountId = ++accountId;
 
-      const { CompleteAddress } = await import("@aztec/aztec.js");
+      const { AztecAddress } = await import("@aztec/aztec.js");
 
       const account = completeAddress
-        ? await accountFromCompleteAddress(
+        ? await accountFromAddress(
             this,
-            await this.#pxe(),
-            await CompleteAddress.fromString(completeAddress),
+            await this.aztecNode(),
+            AztecAddress.fromString(completeAddress),
           )
         : undefined;
       if (thisAccountId !== accountId) {
@@ -113,12 +113,12 @@ export class ReownPopupWalletSdk implements TypedEip1193Provider {
 
     provider.on("session_delete", () => {
       this.#account.set(undefined);
-      this.#connectedAccountCompleteAddress.set(null);
+      this.#connectedAccountAddress.set(null);
     });
 
     provider.on("session_expire", () => {
       this.#account.set(undefined);
-      this.#connectedAccountCompleteAddress.set(null);
+      this.#connectedAccountAddress.set(null);
     });
 
     // Subscribe to session update
@@ -127,17 +127,17 @@ export class ReownPopupWalletSdk implements TypedEip1193Provider {
     });
 
     provider.on("session_event", async (e: any) => {
-      const { CompleteAddress } = await import("@aztec/aztec.js");
+      const { AztecAddress } = await import("@aztec/aztec.js");
       const { event } = e.params;
       if (event.name !== "accountsChanged") {
         return;
       }
       const newAddress = event.data[0];
       this.#account.set(
-        await accountFromCompleteAddress(
+        await accountFromAddress(
           this,
-          await this.#pxe(),
-          await CompleteAddress.fromString(newAddress),
+          await this.aztecNode(),
+          AztecAddress.fromString(newAddress),
         ),
       );
     });
@@ -194,14 +194,14 @@ export class ReownPopupWalletSdk implements TypedEip1193Provider {
 
     await sessionPromise;
 
-    const { CompleteAddress } = await import("@aztec/aztec.js");
-    const account = await accountFromCompleteAddress(
+    const { AztecAddress } = await import("@aztec/aztec.js");
+    const account = await accountFromAddress(
       this,
-      await this.#pxe(),
-      await CompleteAddress.fromString(address),
+      await this.aztecNode(),
+      AztecAddress.fromString(address),
     );
     this.#account.set(account);
-    this.#connectedAccountCompleteAddress.set(address);
+    this.#connectedAccountAddress.set(address);
     return account;
   }
 
@@ -215,7 +215,7 @@ export class ReownPopupWalletSdk implements TypedEip1193Provider {
       await provider.disconnect();
     }
     this.#account.set(undefined);
-    this.#connectedAccountCompleteAddress.set(null);
+    this.#connectedAccountAddress.set(null);
   }
 
   async #getSession() {

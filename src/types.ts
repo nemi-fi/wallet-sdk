@@ -11,13 +11,13 @@ export type SerializedFunctionCall = {
 export type RpcRequestMap = {
   /**
    * Requests the user to connect 1 or more accounts to the app. Should trigger a confirmation popup/modal.
-   * @returns `CompleteAddress[]` of the connected accounts. The first one must be the currently selected account.
+   * @returns `AztecAddress[]` of the connected accounts. The first one must be the currently selected account.
    */
   aztec_requestAccounts: () => string[];
 
   /**
    * Must **NOT** trigger a confirmation popup/modal.
-   * @returns `CompleteAddress[]` of the previously connected accounts. The first one must be the currently selected account.
+   * @returns `AztecAddress[]` of the previously connected accounts. The first one must be the currently selected account.
    */
   aztec_accounts: () => string[];
 
@@ -44,14 +44,14 @@ export type RpcRequestMap = {
 
   /**
    * Reads blockchain state.
-   * @returns an array of return values of the calls ABI encoded as hex strings
+   * @returns an array of return values (each being `Fr[]`) of the calls
    */
   aztec_call: (request: {
     /** `AztecAddress` of the account that will the call will be simulated from */
     from: string;
     /** `FunctionCall[]` to be simulated */
     calls: SerializedFunctionCall[];
-  }) => string[];
+  }) => string[][];
 };
 
 export type RpcRequest<M extends keyof RpcRequestMap> = {
@@ -61,7 +61,7 @@ export type RpcRequest<M extends keyof RpcRequestMap> = {
 
 export type RpcEventsMap = {
   /**
-   * Emitted when the user changes the selected account in wallet UI. It is the `CompleteAddress` of the new selected account.
+   * Emitted when the user changes the selected account in wallet UI. It is the `AztecAddress` of the new selected account.
    */
   accountsChanged: [string];
 };

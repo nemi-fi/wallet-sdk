@@ -1,40 +1,5 @@
-import type { Fr, FunctionCall, PXE } from "@aztec/aztec.js";
-import { Bytes, Hex } from "ox";
-import { assert } from "ts-essentials";
+import type { FunctionCall, PXE } from "@aztec/aztec.js";
 import type { SerializedFunctionCall } from "./types.js";
-
-interface SerdeItem<T, S> {
-  serialize(value: T): Promise<S>;
-  deserialize(value: S): Promise<T>;
-}
-interface Serde {
-  FrArray: SerdeItem<Fr[], string>;
-}
-
-/**
- * @deprecated TODO: think of a better way to do this (serialize as a string using ClassConverter)
- */
-export const serde: Serde = {
-  FrArray: {
-    serialize: async (frs) => {
-      return Hex.concat(...frs.map((fr) => fr.toString()));
-    },
-    deserialize: async (frs) => {
-      const { Fr } = await import("@aztec/aztec.js");
-      const bytes = Bytes.fromHex(frs satisfies string as Hex.Hex);
-      const length = bytes.length / 32;
-      assert(Number.isInteger(length), "invalid Fr[] length");
-      // TODO(perf): remove unnecessary conversions. https://discord.com/channels/1144692727120937080/1329303808135794771
-      return Array.from({ length }, (_, i) =>
-        Fr.fromString(
-          Hex.fromBytes(
-            Bytes.slice(bytes, i * 32, i * 32 + 32, { strict: true }),
-          ),
-        ),
-      );
-    },
-  },
-};
 
 export async function encodeFunctionCall(call: FunctionCall) {
   return {

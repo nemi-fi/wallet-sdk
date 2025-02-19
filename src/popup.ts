@@ -1,8 +1,8 @@
-import type { PXE } from "@aztec/aztec.js";
 import { persisted } from "svelte-persisted-store";
 import { get, readonly, writable } from "svelte/store";
-import { assert, type AsyncOrSync } from "ts-essentials";
+import { assert } from "ts-essentials";
 import { joinURL } from "ufo";
+import { BaseWalletSdk, type AztecNodeInput } from "./base.js";
 import { Communicator, type FallbackOpenPopup } from "./Communicator.js";
 import type { Eip1193Account } from "./exports/eip1193.js";
 import type {
@@ -10,20 +10,17 @@ import type {
   RpcRequestMap,
   TypedEip1193Provider,
 } from "./types.js";
-import {
-  DEFAULT_WALLET_URL,
-  accountFromCompleteAddress,
-  resolvePxe,
-} from "./utils.js";
+import { DEFAULT_WALLET_URL, accountFromAddress } from "./utils.js";
 
-export class PopupWalletSdk implements TypedEip1193Provider {
-  readonly #pxe: () => AsyncOrSync<PXE>;
-
+export class PopupWalletSdk
+  extends BaseWalletSdk
+  implements TypedEip1193Provider
+{
   readonly #communicator: Communicator;
 
   #pendingRequestsCount = 0;
 
-  readonly #connectedAccountCompleteAddress = persisted<string | null>(
+  readonly #connectedAccountAddress = persisted<string | null>(
     "aztec-wallet-connected-complete-address",
     null,
   );
@@ -33,7 +30,7 @@ export class PopupWalletSdk implements TypedEip1193Provider {
   readonly walletUrl: string;
 
   constructor(
-    pxe: (() => AsyncOrSync<PXE>) | PXE,
+    aztecNode: AztecNodeInput,
     params: {
       /**
        * Called when user browser blocks a popup. Use this to attempt to re-open the popup.
@@ -44,7 +41,7 @@ export class PopupWalletSdk implements TypedEip1193Provider {
       walletUrl?: string;
     } = {},
   ) {
-    this.#pxe = resolvePxe(pxe);
+    super(aztecNode);
     this.walletUrl = params.walletUrl ?? DEFAULT_WALLET_URL;
     this.#communicator = new Communicator({
       url: joinURL(this.walletUrl, "/sign"),
@@ -52,20 +49,20 @@ export class PopupWalletSdk implements TypedEip1193Provider {
     });
 
     let accountId = 0;
-    this.#connectedAccountCompleteAddress.subscribe(async (completeAddress) => {
+    this.#connectedAccountAddress.subscribe(async (address) => {
       if (typeof window === "undefined") {
         return;
       }
 
       const thisAccountId = ++accountId;
 
-      const { CompleteAddress } = await import("@aztec/aztec.js");
+      const { AztecAddress } = await import("@aztec/aztec.js");
 
-      const account = completeAddress
-        ? await accountFromCompleteAddress(
+      const account = address
+        ? await accountFromAddress(
             this,
-            await this.#pxe(),
-            await CompleteAddress.fromString(completeAddress),
+            await this.aztecNode(),
+            AztecAddress.fromString(address),
           )
         : undefined;
       if (thisAccountId !== accountId) {
@@ -81,24 +78,24 @@ export class PopupWalletSdk implements TypedEip1193Provider {
   }
 
   async connect() {
-    const { CompleteAddress } = await import("@aztec/aztec.js");
+    const { AztecAddress } = await import("@aztec/aztec.js");
     const result = await this.request({
       method: "aztec_requestAccounts",
       params: [],
     });
     const [address] = result;
     assert(address, "No accounts found");
-    const account = await accountFromCompleteAddress(
+    const account = await accountFromAddress(
       this,
-      await this.#pxe(),
-      await CompleteAddress.fromString(address),
+      await this.aztecNode(),
+      AztecAddress.fromString(address),
     );
-    this.#connectedAccountCompleteAddress.set(address);
+    this.#connectedAccountAddress.set(address);
     return account;
   }
 
   async disconnect() {
-    this.#connectedAccountCompleteAddress.set(null);
+    this.#connectedAccountAddress.set(null);
   }
 
   /**
