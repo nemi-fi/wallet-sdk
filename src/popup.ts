@@ -7,9 +7,9 @@ import { Communicator, type FallbackOpenPopup } from "./Communicator.js";
 import type { Eip1193Account } from "./exports/eip1193.js";
 import type { TypedEip1193Provider } from "./types.js";
 import {
-  accountFromAddress,
   DEFAULT_WALLET_URL,
   FINAL_METHODS,
+  accountFromAddress,
 } from "./utils.js";
 
 export class PopupWalletSdk
