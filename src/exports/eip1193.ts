@@ -267,9 +267,7 @@ export function createEip1193ProviderFromAccounts(accounts: Wallet[]) {
         aztec_accounts: async () => {
           return accounts.map((a) => a.getAddress().toString());
         },
-        wallet_watchAsset: async () => {
-          return true;
-        },
+        wallet_watchAssets: async () => {},
       };
 
       let result = await methodMap[params.method](...params.params);
