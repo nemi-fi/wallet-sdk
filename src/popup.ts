@@ -5,8 +5,12 @@ import { joinURL } from "ufo";
 import { BaseWalletSdk, type AztecNodeInput } from "./base.js";
 import { Communicator, type FallbackOpenPopup } from "./Communicator.js";
 import type { Eip1193Account } from "./exports/eip1193.js";
-import type { RpcRequestMap, TypedEip1193Provider } from "./types.js";
-import { DEFAULT_WALLET_URL, accountFromAddress } from "./utils.js";
+import type { TypedEip1193Provider } from "./types.js";
+import {
+  DEFAULT_WALLET_URL,
+  FINAL_METHODS,
+  accountFromAddress,
+} from "./utils.js";
 
 export class PopupWalletSdk
   extends BaseWalletSdk
@@ -131,7 +135,7 @@ export class PopupWalletSdk
         }
       };
 
-      if (finalMethods.includes(request.method)) {
+      if (FINAL_METHODS.includes(request.method)) {
         disconnectIfNoPendingRequests();
       } else {
         setTimeout(disconnectIfNoPendingRequests, 1000);
@@ -139,9 +143,3 @@ export class PopupWalletSdk
     }
   };
 }
-
-const finalMethods: readonly (keyof RpcRequestMap)[] = [
-  "aztec_requestAccounts",
-  "aztec_sendTransaction",
-  "wallet_watchAssets",
-];

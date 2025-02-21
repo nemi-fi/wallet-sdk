@@ -20,6 +20,12 @@ export const METHODS_NOT_REQUIRING_CONFIRMATION: (keyof RpcRequestMap)[] = [
   "aztec_call",
 ];
 
+export const FINAL_METHODS: readonly (keyof RpcRequestMap)[] = [
+  "aztec_requestAccounts",
+  "aztec_sendTransaction",
+  "wallet_watchAssets",
+];
+
 export function lazyValue<T>(fn: () => T) {
   let value: T;
   let initialized = false;
