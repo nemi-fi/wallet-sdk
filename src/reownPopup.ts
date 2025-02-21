@@ -18,11 +18,12 @@ import type {
   TypedEip1193Provider,
 } from "./types.js";
 import {
+  accountFromAddress,
   CAIP,
   DEFAULT_WALLET_URL,
-  METHODS_NOT_REQUIRING_CONFIRMATION,
-  accountFromAddress,
+  FINAL_METHODS,
   lazyValue,
+  METHODS_NOT_REQUIRING_CONFIRMATION,
 } from "./utils.js";
 
 export class ReownPopupWalletSdk
@@ -272,7 +273,7 @@ export class ReownPopupWalletSdk
         }
       };
 
-      if (finalMethods.includes(request.method)) {
+      if (FINAL_METHODS.includes(request.method)) {
         disconnectIfNoPendingRequests();
       } else {
         setTimeout(disconnectIfNoPendingRequests, 1000);
@@ -287,8 +288,3 @@ const DEFAULT_METADATA = {
   url: "https://example.com",
   icons: [],
 };
-
-const finalMethods: readonly (keyof RpcRequestMap)[] = [
-  "aztec_requestAccounts",
-  "aztec_sendTransaction",
-];
