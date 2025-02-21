@@ -5,11 +5,7 @@ import { joinURL } from "ufo";
 import { BaseWalletSdk, type AztecNodeInput } from "./base.js";
 import { Communicator, type FallbackOpenPopup } from "./Communicator.js";
 import type { Eip1193Account } from "./exports/eip1193.js";
-import type {
-  RpcRequest,
-  RpcRequestMap,
-  TypedEip1193Provider,
-} from "./types.js";
+import type { RpcRequestMap, TypedEip1193Provider } from "./types.js";
 import { DEFAULT_WALLET_URL, accountFromAddress } from "./utils.js";
 
 export class PopupWalletSdk
@@ -106,16 +102,7 @@ export class PopupWalletSdk
   /**
    * Sends a raw RPC request to the user's wallet.
    */
-  async request<M extends keyof RpcRequestMap>(
-    request: RpcRequest<M>,
-  ): Promise<ReturnType<RpcRequestMap[M]>> {
-    const result = await this.#requestPopup(request);
-    return result;
-  }
-
-  async #requestPopup<M extends keyof RpcRequestMap>(
-    request: RpcRequest<M>,
-  ): Promise<ReturnType<RpcRequestMap[M]>> {
+  request: TypedEip1193Provider["request"] = async (request) => {
     this.#pendingRequestsCount++;
     // TODO: handle batch requests
     try {
@@ -150,10 +137,11 @@ export class PopupWalletSdk
         setTimeout(disconnectIfNoPendingRequests, 1000);
       }
     }
-  }
+  };
 }
 
 const finalMethods: readonly (keyof RpcRequestMap)[] = [
   "aztec_requestAccounts",
   "aztec_sendTransaction",
+  "wallet_watchAssets",
 ];
