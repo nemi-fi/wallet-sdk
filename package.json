@@ -1,6 +1,6 @@
 {
   "name": "@shieldswap/wallet-sdk",
-  "version": "0.76.1-obsidion.5",
+  "version": "0.76.1-obsidion.6",
   "type": "module",
   "main": "src/exports/index.ts",
   "module": "src/exports/index.ts",
