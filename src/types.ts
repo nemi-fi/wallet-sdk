@@ -52,6 +52,22 @@ export type RpcRequestMap = {
     /** `FunctionCall[]` to be simulated */
     calls: SerializedFunctionCall[];
   }) => string[][];
+
+  /**
+   * Requests the user to add an asset to the wallet. Must trigger a confirmation popup.
+   * @returns `true` if user approved the request, `false` otherwise
+   */
+  wallet_watchAsset: (request: {
+    // TODO: is this type namespaced enough? Could this clash with other chains which names start with "A"? E.g., Aleo also has an "ARC20" standard
+    type: "ARC20";
+    options: {
+      // TODO: add chainId
+      address: string;
+      symbol: string;
+      decimals: number;
+      image: string;
+    };
+  }) => boolean;
 };
 
 export type RpcRequest<M extends keyof RpcRequestMap> = {
