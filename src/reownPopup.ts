@@ -27,6 +27,9 @@ import {
   METHODS_NOT_REQUIRING_CONFIRMATION,
 } from "./utils.js";
 
+/**
+ * @deprecated a temporary hack to make Obsidion wallet work. Needed to not show a popup on every `aztec_call` RPC call.
+ */
 export class ReownPopupWalletSdk
   extends BaseWalletSdk
   implements TypedEip1193Provider
