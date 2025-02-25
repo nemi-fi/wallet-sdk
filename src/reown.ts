@@ -201,7 +201,7 @@ export class ReownWalletSdk
   };
 }
 
-const DEFAULT_METADATA = {
+export const DEFAULT_METADATA = {
   name: "Example dApp",
   description: "",
   url: "https://example.com",

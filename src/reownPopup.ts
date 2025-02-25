@@ -12,6 +12,7 @@ import { joinURL } from "ufo";
 import { BaseWalletSdk, type AztecNodeInput } from "./base.js";
 import { Communicator, type FallbackOpenPopup } from "./Communicator.js";
 import type { Eip1193Account } from "./exports/eip1193.js";
+import { DEFAULT_METADATA } from "./reown.js";
 import type {
   RpcRequest,
   RpcRequestMap,
@@ -281,10 +282,3 @@ export class ReownPopupWalletSdk
     }
   }
 }
-
-const DEFAULT_METADATA = {
-  name: "Example dApp",
-  description: "",
-  url: "https://example.com",
-  icons: [],
-};
