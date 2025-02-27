@@ -1,13 +1,3 @@
-export type SerializedFunctionCall = {
-  /** `AztecAddress` of the contract */
-  to: string;
-  // TODO: replace selector and args with encoded `data` similar to Ethereum?
-  /** `FunctionSelector` of the contract method */
-  selector: string;
-  /** `Fr[]` */
-  args: string[];
-};
-
 export type RpcRequestMap = {
   /**
    * Requests the user to connect 1 or more accounts to the app. Should trigger a confirmation popup/modal.
@@ -38,6 +28,8 @@ export type RpcRequestMap = {
       // TODO: rename to `call`?
       action: SerializedFunctionCall;
     }[];
+    /** Contracts required to send the transaction */
+    registerContracts?: SerializedRegisterContract[];
   }) => string;
 
   // TODO: add aztec_estimateGas
@@ -51,6 +43,8 @@ export type RpcRequestMap = {
     from: string;
     /** `FunctionCall[]` to be simulated */
     calls: SerializedFunctionCall[];
+    /** Contracts required for this call to be simulated */
+    registerContracts?: SerializedRegisterContract[];
   }) => string[][];
 
   /**
@@ -83,6 +77,43 @@ export type RpcEventsMap = {
    */
   accountsChanged: [string];
 };
+
+export type SerializedFunctionCall = {
+  /** `AztecAddress` of the contract */
+  to: string;
+  // TODO: replace selector and args with encoded `data` similar to Ethereum?
+  /** `FunctionSelector` of the contract method */
+  selector: string;
+  /** `Fr[]` */
+  args: string[];
+};
+
+export type SerializedRegisterContract = {
+  /** `AztecAddress` of the contract to register */
+  address: string;
+  /** Contract instance to register */
+  instance?: SerializedContractInstance;
+  /** Contract artifact to register. Can be omitted if the artifact is already in user's PXE. */
+  artifact?: SerializedContractArtifact;
+};
+
+export type SerializedContractInstance = {
+  /** `bigint` hex string */
+  version: string;
+  /** `Fr` */
+  salt: string;
+  /** `AztecAddress` */
+  deployer: string;
+  /** `Fr` */
+  contractClassId: string;
+  /** `Fr` */
+  initializationHash: string;
+  /** `PublicKeys` */
+  publicKeys: string;
+};
+
+/** JSON string of the contract artifact. Requires aztec.js deserialization */
+export type SerializedContractArtifact = string;
 
 export interface Eip1193Provider {
   request(request: {

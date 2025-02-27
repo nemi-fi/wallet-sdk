@@ -5,12 +5,13 @@ import {
   SentTx,
   TxHash,
   type AztecNode,
+  type ContractArtifact,
   type FunctionCall,
   type PXE,
   type Wallet,
 } from "@aztec/aztec.js";
 import type { TxSimulationResult } from "@aztec/circuit-types";
-import { GasSettings } from "@aztec/circuits.js";
+import { GasSettings, type ContractInstance } from "@aztec/circuits.js";
 import {
   encodeArguments,
   FunctionType,
@@ -19,11 +20,17 @@ import {
 } from "@aztec/foundation/abi";
 import { assert } from "ts-essentials";
 import type { MinimalAztecNode } from "../base.js";
-import type { IntentAction } from "../contract.js";
-import { decodeFunctionCall, encodeFunctionCall } from "../serde.js";
+import type { Contract, IntentAction } from "../contract.js";
+import {
+  decodeFunctionCall,
+  decodeRegisterContracts,
+  encodeFunctionCall,
+  encodeRegisterContracts,
+} from "../serde.js";
 import type {
   Eip1193Provider,
   RpcRequestMap,
+  SerializedRegisterContract,
   TypedEip1193Provider,
 } from "../types.js";
 
@@ -66,17 +73,20 @@ export class Eip1193Account {
                 action: await encodeFunctionCall(x.action),
               })),
             ),
+            registerContracts: await encodeRegisterContracts(
+              txRequest_.registerContracts ?? [],
+            ),
           },
         ],
       });
     })().then((x) => TxHash.fromString(x));
 
-    return new SentTx(this.aztecNode as PXE, txHashPromise);
+    return new SentTx(this.aztecNode as unknown as PXE, txHashPromise);
   }
 
   // TODO: rename to either `call` or `view` or `readContract` or something more descriptive
   async simulateTransaction(
-    txRequest: Pick<TransactionRequest, "calls">,
+    txRequest: Pick<TransactionRequest, "calls" | "registerContracts">,
   ): Promise<Fr[][]> {
     const results = await this.provider.request({
       method: "aztec_call",
@@ -85,6 +95,9 @@ export class Eip1193Account {
           from: this.address.toString(),
           calls: await Promise.all(
             txRequest.calls.map((x) => encodeFunctionCall(x)),
+          ),
+          registerContracts: await encodeRegisterContracts(
+            txRequest.registerContracts ?? [],
           ),
         },
       ],
@@ -96,18 +109,32 @@ export class Eip1193Account {
   /**
    * @deprecated only use to convert aztec.js account to `Eip1193Account` for compatibility reasons
    */
-  static fromAztec(account: Wallet): Eip1193Account {
-    const provider = createEip1193ProviderFromAccounts([account]);
-    return new this(account.getAddress(), provider, account);
+  static fromAztec(account: Wallet, aztecNode: AztecNode): Eip1193Account {
+    const provider = createEip1193ProviderFromAccounts(aztecNode, [account]);
+    return new this(account.getAddress(), provider, aztecNode);
   }
 }
 
 export type TransactionRequest = {
   calls: FunctionCall[];
   authWitnesses?: IntentAction[];
+  registerContracts?: RegisterContract[];
 };
 
-export function createEip1193ProviderFromAccounts(accounts: Wallet[]) {
+export type RegisterContract =
+  // for easy API
+  | Contract<any>
+  // provide optional instance and artifact (if not provided, fetch from node or artifact store)
+  | {
+      address: AztecAddress;
+      instance?: ContractInstance;
+      artifact?: ContractArtifact;
+    };
+
+export function createEip1193ProviderFromAccounts(
+  aztecNode: AztecNode,
+  accounts: Wallet[],
+) {
   function getAccount(address: string) {
     const account = accounts.find((a) => a.getAddress().toString() === address);
     assert(account, `no account found for ${address}`);
@@ -124,17 +151,26 @@ export function createEip1193ProviderFromAccounts(accounts: Wallet[]) {
       } = {
         aztec_sendTransaction: async (request) => {
           const account = getAccount(request.from);
+
+          // register contracts
+          await registerContracts(
+            aztecNode,
+            account,
+            request.registerContracts ?? [],
+          );
+
+          // decode calls
+          const calls = await Promise.all(
+            request.calls.map((x) => decodeFunctionCall(account, x)),
+          );
+
+          // approve auth witnesses
           const authWitRequests: IntentAction[] = await Promise.all(
             request.authWitnesses.map(async (authWitness) => ({
               caller: AztecAddress.fromString(authWitness.caller),
               action: await decodeFunctionCall(account, authWitness.action),
             })),
           );
-          const calls = await Promise.all(
-            request.calls.map((x) => decodeFunctionCall(account, x)),
-          );
-
-          // approve auth witnesses
           for (const authWitRequest of authWitRequests) {
             await account.createAuthWit(authWitRequest);
           }
@@ -160,6 +196,14 @@ export function createEip1193ProviderFromAccounts(accounts: Wallet[]) {
         },
         aztec_call: async (request) => {
           const account = getAccount(request.from);
+
+          // register contracts
+          await registerContracts(
+            aztecNode,
+            account,
+            request.registerContracts ?? [],
+          );
+
           const deserializedCalls = await Promise.all(
             request.calls.map((x) => decodeFunctionCall(account, x)),
           );
@@ -288,4 +332,41 @@ export function createEip1193ProviderFromAccounts(accounts: Wallet[]) {
   }
 
   return provider;
+}
+
+async function registerContracts(
+  aztecNode: AztecNode,
+  pxe: PXE,
+  serialized: SerializedRegisterContract[],
+) {
+  const contracts = await Promise.all(
+    (await decodeRegisterContracts(serialized)).map(async (c) => {
+      const instance = c.instance ?? (await aztecNode.getContract(c.address));
+      if (!instance) {
+        // fails the whole RPC call if instance not found
+        throw new Error(`no contract instance found for ${c.address}`);
+      }
+
+      const artifact =
+        c.artifact ??
+        // TODO: try to fetch artifact from aztecscan or a similar service
+        (await pxe.getContractClassMetadata(instance.contractClassId, true))
+          .artifact;
+      if (!artifact) {
+        // fails the whole RPC call if artifact not found
+        throw new Error(`no contract artifact found for ${c.address}`);
+      }
+
+      return {
+        instance: {
+          ...instance,
+          address: c.address,
+        },
+        artifact,
+      };
+    }),
+  );
+  for (const contract of contracts) {
+    await pxe.registerContract(contract);
+  }
 }

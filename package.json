@@ -1,6 +1,6 @@
 {
   "name": "@shieldswap/wallet-sdk",
-  "version": "0.76.1-obsidion.9",
+  "version": "0.76.1-next.1",
   "type": "module",
   "main": "src/exports/index.ts",
   "module": "src/exports/index.ts",
@@ -57,6 +57,7 @@
     "@walletconnect/modal-sign-html": "^2.6.2",
     "@walletconnect/universal-provider": "^2.18.0",
     "@walletconnect/utils": "^2.11.2",
+    "ox": "^0.6.9",
     "svelte": "^5.17.3",
     "svelte-persisted-store": "^0.11.0",
     "ts-essentials": "^9.4.1",

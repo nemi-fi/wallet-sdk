@@ -50,11 +50,5 @@ export async function accountFromAddress(
 export function resolveAztecNode(getAztecNode: AztecNodeInput) {
   const getAztecNodeFn =
     typeof getAztecNode === "function" ? getAztecNode : () => getAztecNode;
-  return lazyValue(async () => {
-    const { waitForPXE } = await import("@aztec/aztec.js");
-    const aztecNode = await getAztecNodeFn();
-    // TODO: don't wait
-    await waitForPXE(aztecNode as any);
-    return aztecNode;
-  });
+  return lazyValue(getAztecNodeFn);
 }

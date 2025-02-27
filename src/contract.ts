@@ -2,6 +2,7 @@ import {
   type AztecAddress,
   type Contract as AztecContract,
   type ContractArtifact,
+  type ContractInstanceWithAddress,
   type DeployMethod,
   type FunctionCall,
   type Wallet,
@@ -22,8 +23,8 @@ export class ContractBase<T extends AztecContract> {
   };
 
   protected constructor(
-    /** Address of the deployed contract instance. */
-    readonly address: AztecAddress,
+    /** Deployed contract instance. */
+    readonly instance: ContractInstanceWithAddress,
     /** The Application Binary Interface for the contract. */
     readonly artifact: ContractArtifact,
     /** The account used for interacting with this contract. */
@@ -41,7 +42,7 @@ export class ContractBase<T extends AztecContract> {
                     argsAndOptions[argsAndOptions.length - 1],
                   ];
             return new ContractFunctionInteraction(
-              this.address,
+              this, // TODO: is this memory leak?
               this.account,
               f,
               args,
@@ -63,10 +64,14 @@ export class ContractBase<T extends AztecContract> {
     );
   }
 
+  get address() {
+    return this.instance.address;
+  }
+
   /** @deprecated use `withAccount` */
   withWallet = this.withAccount.bind(this);
   withAccount(account: Eip1193Account): Contract<T> {
-    return new Contract<T>(this.address, this.artifact, account);
+    return new Contract<T>(this.instance, this.artifact, account);
   }
 }
 
@@ -76,7 +81,11 @@ export class Contract<T extends AztecContract> extends ContractBase<T> {
     artifact: ContractArtifact,
     account: Eip1193Account,
   ) {
-    return new Contract<T>(address, artifact, account);
+    const contractInstance = await account.aztecNode.getContract(address);
+    if (contractInstance == null) {
+      throw new Error(`Contract at ${address.toString()} not found`);
+    }
+    return new Contract<T>(contractInstance, artifact, account);
   }
 
   static fromAztec<T extends AztecContract>(
@@ -93,6 +102,10 @@ export class Contract<T extends AztecContract> extends ContractBase<T> {
       static deploy(...args: Parameters<(typeof original)["deploy"]>) {
         return original.deploy(...args);
       }
+
+      static get artifact() {
+        return artifact;
+      }
     };
     return ContractClass;
   }
@@ -108,7 +121,7 @@ class ContractFunctionInteraction {
   readonly #txRequest: () => Promise<Required<TransactionRequest>>;
 
   constructor(
-    address: AztecAddress,
+    contract: Contract<AztecContract>,
     private account: Eip1193Account,
     private functionAbi: FunctionAbi,
     args: unknown[],
@@ -123,7 +136,7 @@ class ContractFunctionInteraction {
           this.functionAbi.parameters,
         ),
         type: this.functionAbi.functionType,
-        to: address,
+        to: contract.address,
         isStatic: this.functionAbi.isStatic,
         returnTypes: this.functionAbi.returnTypes,
       };
@@ -132,6 +145,7 @@ class ContractFunctionInteraction {
       return {
         calls: [await this.#call()],
         authWitnesses: options?.authWitnesses ?? [],
+        registerContracts: [contract],
       };
     });
   }
@@ -178,9 +192,10 @@ export type IntentAction = {
   action: FunctionCall;
 };
 
-type SendOptions = {
-  authWitnesses?: IntentAction[];
-};
+type SendOptions = Pick<
+  TransactionRequest,
+  "authWitnesses" | "registerContracts"
+>;
 
 type ContractMethod<T extends AztecContract, K extends keyof T["methods"]> = ((
   ...args: [...Parameters<T["methods"][K]>, options?: SendOptions]

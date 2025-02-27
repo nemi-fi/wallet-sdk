@@ -1,4 +1,4 @@
-import type { PXE } from "@aztec/aztec.js";
+import type { AztecNode } from "@aztec/aztec.js";
 import type { AsyncOrSync } from "ts-essentials";
 import type { RpcRequestMap, TypedEip1193Provider } from "./types.js";
 import { resolveAztecNode } from "./utils.js";
@@ -30,9 +30,14 @@ export type AztecNodeInput =
 /**
  * Used to fetch public data only
  */
-// TODO: remove this once aztec.js makes `AztecNode` type usable
+// TODO: replace with just `AztecNode` instead of picking a few methods
 export type MinimalAztecNode = Pick<
-  PXE, // should be `AztecNode`
+  AztecNode,
   // methods used in `SentTx`
-  "getTxEffect" | "getTxReceipt" | "getPublicLogs" | "getProvenBlockNumber"
+  | "getTxEffect"
+  | "getTxReceipt"
+  | "getPublicLogs"
+  | "getProvenBlockNumber"
+  // other methods
+  | "getContract"
 >;
