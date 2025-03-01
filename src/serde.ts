@@ -1,4 +1,10 @@
-import type { ContractArtifact, FunctionCall, PXE } from "@aztec/aztec.js";
+import type {
+  AztecAddress,
+  ContractArtifact,
+  FunctionCall,
+  FunctionSelector,
+  PXE,
+} from "@aztec/aztec.js";
 import type { ContractInstance } from "@aztec/circuits.js";
 import { Hex } from "ox";
 import type { RegisterContract } from "./exports/eip1193.js";
@@ -26,18 +32,39 @@ export async function decodeFunctionCall(pxe: PXE, fc: SerializedFunctionCall) {
   const selector = FunctionSelector.fromString(fc.selector);
   const args = fc.args.map((x) => Fr.fromHexString(x));
 
-  const instance = await pxe.getContractMetadata(to);
+  const artifact = await getContractFunctionAbiFromPxe(pxe, to, selector);
+
+  const call: FunctionCall = {
+    to,
+    selector,
+    args,
+    name: artifact.name,
+    type: artifact.functionType,
+    isStatic: artifact.isStatic,
+    returnTypes: artifact.returnTypes,
+  };
+  return call;
+}
+
+export async function getContractFunctionAbiFromPxe(
+  pxe: PXE,
+  address: AztecAddress,
+  selector: FunctionSelector,
+) {
+  const { FunctionSelector } = await import("@aztec/aztec.js");
+
+  const instance = await pxe.getContractMetadata(address);
   if (!instance.contractInstance) {
     // TODO(security): can leak privacy by fingerprinting what contracts are added to user's PXE
-    throw new Error(`no contract instance found for ${to}`);
+    throw new Error(`no contract instance found for ${address}`);
   }
   const contractArtifact = await pxe.getContractClassMetadata(
     instance.contractInstance.contractClassId,
-    true, // includeArtifact
+    true,
   );
   if (!contractArtifact.artifact) {
     // TODO(security): can leak privacy by fingerprinting what contracts are added to user's PXE
-    throw new Error(`no contract artifact found for ${to}`);
+    throw new Error(`no contract artifact found for ${address}`);
   }
   const artifact = (
     await Promise.all(
@@ -52,19 +79,9 @@ export async function decodeFunctionCall(pxe: PXE, fc: SerializedFunctionCall) {
   ).find((f) => f != null);
   if (!artifact) {
     // TODO(security): can leak privacy by fingerprinting what contracts are added to user's PXE
-    throw new Error(`no function artifact found for ${to}`);
+    throw new Error(`no function artifact found for ${address}`);
   }
-
-  const call: FunctionCall = {
-    to,
-    selector,
-    args,
-    name: artifact.name,
-    type: artifact.functionType,
-    isStatic: artifact.isStatic,
-    returnTypes: artifact.returnTypes,
-  };
-  return call;
+  return artifact;
 }
 
 export async function encodeRegisterContracts(contracts: RegisterContract[]) {

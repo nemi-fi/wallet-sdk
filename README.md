@@ -15,7 +15,8 @@ const token = await TokenContract.at(address, account);
 // after
 import { PopupWalletSdk } from "@shieldswap/wallet-sdk";
 import { Eip1193Account, Contract } from "@shieldswap/wallet-sdk/eip1193";
-const Token = Contract.fromAztec(TokenContract, TokenContractArtifact);
+
+class Token extends Contract.fromAztec(TokenContract, TokenContractArtifact) {}
 
 const wallet = new PopupWalletSdk(pxe);
 const account = await wallet.getAccount();

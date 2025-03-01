@@ -12,13 +12,18 @@ import {
 import type { TxSimulationResult } from "@aztec/circuit-types";
 import { GasSettings } from "@aztec/circuits.js";
 import {
+  decodeFromAbi,
   FunctionType,
   type ABIParameter,
   type FunctionAbi,
 } from "@aztec/foundation/abi";
 import { assert } from "ts-essentials";
 import type { IntentAction } from "./contract.js";
-import { decodeFunctionCall, decodeRegisterContracts } from "./serde.js";
+import {
+  decodeFunctionCall,
+  decodeRegisterContracts,
+  getContractFunctionAbiFromPxe,
+} from "./serde.js";
 import type {
   RpcRequestMap,
   SerializedRegisterContract,
@@ -131,16 +136,24 @@ export function createEip1193ProviderFromAccounts(
           );
 
           const unconstrainedCalls = unconstrained.map(
-            async ([call, index]) =>
-              [
+            async ([call, index]) => {
+              const fnAbi = await getContractFunctionAbiFromPxe(
+                account,
+                call.to,
+                call.selector,
+              );
+              return [
                 await account.simulateUnconstrained(
                   call.name,
-                  call.args,
+                  call.args.map((arg, i) =>
+                    decodeFromAbi([fnAbi.parameters[i]!.type], [arg]),
+                  ),
                   call.to,
                   account.getAddress(),
                 ),
                 index,
-              ] as const,
+              ] as const;
+            },
           );
 
           let simulatedTxPromise: Promise<TxSimulationResult> | undefined;

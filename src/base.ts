@@ -24,6 +24,8 @@ export abstract class BaseWalletSdk implements TypedEip1193Provider {
 }
 
 export type AztecNodeInput =
+  | string
+  | URL
   | (() => AsyncOrSync<MinimalAztecNode>)
   | AsyncOrSync<MinimalAztecNode>;
 

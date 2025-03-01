@@ -110,35 +110,35 @@ export class Contract<T extends AztecContract> extends ContractBase<T> {
     return ContractClass;
   }
 }
-export namespace Contract {
-  export type Infer<T extends { at: (...args: any[]) => any }> = Awaited<
-    ReturnType<T["at"]>
-  >;
-}
 
 class ContractFunctionInteraction {
+  readonly #account: Eip1193Account;
+  readonly #functionAbi: FunctionAbi;
   readonly #call: () => Promise<FunctionCall>;
   readonly #txRequest: () => Promise<Required<TransactionRequest>>;
 
   constructor(
     contract: Contract<AztecContract>,
-    private account: Eip1193Account,
-    private functionAbi: FunctionAbi,
+    account: Eip1193Account,
+    functionAbi: FunctionAbi,
     args: unknown[],
     options: SendOptions | undefined,
   ) {
+    this.#account = account;
+    this.#functionAbi = functionAbi;
+
     this.#call = lazyValue(async () => {
       return {
-        name: this.functionAbi.name,
-        args: encodeArguments(this.functionAbi, args),
+        name: this.#functionAbi.name,
+        args: encodeArguments(this.#functionAbi, args),
         selector: await FunctionSelector.fromNameAndParameters(
-          this.functionAbi.name,
-          this.functionAbi.parameters,
+          this.#functionAbi.name,
+          this.#functionAbi.parameters,
         ),
-        type: this.functionAbi.functionType,
+        type: this.#functionAbi.functionType,
         to: contract.address,
-        isStatic: this.functionAbi.isStatic,
-        returnTypes: this.functionAbi.returnTypes,
+        isStatic: this.#functionAbi.isStatic,
+        returnTypes: this.#functionAbi.returnTypes,
       };
     });
     this.#txRequest = lazyValue(async () => {
@@ -151,18 +151,18 @@ class ContractFunctionInteraction {
   }
 
   send() {
-    return this.account.sendTransaction(this.#txRequest());
+    return this.#account.sendTransaction(this.#txRequest());
   }
 
   async simulate() {
-    const results = await this.account.simulateTransaction(
+    const results = await this.#account.simulateTransaction(
       await this.#txRequest(),
     );
     if (results.length !== 1) {
       throw new Error(`invalid results length: ${results.length}`);
     }
     const result = results[0]!;
-    return decodeFromAbi(this.functionAbi.returnTypes, result);
+    return decodeFromAbi(this.#functionAbi.returnTypes, result);
   }
 
   async request(): Promise<FunctionCall> {

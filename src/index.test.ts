@@ -1,3 +1,3 @@
 import { test } from "vitest";
 
-test.todo("write tests");
+test.skip("write tests");

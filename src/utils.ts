@@ -13,7 +13,7 @@ export const CAIP = {
   },
 };
 
-export const DEFAULT_WALLET_URL = "https://obsidion.vercel.app";
+export const DEFAULT_WALLET_URL = "https://app.obsidion.xyz";
 
 export const METHODS_NOT_REQUIRING_CONFIRMATION: (keyof RpcRequestMap)[] = [
   "aztec_accounts",
@@ -47,8 +47,24 @@ export async function accountFromAddress(
   return new Eip1193Account(address, provider, aztecNode);
 }
 
-export function resolveAztecNode(getAztecNode: AztecNodeInput) {
+export function resolveAztecNode(
+  getAztecNode: AztecNodeInput,
+): () => Promise<MinimalAztecNode> {
   const getAztecNodeFn =
     typeof getAztecNode === "function" ? getAztecNode : () => getAztecNode;
-  return lazyValue(getAztecNodeFn);
+  return lazyValue(async () => {
+    const { createAztecNodeClient, makeFetch } = await import(
+      "@aztec/aztec.js"
+    );
+    let aztecNode = getAztecNodeFn();
+    if (typeof aztecNode === "string" || aztecNode instanceof URL) {
+      const noRetryFetch = makeFetch([], true); // disable retires. May need to enable in the future for resilience. Probably retries even mutating requests.
+      aztecNode = createAztecNodeClient(
+        new URL(aztecNode).href,
+        undefined,
+        noRetryFetch,
+      );
+    }
+    return aztecNode;
+  });
 }
