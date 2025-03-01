@@ -13,7 +13,8 @@ import {
   FunctionSelector,
   type FunctionAbi,
 } from "@aztec/foundation/abi";
-import type { Eip1193Account, TransactionRequest } from "./exports/eip1193.js";
+import type { TransactionRequest } from "./exports/eip1193.js";
+import type { Account } from "./types.js";
 import { lazyValue } from "./utils.js";
 
 // TODO: consider changing the API to be more viem-like. I.e., use `contract.write.methodName` and `contract.read.methodName`
@@ -28,7 +29,7 @@ export class ContractBase<T extends AztecContract> {
     /** The Application Binary Interface for the contract. */
     readonly artifact: ContractArtifact,
     /** The account used for interacting with this contract. */
-    readonly account: Eip1193Account,
+    readonly account: Account,
   ) {
     this.methods = artifact.functions.reduce(
       (acc, f) => {
@@ -70,7 +71,7 @@ export class ContractBase<T extends AztecContract> {
 
   /** @deprecated use `withAccount` */
   withWallet = this.withAccount.bind(this);
-  withAccount(account: Eip1193Account): Contract<T> {
+  withAccount(account: Account): Contract<T> {
     return new Contract<T>(this.instance, this.artifact, account);
   }
 }
@@ -79,7 +80,7 @@ export class Contract<T extends AztecContract> extends ContractBase<T> {
   static async at<T extends AztecContract = AztecContract>(
     address: AztecAddress,
     artifact: ContractArtifact,
-    account: Eip1193Account,
+    account: Account,
   ) {
     const contractInstance = await account.aztecNode.getContract(address);
     if (contractInstance == null) {
@@ -88,38 +89,45 @@ export class Contract<T extends AztecContract> extends ContractBase<T> {
     return new Contract<T>(contractInstance, artifact, account);
   }
 
-  static fromAztec<T extends AztecContract>(
-    original: {
-      deploy: (deployer: Wallet, ...args: any[]) => DeployMethod<T>;
-    },
-    artifact: ContractArtifact,
-  ) {
+  static fromAztec<
+    T extends AztecContract,
+    TEvents extends {},
+    TNotes extends {},
+    TStorage extends {},
+  >(original: {
+    deploy: (deployer: Wallet, ...args: any[]) => DeployMethod<T>;
+    artifact: ContractArtifact;
+    events?: TEvents;
+    notes?: TNotes;
+    storage?: TStorage;
+  }) {
     const ContractClass = class extends ContractBase<T> {
-      static async at(address: AztecAddress, account: Eip1193Account) {
-        return await Contract.at<T>(address, artifact, account);
+      static async at(address: AztecAddress, account: Account) {
+        return await Contract.at<T>(address, this.artifact, account);
       }
 
       static deploy(...args: Parameters<(typeof original)["deploy"]>) {
         return original.deploy(...args);
       }
 
-      static get artifact() {
-        return artifact;
-      }
+      static artifact = original.artifact;
+      static events: TEvents = original.events ?? ({} as TEvents);
+      static notes: TNotes = original.notes ?? ({} as TNotes);
+      static storage: TStorage = original.storage ?? ({} as TStorage);
     };
     return ContractClass;
   }
 }
 
 class ContractFunctionInteraction {
-  readonly #account: Eip1193Account;
+  readonly #account: Account;
   readonly #functionAbi: FunctionAbi;
   readonly #call: () => Promise<FunctionCall>;
   readonly #txRequest: () => Promise<Required<TransactionRequest>>;
 
   constructor(
     contract: Contract<AztecContract>,
-    account: Eip1193Account,
+    account: Account,
     functionAbi: FunctionAbi,
     args: unknown[],
     options: SendOptions | undefined,
@@ -174,7 +182,7 @@ export class BatchCall
   implements Pick<ReturnType<ContractMethod<any, any>>, "send">
 {
   constructor(
-    readonly account: Eip1193Account,
+    readonly account: Account,
     readonly calls: FunctionCall[],
     readonly options?: SendOptions,
   ) {}

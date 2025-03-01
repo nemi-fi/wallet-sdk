@@ -4,8 +4,7 @@ import { assert } from "ts-essentials";
 import { joinURL } from "ufo";
 import { BaseWalletSdk, type AztecNodeInput } from "./base.js";
 import { Communicator, type FallbackOpenPopup } from "./Communicator.js";
-import type { Eip1193Account } from "./exports/eip1193.js";
-import type { TypedEip1193Provider } from "./types.js";
+import type { Account, TypedEip1193Provider } from "./types.js";
 import {
   DEFAULT_WALLET_URL,
   FINAL_METHODS,
@@ -24,7 +23,7 @@ export class PopupWalletSdk
     "aztec-wallet-connected-complete-address",
     null,
   );
-  readonly #account = writable<Eip1193Account | undefined>(undefined);
+  readonly #account = writable<Account | undefined>(undefined);
   readonly accountObservable = readonly(this.#account);
 
   readonly walletUrl: string;

@@ -11,9 +11,9 @@ import { assert } from "ts-essentials";
 import { joinURL } from "ufo";
 import { BaseWalletSdk, type AztecNodeInput } from "./base.js";
 import { Communicator, type FallbackOpenPopup } from "./Communicator.js";
-import type { Eip1193Account } from "./exports/eip1193.js";
 import { DEFAULT_METADATA } from "./reown.js";
 import type {
+  Account,
   RpcRequest,
   RpcRequestMap,
   TypedEip1193Provider,
@@ -42,8 +42,8 @@ export class ReownPopupWalletSdk
     null,
   );
 
-  readonly #account: Writable<Eip1193Account | undefined> = writable(undefined);
-  readonly accountObservable: Readable<Eip1193Account | undefined> = readonly(
+  readonly #account: Writable<Account | undefined> = writable(undefined);
+  readonly accountObservable: Readable<Account | undefined> = readonly(
     this.#account,
   );
   readonly #options: UniversalProviderOpts;

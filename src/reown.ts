@@ -9,8 +9,8 @@ import {
 } from "svelte/store";
 import { assert } from "ts-essentials";
 import { BaseWalletSdk, type AztecNodeInput } from "./base.js";
-import type { Eip1193Account } from "./exports/eip1193.js";
 import type {
+  Account,
   RpcRequest,
   RpcRequestMap,
   TypedEip1193Provider,
@@ -29,9 +29,9 @@ export class ReownWalletSdk
   extends BaseWalletSdk
   implements TypedEip1193Provider
 {
-  readonly #account: Writable<Eip1193Account | undefined> = writable(undefined);
+  readonly #account: Writable<Account | undefined> = writable(undefined);
 
-  readonly accountObservable: Readable<Eip1193Account | undefined> = readonly(
+  readonly accountObservable: Readable<Account | undefined> = readonly(
     this.#account,
   );
 

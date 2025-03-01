@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import type { PopupWalletSdk } from "../popup.js";
-import type { Eip1193Account } from "./eip1193.js";
+import type { Account } from "../types.js";
 
 export function useAccount(wallet: Pick<PopupWalletSdk, "accountObservable">) {
-  const [account, setAccount] = useState<Eip1193Account | undefined>(undefined);
+  const [account, setAccount] = useState<Account | undefined>(undefined);
 
   useEffect(() => {
     const unsubscribe = wallet.accountObservable.subscribe((account) => {

@@ -1,3 +1,5 @@
+import type { Eip1193Account } from "./exports/eip1193.js";
+
 export type RpcRequestMap = {
   /**
    * Requests the user to connect 1 or more accounts to the app. Should trigger a confirmation popup/modal.
@@ -127,3 +129,6 @@ export interface TypedEip1193Provider {
     request: RpcRequest<M>,
   ): Promise<ReturnType<RpcRequestMap[M]>>;
 }
+
+// TODO: list all the methods instead of inheriting from Eip1193Account
+export interface Account extends Eip1193Account {}
