@@ -1,6 +1,5 @@
-import type { AztecAddress } from "@aztec/aztec.js";
 import type { AztecNodeInput, MinimalAztecNode } from "./base.js";
-import type { Eip1193Provider, RpcRequestMap } from "./types.js";
+import type { RpcRequestMap } from "./types.js";
 
 const CAIP_PREFIX = "aztec";
 const AZTEC_CHAIN_ID = "1";
@@ -12,8 +11,6 @@ export const CAIP = {
     return `${CAIP_PREFIX}:${AZTEC_CHAIN_ID}:${address.toLowerCase()}`;
   },
 };
-
-export const DEFAULT_WALLET_URL = "https://app.obsidion.xyz";
 
 export const METHODS_NOT_REQUIRING_CONFIRMATION: (keyof RpcRequestMap)[] = [
   "aztec_accounts",
@@ -36,15 +33,6 @@ export function lazyValue<T>(fn: () => T) {
     }
     return value;
   };
-}
-
-export async function accountFromAddress(
-  provider: Eip1193Provider,
-  aztecNode: MinimalAztecNode,
-  address: AztecAddress,
-) {
-  const { Eip1193Account } = await import("./exports/eip1193.js");
-  return new Eip1193Account(address, provider, aztecNode);
 }
 
 export function resolveAztecNode(

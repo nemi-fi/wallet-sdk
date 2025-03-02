@@ -1,109 +1,58 @@
 import type { UniversalProviderOpts } from "@walletconnect/universal-provider";
 import { persisted } from "svelte-persisted-store";
-import {
-  get,
-  readonly,
-  writable,
-  type Readable,
-  type Writable,
-} from "svelte/store";
+import { derived, type Readable, type Writable } from "svelte/store";
 import { assert } from "ts-essentials";
 import { joinURL } from "ufo";
-import { BaseWalletSdk, type AztecNodeInput } from "./base.js";
-import { Communicator, type FallbackOpenPopup } from "./Communicator.js";
-import { DEFAULT_METADATA } from "./reown.js";
+import type { Eip6963ProviderInfo, IAdapter } from "./base.js";
+import { Communicator } from "./Communicator.js";
+import type { PopupAdapterOptions } from "./popup.js";
+import { DEFAULT_METADATA, type ReownAdapterOptions } from "./reown.js";
 import type {
-  Account,
   RpcRequest,
   RpcRequestMap,
   TypedEip1193Provider,
 } from "./types.js";
 import {
-  accountFromAddress,
   CAIP,
-  DEFAULT_WALLET_URL,
   FINAL_METHODS,
   lazyValue,
   METHODS_NOT_REQUIRING_CONFIRMATION,
 } from "./utils.js";
 
 // TODO: remove this class. It's a temporary hack to make Obsidion wallet work. Needed to not show a popup on every `aztec_call` RPC call.
-export class ReownPopupWalletSdk
-  extends BaseWalletSdk
-  implements TypedEip1193Provider
-{
+export class ReownPopupAdapter implements IAdapter {
+  readonly info: Eip6963ProviderInfo;
   readonly #communicator: Communicator;
   #pendingRequestsCount = 0;
 
-  readonly #connectedAccountAddress = persisted<string | null>(
-    "aztec-wallet-connected-address",
-    null,
-  );
+  readonly #connectedAccountAddress: Writable<string | null>;
+  readonly accountObservable: Readable<string | undefined>;
 
-  readonly #account: Writable<Account | undefined> = writable(undefined);
-  readonly accountObservable: Readable<Account | undefined> = readonly(
-    this.#account,
-  );
   readonly #options: UniversalProviderOpts;
 
   readonly walletUrl: string;
 
-  constructor(
-    aztecNode: AztecNodeInput,
-    wcOptions: UniversalProviderOpts,
-    params: {
-      /**
-       * Called when user browser blocks a popup. Use this to attempt to re-open the popup.
-       * Must call the provided callback right after user clicks a button, so browser does not block it.
-       * Browsers usually don't block popups if they are opened within a few milliseconds of a button click.
-       */
-      fallbackOpenPopup?: FallbackOpenPopup;
-      walletUrl?: string;
-    } = {},
-  ) {
-    super(aztecNode);
+  constructor(params: ReownPopupAdapterOptions) {
+    this.info = { uuid: params.uuid, name: params.name, icon: params.icon };
     this.#options = {
-      ...wcOptions,
-      metadata: wcOptions.metadata ?? DEFAULT_METADATA,
-      projectId: wcOptions.projectId,
+      metadata: DEFAULT_METADATA,
+      projectId: params.projectId,
     };
 
-    this.walletUrl = params.walletUrl ?? DEFAULT_WALLET_URL;
+    this.walletUrl = params.walletUrl;
     this.#communicator = new Communicator({
       url: joinURL(this.walletUrl, "/sign"),
       ...params,
     });
 
-    let accountId = 0;
-    this.#connectedAccountAddress.subscribe(async (address) => {
-      if (typeof window === "undefined") {
-        return;
-      }
-
-      const thisAccountId = ++accountId;
-
-      const { AztecAddress } = await import("@aztec/aztec.js");
-
-      const account = address
-        ? await accountFromAddress(
-            this,
-            await this.aztecNode(),
-            AztecAddress.fromString(address),
-          )
-        : undefined;
-      if (thisAccountId !== accountId) {
-        // prevent race condition
-        return;
-      }
-      this.#account.set(account);
-    });
-  }
-
-  /**
-   * Returns currently selected account if any.
-   */
-  getAccount() {
-    return get(this.#account);
+    this.#connectedAccountAddress = persisted<string | null>(
+      `aztec-wallet-connected-address-${params.uuid}`,
+      null,
+    );
+    this.accountObservable = derived(
+      this.#connectedAccountAddress,
+      (x) => x ?? undefined,
+    );
   }
 
   #getReownProvider = lazyValue(async () => {
@@ -115,12 +64,10 @@ export class ReownPopupWalletSdk
     });
 
     provider.on("session_delete", () => {
-      this.#account.set(undefined);
       this.#connectedAccountAddress.set(null);
     });
 
     provider.on("session_expire", () => {
-      this.#account.set(undefined);
       this.#connectedAccountAddress.set(null);
     });
 
@@ -129,20 +76,13 @@ export class ReownPopupWalletSdk
       // TODO: update...
     });
 
-    provider.on("session_event", async (e: any) => {
-      const { AztecAddress } = await import("@aztec/aztec.js");
+    provider.on("session_event", (e: any) => {
       const { event } = e.params;
       if (event.name !== "accountsChanged") {
         return;
       }
       const newAddress = event.data[0];
-      this.#account.set(
-        await accountFromAddress(
-          this,
-          await this.aztecNode(),
-          AztecAddress.fromString(newAddress),
-        ),
-      );
+      this.#connectedAccountAddress.set(newAddress);
     });
 
     return provider;
@@ -167,13 +107,6 @@ export class ReownPopupWalletSdk
     );
   }
 
-  /**
-   * Opens a WalletConnect modal and connects to the user's wallet.
-   *
-   * Call this when user clicks a "Connect wallet" button.
-   *
-   * @returns the connected account
-   */
   async connect() {
     const provider = await this.#getReownProvider();
     const sessionPromise = provider.connect({
@@ -188,7 +121,7 @@ export class ReownPopupWalletSdk
     const uri = await this.getReownProviderUri(provider);
     await this.sendReownUriToPopup(uri);
 
-    const result = await this.request({
+    const result = await this.provider.request({
       method: "aztec_requestAccounts",
       params: [],
     });
@@ -197,27 +130,20 @@ export class ReownPopupWalletSdk
 
     await sessionPromise;
 
-    const { AztecAddress } = await import("@aztec/aztec.js");
-    const account = await accountFromAddress(
-      this,
-      await this.aztecNode(),
-      AztecAddress.fromString(address),
-    );
-    this.#account.set(account);
     this.#connectedAccountAddress.set(address);
-    return account;
+    return address;
   }
 
-  /**
-   * Disconnects from the user's wallet.
-   */
+  async reconnect() {
+    return undefined;
+  }
+
   async disconnect() {
     const session = await this.#getSession();
     if (session) {
       const provider = await this.#getReownProvider();
       await provider.disconnect();
     }
-    this.#account.set(undefined);
     this.#connectedAccountAddress.set(null);
   }
 
@@ -226,22 +152,21 @@ export class ReownPopupWalletSdk
     return provider.session;
   }
 
-  /**
-   * Sends a raw RPC request to the user's wallet.
-   */
-  request: TypedEip1193Provider["request"] = async (request) => {
-    const abortController = new AbortController();
-    if (METHODS_NOT_REQUIRING_CONFIRMATION.includes(request.method)) {
-      try {
-        const provider = await this.#getReownProvider();
-        const result = await provider.request(request, CAIP.chain());
-        return result as any;
-      } finally {
-        abortController.abort();
+  provider: TypedEip1193Provider = {
+    request: async (request) => {
+      const abortController = new AbortController();
+      if (METHODS_NOT_REQUIRING_CONFIRMATION.includes(request.method)) {
+        try {
+          const provider = await this.#getReownProvider();
+          const result = await provider.request(request, CAIP.chain());
+          return result as any;
+        } finally {
+          abortController.abort();
+        }
+      } else {
+        return await this.#requestPopup(request);
       }
-    } else {
-      return await this.#requestPopup(request);
-    }
+    },
   };
 
   async #requestPopup<M extends keyof RpcRequestMap>(
@@ -283,3 +208,7 @@ export class ReownPopupWalletSdk
     }
   }
 }
+
+export interface ReownPopupAdapterOptions
+  extends ReownAdapterOptions,
+    PopupAdapterOptions {}

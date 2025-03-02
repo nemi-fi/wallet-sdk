@@ -1,16 +1,10 @@
 import type { WalletConnectModalSignOptions } from "@walletconnect/modal-sign-html";
 import { getSdkError } from "@walletconnect/utils";
-import {
-  get,
-  readonly,
-  writable,
-  type Readable,
-  type Writable,
-} from "svelte/store";
+import { readonly, writable, type Writable } from "svelte/store";
 import { assert } from "ts-essentials";
-import { BaseWalletSdk, type AztecNodeInput } from "./base.js";
+import type { Eip6963ProviderInfo, IAdapter } from "./base.js";
+import type { PopupAdapter } from "./popup.js";
 import type {
-  Account,
   RpcRequest,
   RpcRequestMap,
   TypedEip1193Provider,
@@ -18,29 +12,16 @@ import type {
 import {
   CAIP,
   METHODS_NOT_REQUIRING_CONFIRMATION,
-  accountFromAddress,
   lazyValue,
 } from "./utils.js";
 
 /**
- * @deprecated Use PopupWalletSdk instead.
+ * @deprecated Use {@link PopupAdapter} instead.
  */
-export class ReownWalletSdk
-  extends BaseWalletSdk
-  implements TypedEip1193Provider
-{
-  readonly #account: Writable<Account | undefined> = writable(undefined);
-
-  readonly accountObservable: Readable<Account | undefined> = readonly(
-    this.#account,
-  );
-
-  /**
-   * Returns currently selected account if any.
-   */
-  getAccount() {
-    return get(this.#account);
-  }
+export class ReownAdapter implements IAdapter {
+  readonly info: Eip6963ProviderInfo;
+  readonly #account: Writable<string | undefined> = writable(undefined);
+  readonly accountObservable = readonly(this.#account);
 
   readonly #options: ConstructorParameters<
     typeof import("@walletconnect/modal-sign-html").WalletConnectModalSign
@@ -49,13 +30,16 @@ export class ReownWalletSdk
   readonly #onRequest: OnRpcConfirmationRequest;
 
   constructor(
-    options: MyWalletConnectOptions,
-    aztecNode: AztecNodeInput,
+    options: ReownAdapterOptions,
     onRequest: OnRpcConfirmationRequest,
   ) {
-    super(aztecNode);
+    this.info = {
+      uuid: options.uuid,
+      name: "Reown",
+      icon: "",
+    };
     this.#options = {
-      ...options,
+      projectId: options.projectId,
       metadata: options.metadata ?? DEFAULT_METADATA,
     };
     this.#onRequest = onRequest ?? (() => {});
@@ -81,20 +65,13 @@ export class ReownWalletSdk
       console.log("session expire");
       this.#account.set(undefined);
     });
-    web3modal.onSessionEvent(async (e) => {
-      const { AztecAddress } = await import("@aztec/aztec.js");
+    web3modal.onSessionEvent((e) => {
       const { event } = e.params;
       if (event.name !== "accountsChanged") {
         return;
       }
       const newAddress = event.data[0];
-      this.#account.set(
-        await accountFromAddress(
-          this,
-          await this.aztecNode(),
-          AztecAddress.fromString(newAddress),
-        ),
-      );
+      this.#account.set(newAddress);
     });
     return web3modal;
   });
@@ -129,13 +106,8 @@ export class ReownWalletSdk
       this.#account.set(undefined);
       return undefined;
     }
-    const account = await accountFromAddress(
-      this,
-      await this.aztecNode(),
-      address,
-    );
-    this.#account.set(account);
-    return account;
+    this.#account.set(address);
+    return address;
   }
 
   /**
@@ -158,7 +130,7 @@ export class ReownWalletSdk
     if (!session) {
       return undefined;
     }
-    const addresses = await this.request({
+    const addresses = await this.provider.request({
       method: "aztec_accounts",
       params: [],
     });
@@ -166,8 +138,7 @@ export class ReownWalletSdk
     if (address == null) {
       return undefined;
     }
-    const { AztecAddress } = await import("@aztec/aztec.js");
-    return AztecAddress.fromString(address);
+    return address;
   }
 
   async #getSession() {
@@ -176,28 +147,27 @@ export class ReownWalletSdk
     return session;
   }
 
-  /**
-   * Sends a raw RPC request to the user's wallet.
-   */
-  request: TypedEip1193Provider["request"] = async (request) => {
-    const abortController = new AbortController();
-    if (!METHODS_NOT_REQUIRING_CONFIRMATION.includes(request.method)) {
-      this.#onRequest(request, abortController);
-    }
+  provider: TypedEip1193Provider = {
+    request: async (request) => {
+      const abortController = new AbortController();
+      if (!METHODS_NOT_REQUIRING_CONFIRMATION.includes(request.method)) {
+        this.#onRequest(request, abortController);
+      }
 
-    try {
-      const session = await this.#getSession();
-      assert(session, "no session");
-      const web3modal = await this.#getWeb3Modal();
-      const result = await web3modal.request({
-        chainId: CAIP.chain(),
-        topic: session.topic,
-        request,
-      });
-      return result as any;
-    } finally {
-      abortController.abort();
-    }
+      try {
+        const session = await this.#getSession();
+        assert(session, "no session");
+        const web3modal = await this.#getWeb3Modal();
+        const result = await web3modal.request({
+          chainId: CAIP.chain(),
+          topic: session.topic,
+          request,
+        });
+        return result as any;
+      } finally {
+        abortController.abort();
+      }
+    },
   };
 }
 
@@ -208,10 +178,13 @@ export const DEFAULT_METADATA = {
   icons: [],
 };
 
-export type MyWalletConnectOptions = Omit<
-  WalletConnectModalSignOptions,
-  "metadata"
-> & {
+export type ReownAdapterOptions = {
+  /** EIP-6963 provider UUID */
+  uuid: string;
+
+  /** Reown project ID */
+  projectId: string;
+  /** Reown metadata */
   metadata?: WalletConnectModalSignOptions["metadata"];
 };
 

@@ -162,22 +162,16 @@ export class DeployMethod<TContract extends AztecContract> {
   }
 }
 
-export type DeployOptions = {
-  /** An optional salt value used to deterministically calculate the contract address. */
-  contractAddressSalt?: Fr;
-  /** Set to true to *not* include the sender in the address computation. */
-  universalDeploy?: boolean;
-  /** Skip contract class registration. */
-  skipClassRegistration?: boolean;
-  /** Skip public deployment, instead just privately initialize the contract. */
-  skipPublicDeployment?: boolean;
-  /** Skip contract initialization. */
-  skipInitialization?: boolean;
-};
+export type DeployOptions = Pick<
+  import("@aztec/aztec.js").DeployOptions,
+  | "contractAddressSalt"
+  | "universalDeploy"
+  | "skipClassRegistration"
+  | "skipPublicDeployment"
+  | "skipInitialization"
+>;
 
-export class DeploySentTx<
-  TContract extends AztecContract = AztecContract,
-> extends SentTx {
+export class DeploySentTx<TContract extends AztecContract> extends SentTx {
   constructor(
     aztecNode: MinimalAztecNode,
     txHash: Promise<TxHash>,

@@ -1,6 +1,6 @@
 {
   "name": "@shieldswap/wallet-sdk",
-  "version": "0.76.1-next.4",
+  "version": "0.76.1-next.5",
   "type": "module",
   "main": "src/exports/index.ts",
   "module": "src/exports/index.ts",
@@ -61,6 +61,7 @@
     "ox": "^0.6.9",
     "svelte": "^5.17.3",
     "svelte-persisted-store": "^0.11.0",
+    "svelte-reactive": "^0.0.10",
     "ts-essentials": "^9.4.1",
     "ufo": "^1.5.4"
   },

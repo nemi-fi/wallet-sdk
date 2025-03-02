@@ -1,144 +1,106 @@
 import { persisted } from "svelte-persisted-store";
-import { get, readonly, writable } from "svelte/store";
+import { derived, type Readable, type Writable } from "svelte/store";
 import { assert } from "ts-essentials";
 import { joinURL } from "ufo";
-import { BaseWalletSdk, type AztecNodeInput } from "./base.js";
+import type { Eip6963ProviderInfo, IAdapter } from "./base.js";
 import { Communicator, type FallbackOpenPopup } from "./Communicator.js";
-import type { Account, TypedEip1193Provider } from "./types.js";
-import {
-  DEFAULT_WALLET_URL,
-  FINAL_METHODS,
-  accountFromAddress,
-} from "./utils.js";
+import type { TypedEip1193Provider } from "./types.js";
+import { FINAL_METHODS } from "./utils.js";
 
-export class PopupWalletSdk
-  extends BaseWalletSdk
-  implements TypedEip1193Provider
-{
+export class PopupAdapter implements IAdapter {
+  readonly info: Eip6963ProviderInfo;
   readonly #communicator: Communicator;
 
   #pendingRequestsCount = 0;
 
-  readonly #connectedAccountAddress = persisted<string | null>(
-    "aztec-wallet-connected-address",
-    null,
-  );
-  readonly #account = writable<Account | undefined>(undefined);
-  readonly accountObservable = readonly(this.#account);
+  readonly #connectedAccountAddress: Writable<string | null>;
+  readonly accountObservable: Readable<string | undefined>;
 
   readonly walletUrl: string;
 
-  constructor(
-    aztecNode: AztecNodeInput,
-    params: {
-      /**
-       * Called when user browser blocks a popup. Use this to attempt to re-open the popup.
-       * Must call the provided callback right after user clicks a button, so browser does not block it.
-       * Browsers usually don't block popups if they are opened within a few milliseconds of a button click.
-       */
-      fallbackOpenPopup?: FallbackOpenPopup;
-      walletUrl?: string;
-    } = {},
-  ) {
-    super(aztecNode);
-    this.walletUrl = params.walletUrl ?? DEFAULT_WALLET_URL;
+  constructor(params: PopupAdapterOptions) {
+    this.info = { uuid: params.uuid, name: params.name, icon: params.icon };
+    this.walletUrl = params.walletUrl;
     this.#communicator = new Communicator({
       url: joinURL(this.walletUrl, "/sign"),
       ...params,
     });
 
-    let accountId = 0;
-    this.#connectedAccountAddress.subscribe(async (address) => {
-      if (typeof window === "undefined") {
-        return;
-      }
-
-      const thisAccountId = ++accountId;
-
-      const { AztecAddress } = await import("@aztec/aztec.js");
-
-      const account = address
-        ? await accountFromAddress(
-            this,
-            await this.aztecNode(),
-            AztecAddress.fromString(address),
-          )
-        : undefined;
-      if (thisAccountId !== accountId) {
-        // prevent race condition
-        return;
-      }
-      this.#account.set(account);
-    });
-  }
-
-  getAccount() {
-    return get(this.#account);
+    this.#connectedAccountAddress = persisted<string | null>(
+      `aztec-wallet-connected-address-${params.uuid}`,
+      null,
+    );
+    this.accountObservable = derived(
+      this.#connectedAccountAddress,
+      (x) => x ?? undefined,
+    );
   }
 
   async connect() {
-    const { AztecAddress } = await import("@aztec/aztec.js");
-    const result = await this.request({
+    const result = await this.provider.request({
       method: "aztec_requestAccounts",
       params: [],
     });
     const [address] = result;
     assert(address, "No accounts found");
-    const account = await accountFromAddress(
-      this,
-      await this.aztecNode(),
-      AztecAddress.fromString(address),
-    );
     this.#connectedAccountAddress.set(address);
-    return account;
+    return address;
+  }
+
+  async reconnect() {
+    return undefined;
   }
 
   async disconnect() {
     this.#connectedAccountAddress.set(null);
   }
 
-  /**
-   * @deprecated not needed anymore
-   */
-  async reconnect() {}
-
-  /**
-   * Sends a raw RPC request to the user's wallet.
-   */
-  request: TypedEip1193Provider["request"] = async (request) => {
-    this.#pendingRequestsCount++;
-    // TODO: handle batch requests
-    try {
-      const rpcRequest = {
-        id: crypto.randomUUID(),
-        jsonrpc: "2.0",
-        method: request.method,
-        params: request.params,
-      };
-      const response: any = (
-        await this.#communicator.postRequestAndWaitForResponse({
-          requestId: crypto.randomUUID(),
-          data: rpcRequest,
-        })
-      )?.data;
-      if ("error" in response) {
-        throw new Error(JSON.stringify(response.error));
-      }
-      return response.result;
-    } finally {
-      this.#pendingRequestsCount--;
-
-      const disconnectIfNoPendingRequests = () => {
-        if (this.#pendingRequestsCount <= 0) {
-          this.#communicator.disconnect();
+  provider: TypedEip1193Provider = {
+    request: async (request) => {
+      this.#pendingRequestsCount++;
+      // TODO: handle batch requests
+      try {
+        const rpcRequest = {
+          id: crypto.randomUUID(),
+          jsonrpc: "2.0",
+          method: request.method,
+          params: request.params,
+        };
+        const response: any = (
+          await this.#communicator.postRequestAndWaitForResponse({
+            requestId: crypto.randomUUID(),
+            data: rpcRequest,
+          })
+        )?.data;
+        if ("error" in response) {
+          throw new Error(JSON.stringify(response.error));
         }
-      };
+        return response.result;
+      } finally {
+        this.#pendingRequestsCount--;
 
-      if (FINAL_METHODS.includes(request.method)) {
-        disconnectIfNoPendingRequests();
-      } else {
-        setTimeout(disconnectIfNoPendingRequests, 1000);
+        const disconnectIfNoPendingRequests = () => {
+          if (this.#pendingRequestsCount <= 0) {
+            this.#communicator.disconnect();
+          }
+        };
+
+        if (FINAL_METHODS.includes(request.method)) {
+          disconnectIfNoPendingRequests();
+        } else {
+          setTimeout(disconnectIfNoPendingRequests, 1000);
+        }
       }
-    }
+    },
   };
+}
+
+export interface PopupAdapterOptions extends Eip6963ProviderInfo {
+  /**
+   * Called when user browser blocks a popup. Use this to attempt to re-open the popup.
+   * Must call the provided callback right after user clicks a button, so browser does not block it.
+   * Browsers usually don't block popups if they are opened within a few milliseconds of a button click.
+   */
+  fallbackOpenPopup?: FallbackOpenPopup;
+  walletUrl: string;
 }
