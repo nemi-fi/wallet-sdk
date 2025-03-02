@@ -47,7 +47,7 @@
     "prettier": "^3.2.5",
     "react": "^18.3.1",
     "typescript": "^5.7.3",
-    "vitest": "^1.1.1"
+    "vitest": "^3.0.7"
   },
   "dependencies": {
     "@aztec/aztec.js": "0.76.1",

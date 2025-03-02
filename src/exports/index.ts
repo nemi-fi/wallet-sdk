@@ -13,4 +13,4 @@ export type {
 export * from "../popup.js";
 export * from "../reown.js";
 export * from "../reownPopup.js";
-export type { Account } from "../types.js";
+export type { Account, Wallet } from "../types.js";

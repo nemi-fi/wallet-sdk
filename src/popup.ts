@@ -20,7 +20,7 @@ export class PopupWalletSdk
   #pendingRequestsCount = 0;
 
   readonly #connectedAccountAddress = persisted<string | null>(
-    "aztec-wallet-connected-complete-address",
+    "aztec-wallet-connected-address",
     null,
   );
   readonly #account = writable<Account | undefined>(undefined);

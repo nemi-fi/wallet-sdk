@@ -134,3 +134,10 @@ export interface TypedEip1193Provider {
 
 // TODO: list all the methods instead of inheriting from Eip1193Account
 export interface Account extends Eip1193Account {}
+/**
+ * @deprecated use {@link Account} instead
+ * @example
+ * ```ts
+ * import { type Account } from "@shieldswap/wallet-sdk";
+ */
+export type Wallet = Account;

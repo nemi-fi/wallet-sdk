@@ -27,9 +27,7 @@ import {
   METHODS_NOT_REQUIRING_CONFIRMATION,
 } from "./utils.js";
 
-/**
- * @deprecated a temporary hack to make Obsidion wallet work. Needed to not show a popup on every `aztec_call` RPC call.
- */
+// TODO: remove this class. It's a temporary hack to make Obsidion wallet work. Needed to not show a popup on every `aztec_call` RPC call.
 export class ReownPopupWalletSdk
   extends BaseWalletSdk
   implements TypedEip1193Provider
@@ -38,7 +36,7 @@ export class ReownPopupWalletSdk
   #pendingRequestsCount = 0;
 
   readonly #connectedAccountAddress = persisted<string | null>(
-    "aztec-wallet-connected-complete-address",
+    "aztec-wallet-connected-address",
     null,
   );
 
@@ -77,7 +75,7 @@ export class ReownPopupWalletSdk
     });
 
     let accountId = 0;
-    this.#connectedAccountAddress.subscribe(async (completeAddress) => {
+    this.#connectedAccountAddress.subscribe(async (address) => {
       if (typeof window === "undefined") {
         return;
       }
@@ -86,11 +84,11 @@ export class ReownPopupWalletSdk
 
       const { AztecAddress } = await import("@aztec/aztec.js");
 
-      const account = completeAddress
+      const account = address
         ? await accountFromAddress(
             this,
             await this.aztecNode(),
-            AztecAddress.fromString(completeAddress),
+            AztecAddress.fromString(address),
           )
         : undefined;
       if (thisAccountId !== accountId) {
