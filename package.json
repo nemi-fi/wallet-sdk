@@ -43,6 +43,7 @@
     "_chore": "pnpm i"
   },
   "devDependencies": {
+    "@types/lodash-es": "^4.17.12",
     "@types/react": "^18.3.11",
     "prettier": "^3.2.5",
     "react": "^18.3.1",
@@ -58,6 +59,7 @@
     "@walletconnect/modal-sign-html": "^2.6.2",
     "@walletconnect/universal-provider": "^2.18.0",
     "@walletconnect/utils": "^2.11.2",
+    "lodash-es": "^4.17.21",
     "ox": "^0.6.9",
     "svelte": "^5.17.3",
     "svelte-persisted-store": "^0.11.0",

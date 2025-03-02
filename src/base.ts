@@ -1,7 +1,9 @@
 import type { AztecNode } from "@aztec/aztec.js";
+import { uniqBy } from "lodash-es";
 import { persisted } from "svelte-persisted-store";
 import { reactive } from "svelte-reactive";
 import {
+  derived,
   get,
   readonly,
   writable,
@@ -11,6 +13,7 @@ import {
 import type { AsyncOrSync } from "ts-essentials";
 import type { FallbackOpenPopup } from "./Communicator.js";
 import type { Eip1193Account } from "./exports/eip1193.js";
+import { InjectedAdapter, requestEip6963Providers } from "./injected.js";
 import type { Eip1193Provider, RpcRequestMap } from "./types.js";
 import { resolveAztecNode } from "./utils.js";
 
@@ -20,10 +23,12 @@ export class AztecWalletSdk {
   readonly accountObservable = readonly(this.#account);
 
   readonly #currentAdapterUuid = persisted<string | null>(
-    "aztec-wallet-current-provider-uuid",
+    "aztec-wallet-current-adapter-uuid",
     null,
   );
-  readonly #adapters: Writable<readonly IAdapter[]>;
+  readonly #specifiedAdapters: Writable<readonly IAdapter[]>;
+  readonly #injectedAdapters: Readable<readonly IAdapter[]>;
+  readonly #adapters: Readable<readonly IAdapter[]>;
   readonly #currentAdapter: Readable<IAdapter | undefined>;
   readonly fallbackOpenPopup: FallbackOpenPopup | undefined;
 
@@ -35,8 +40,17 @@ export class AztecWalletSdk {
     this.#aztecNode = resolveAztecNode(params.aztecNode);
     this.fallbackOpenPopup = params.fallbackOpenPopup;
 
-    this.#adapters = writable(
+    this.#specifiedAdapters = writable(
       params.adapters.map((x) => (typeof x === "function" ? x(this) : x)),
+    );
+    this.#injectedAdapters = derived(requestEip6963Providers(), (providers) =>
+      providers.map((p) => new InjectedAdapter(p)),
+    );
+    this.#adapters = reactive(($) =>
+      uniqBy(
+        [...$(this.#specifiedAdapters), ...$(this.#injectedAdapters)],
+        (x) => x.info.uuid,
+      ),
     );
     this.#currentAdapter = reactive(($) => {
       const currentAdapterUuid = $(this.#currentAdapterUuid);
@@ -80,7 +94,11 @@ export class AztecWalletSdk {
     if (!this.#adapter) {
       throw new Error(`no provider found for ${providerUuid}`);
     }
-    return await this.#toAccount(await this.#adapter.connect());
+    const address = await this.#adapter.connect();
+    if (!address) {
+      throw new Error("Failed to connect");
+    }
+    return await this.#toAccount(address);
   }
 
   async reconnect() {
@@ -111,8 +129,8 @@ export class AztecWalletSdk {
     });
   }
 
-  get adapters(): readonly IAdapter[] {
-    return get(this.#adapters).slice();
+  get adapters(): readonly Eip6963ProviderInfo[] {
+    return get(this.#adapters).map((x) => x.info);
   }
 
   get #adapter() {
@@ -141,16 +159,16 @@ export interface IAdapter {
   readonly info: Eip6963ProviderInfo;
   readonly provider: Eip1193Provider;
   readonly accountObservable: Readable<string | undefined>;
-  connect(): Promise<string>;
+  connect(): Promise<string | undefined>;
   reconnect(): Promise<string | undefined>;
   disconnect(): Promise<void>;
 }
 
 export interface Eip6963ProviderInfo {
-  uuid: string;
-  name: string;
-  icon: string;
-  // rdns: string; // TODO: careful with this field. Check EIP-6963 spec
+  readonly uuid: string;
+  readonly name: string;
+  readonly icon: string;
+  // readonly rdns: string; // TODO: careful with this field. Check EIP-6963 spec
 }
 
 export type AztecNodeInput =

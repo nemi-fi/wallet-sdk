@@ -86,11 +86,7 @@ export class ReownAdapter implements IAdapter {
   async connect() {
     const web3modal = await this.#getWeb3Modal();
     await web3modal.connect({});
-    const account = await this.reconnect();
-    if (!account) {
-      throw new Error("No accounts found");
-    }
-    return account;
+    return await this.reconnect();
   }
 
   /**
@@ -102,10 +98,6 @@ export class ReownAdapter implements IAdapter {
    */
   async reconnect() {
     const address = await this.#getSelectedAccount();
-    if (!address) {
-      this.#account.set(undefined);
-      return undefined;
-    }
     this.#account.set(address);
     return address;
   }
@@ -180,7 +172,7 @@ export const DEFAULT_METADATA = {
 
 export type ReownAdapterOptions = {
   /** EIP-6963 provider UUID */
-  uuid: string;
+  readonly uuid: string;
 
   /** Reown project ID */
   projectId: string;

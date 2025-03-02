@@ -1,7 +1,6 @@
 import type { UniversalProviderOpts } from "@walletconnect/universal-provider";
 import { persisted } from "svelte-persisted-store";
 import { derived, type Readable, type Writable } from "svelte/store";
-import { assert } from "ts-essentials";
 import { joinURL } from "ufo";
 import type { Eip6963ProviderInfo, IAdapter } from "./base.js";
 import { Communicator } from "./Communicator.js";
@@ -108,6 +107,12 @@ export class ReownPopupAdapter implements IAdapter {
   }
 
   async connect() {
+    // must be first to ensure the browser opens the popup
+    const result = this.provider.request({
+      method: "aztec_requestAccounts",
+      params: [],
+    });
+
     const provider = await this.#getReownProvider();
     const sessionPromise = provider.connect({
       namespaces: {
@@ -121,16 +126,11 @@ export class ReownPopupAdapter implements IAdapter {
     const uri = await this.getReownProviderUri(provider);
     await this.sendReownUriToPopup(uri);
 
-    const result = await this.provider.request({
-      method: "aztec_requestAccounts",
-      params: [],
-    });
-    const [address] = result;
-    assert(address, "No accounts found");
+    const [address] = await result;
 
     await sessionPromise;
 
-    this.#connectedAccountAddress.set(address);
+    this.#connectedAccountAddress.set(address ?? null);
     return address;
   }
 
