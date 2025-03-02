@@ -2,8 +2,6 @@
 
 Connect your Aztec app to any Aztec wallet.
 
-[Docs](https://docs.shieldswap.org/modal)
-
 ## EIP-1193 RPC docs
 
 ```ts

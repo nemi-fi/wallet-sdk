@@ -1,6 +1,12 @@
 export type {
+  DeployMethod,
+  DeployOptions,
+  DeploySentTx,
+} from "../contract-deploy.js";
+export type {
   Capsule,
   Contract,
+  ContractFunctionInteraction,
   IntentAction,
   SendOptions,
 } from "../contract.js";

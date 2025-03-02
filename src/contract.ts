@@ -1,9 +1,10 @@
 import {
+  PublicKeys,
   type AztecAddress,
   type Contract as AztecContract,
+  type DeployMethod as AztecDeployMethod,
   type ContractArtifact,
   type ContractInstanceWithAddress,
-  type DeployMethod,
   type Fr,
   type FunctionCall,
   type Wallet,
@@ -14,9 +15,10 @@ import {
   FunctionSelector,
   type FunctionAbi,
 } from "@aztec/foundation/abi";
+import { DeployMethod, type DeployOptions } from "./contract-deploy.js";
 import type { TransactionRequest } from "./exports/eip1193.js";
 import type { Account } from "./types.js";
-import { lazyValue } from "./utils.js";
+import { lazyValue, type ParametersExceptFirst } from "./utils.js";
 
 // TODO: consider changing the API to be more viem-like. I.e., use `contract.write.methodName` and `contract.read.methodName`
 export class ContractBase<T extends AztecContract> {
@@ -91,43 +93,72 @@ export class Contract<T extends AztecContract> extends ContractBase<T> {
   }
 
   static fromAztec<
-    T extends AztecContract,
-    TEvents extends {},
-    TNotes extends {},
-    TStorage extends {},
-  >(original: {
-    deploy: (deployer: Wallet, ...args: any[]) => DeployMethod<T>;
-    artifact: ContractArtifact;
-    events?: TEvents;
-    notes?: TNotes;
-    storage?: TStorage;
-  }) {
+    TClass extends AztecContractClass<any>,
+    T extends AztecContractInstance<TClass>,
+  >(original: TClass) {
     const ContractClass = class extends ContractBase<T> {
       static async at(address: AztecAddress, account: Account) {
-        return await Contract.at<T>(address, this.artifact, account);
+        return await Contract.at<T>(address, original.artifact, account);
       }
 
-      static deploy(...args: Parameters<(typeof original)["deploy"]>) {
-        return original.deploy(...args);
+      static deploy(
+        account: Account,
+        ...args: ParametersExceptFirst<TClass["deploy"]>
+      ) {
+        return this.deployWithOpts({ account }, ...args);
       }
 
-      static artifact = original.artifact;
-      static events: TEvents = original.events ?? ({} as TEvents);
-      static notes: TNotes = original.notes ?? ({} as TNotes);
-      static storage: TStorage = original.storage ?? ({} as TStorage);
+      static deployWithOpts(
+        options: DeployOptions & {
+          account: Account;
+          publicKeys?: PublicKeys;
+          method?: keyof T["methods"] & string;
+        },
+        ...args: ParametersExceptFirst<TClass["deploy"]>
+      ) {
+        return new DeployMethod(
+          options.publicKeys ?? PublicKeys.default(),
+          options.account,
+          this.artifact,
+          this.at,
+          args,
+          options,
+          options.method,
+        );
+      }
+
+      static artifact: TClass["artifact"] = original.artifact;
+      static events: TClass["events"] = original.events ?? {};
+      static notes: TClass["notes"] = original.notes ?? {};
+      static storage: TClass["storage"] = original.storage ?? {};
     };
     return ContractClass;
   }
 }
 
-class ContractFunctionInteraction {
+export class UnsafeContract<T extends AztecContract> extends Contract<T> {
+  constructor(
+    instance: ContractInstanceWithAddress,
+    artifact: ContractArtifact,
+    account: Account,
+  ) {
+    super(instance, artifact, account);
+  }
+}
+
+export type ContractInfo = Pick<
+  Contract<AztecContract>,
+  "address" | "instance" | "artifact"
+>;
+
+export class ContractFunctionInteraction {
   readonly #account: Account;
   readonly #functionAbi: FunctionAbi;
   readonly #call: () => Promise<FunctionCall>;
   readonly #txRequest: () => Promise<Required<TransactionRequest>>;
 
   constructor(
-    contract: Contract<AztecContract>,
+    contract: ContractInfo,
     account: Account,
     functionAbi: FunctionAbi,
     args: unknown[],
@@ -214,3 +245,14 @@ type ContractMethod<T extends AztecContract, K extends keyof T["methods"]> = ((
 ) => ContractFunctionInteraction) & {
   selector(): Promise<FunctionSelector>;
 };
+
+type AztecContractClass<T extends AztecContract> = {
+  deploy: (deployer: Wallet, ...args: any[]) => AztecDeployMethod<T>;
+  artifact: ContractArtifact;
+  events?: {};
+  notes?: {};
+  storage?: {};
+};
+
+type AztecContractInstance<C extends AztecContractClass<any>> =
+  C extends AztecContractClass<infer T> ? T : never;

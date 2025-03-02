@@ -42,4 +42,5 @@ export type MinimalAztecNode = Pick<
   | "getProvenBlockNumber"
   // other methods
   | "getContract"
+  | "getContractClass"
 >;

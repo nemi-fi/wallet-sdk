@@ -1,6 +1,6 @@
 {
   "name": "@shieldswap/wallet-sdk",
-  "version": "0.76.1-next.2",
+  "version": "0.76.1-next.4",
   "type": "module",
   "main": "src/exports/index.ts",
   "module": "src/exports/index.ts",
@@ -54,6 +54,7 @@
     "@aztec/circuit-types": "0.76.1",
     "@aztec/circuits.js": "0.76.1",
     "@aztec/foundation": "0.76.1",
+    "@aztec/protocol-contracts": "0.76.1",
     "@walletconnect/modal-sign-html": "^2.6.2",
     "@walletconnect/universal-provider": "^2.18.0",
     "@walletconnect/utils": "^2.11.2",
