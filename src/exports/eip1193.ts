@@ -11,7 +11,7 @@ import {
 } from "@aztec/aztec.js";
 import { type ContractInstance } from "@aztec/circuits.js";
 import type { MinimalAztecNode } from "../base.js";
-import type { Contract, IntentAction } from "../contract.js";
+import type { Capsule, Contract, IntentAction } from "../contract.js";
 import { createEip1193ProviderFromAccounts } from "../createEip1193ProviderFromAccounts.js";
 import { encodeFunctionCall, encodeRegisterContracts } from "../serde.js";
 import type { Eip1193Provider, TypedEip1193Provider } from "../types.js";
@@ -54,6 +54,9 @@ export class Eip1193Account {
                 caller: x.caller.toString(),
                 action: await encodeFunctionCall(x.action),
               })),
+            ),
+            capsules: (txRequest_?.capsules ?? []).map((capsule) =>
+              capsule.map((x) => x.toString()),
             ),
             registerContracts: await encodeRegisterContracts(
               txRequest_.registerContracts ?? [],
@@ -100,6 +103,7 @@ export class Eip1193Account {
 export type TransactionRequest = {
   calls: FunctionCall[];
   authWitnesses?: IntentAction[];
+  capsules?: Capsule[];
   registerContracts?: RegisterContract[];
 };
 

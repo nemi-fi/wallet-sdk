@@ -4,6 +4,7 @@ import {
   type ContractArtifact,
   type ContractInstanceWithAddress,
   type DeployMethod,
+  type Fr,
   type FunctionCall,
   type Wallet,
 } from "@aztec/aztec.js";
@@ -153,7 +154,8 @@ class ContractFunctionInteraction {
       return {
         calls: [await this.#call()],
         authWitnesses: options?.authWitnesses ?? [],
-        registerContracts: [contract],
+        capsules: options?.capsules ?? [],
+        registerContracts: [contract, ...(options?.registerContracts ?? [])],
       };
     });
   }
@@ -200,9 +202,11 @@ export type IntentAction = {
   action: FunctionCall;
 };
 
-type SendOptions = Pick<
+export type Capsule = Fr[];
+
+export type SendOptions = Pick<
   TransactionRequest,
-  "authWitnesses" | "registerContracts"
+  "authWitnesses" | "capsules" | "registerContracts"
 >;
 
 type ContractMethod<T extends AztecContract, K extends keyof T["methods"]> = ((

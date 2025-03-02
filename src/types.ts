@@ -30,6 +30,8 @@ export type RpcRequestMap = {
       // TODO: rename to `call`?
       action: SerializedFunctionCall;
     }[];
+    /** `Fr[][]` a list of capsules required for the transaction */
+    capsules: string[][];
     /** Contracts required to send the transaction */
     registerContracts?: SerializedRegisterContract[];
   }) => string;

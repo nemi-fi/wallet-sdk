@@ -74,6 +74,14 @@ export function createEip1193ProviderFromAccounts(
             await account.createAuthWit(authWitRequest);
           }
 
+          // add capsules
+          const capsules = request.capsules.map((capsule) =>
+            capsule.map((x) => new Fr(BigInt(x))),
+          );
+          for (const capsule of capsules) {
+            await account.addCapsule(capsule);
+          }
+
           // sign the tx
           const txRequest = await account.createTxExecutionRequest({
             calls,
