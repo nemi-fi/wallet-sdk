@@ -60,8 +60,8 @@ export function requestEip6963Providers() {
   // request providers
   window.addEventListener(AZTEC_EIP6963_ANNOUNCE_PROVIDER, (event: any) => {
     const detail = {
-      info: event.detail.info,
-      provider: event.detail.provider,
+      info: event?.detail?.info,
+      provider: event?.detail?.provider,
     };
     if (!detail.info || !detail.provider) {
       console.warn("got invalid Aztec EIP6963 announce", detail);

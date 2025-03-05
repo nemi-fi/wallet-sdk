@@ -10,6 +10,9 @@ import type {
 } from "./types.js";
 import { lazyValue } from "./utils.js";
 
+/**
+ * @deprecated nuke this and this whole file when azguard properly implements EIP-6963 & RPC spec
+ */
 export const startAzguardEip6963Announcing = lazyValue(async () => {
   if (typeof window === "undefined") {
     return;
