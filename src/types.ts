@@ -31,7 +31,7 @@ export type RpcRequestMap = {
       action: SerializedFunctionCall;
     }[];
     /** `Fr[][]` a list of capsules required for the transaction */
-    capsules: string[][];
+    capsules?: string[][];
     /** Contracts required to send the transaction */
     registerContracts?: SerializedRegisterContract[];
   }) => string;

@@ -12,14 +12,13 @@ import {
 } from "svelte/store";
 import type { AsyncOrSync } from "ts-essentials";
 import type { FallbackOpenPopup } from "./Communicator.js";
-import type { Eip1193Account } from "./exports/eip1193.js";
 import { InjectedAdapter, requestEip6963Providers } from "./injected.js";
-import type { Eip1193Provider, RpcRequestMap } from "./types.js";
+import type { Account, Eip1193Provider, RpcRequestMap } from "./types.js";
 import { resolveAztecNode } from "./utils.js";
 
 export class AztecWalletSdk {
-  readonly #aztecNode: () => Promise<MinimalAztecNode>;
-  readonly #account = writable<Eip1193Account | undefined>(undefined);
+  readonly #aztecNode: () => Promise<AztecNode>;
+  readonly #account = writable<Account | undefined>(undefined);
   readonly accountObservable = readonly(this.#account);
 
   readonly #currentAdapterUuid = persisted<string | null>(
@@ -174,21 +173,5 @@ export interface Eip6963ProviderInfo {
 export type AztecNodeInput =
   | string
   | URL
-  | (() => AsyncOrSync<MinimalAztecNode>)
-  | AsyncOrSync<MinimalAztecNode>;
-
-/**
- * Used to fetch public data only
- */
-// TODO: replace with just `AztecNode` instead of picking a few methods
-export type MinimalAztecNode = Pick<
-  AztecNode,
-  // methods used in `SentTx`
-  | "getTxEffect"
-  | "getTxReceipt"
-  | "getPublicLogs"
-  | "getProvenBlockNumber"
-  // other methods
-  | "getContract"
-  | "getContractClass"
->;
+  | (() => AsyncOrSync<AztecNode>)
+  | AsyncOrSync<AztecNode>;

@@ -1,4 +1,5 @@
-import type { AztecNodeInput, MinimalAztecNode } from "./base.js";
+import type { AztecNode } from "@aztec/aztec.js";
+import type { AztecNodeInput } from "./base.js";
 import type { RpcRequestMap } from "./types.js";
 
 const CAIP_PREFIX = "aztec";
@@ -37,7 +38,7 @@ export function lazyValue<T>(fn: () => T) {
 
 export function resolveAztecNode(
   getAztecNode: AztecNodeInput,
-): () => Promise<MinimalAztecNode> {
+): () => Promise<AztecNode> {
   const getAztecNodeFn =
     typeof getAztecNode === "function" ? getAztecNode : () => getAztecNode;
   return lazyValue(async () => {

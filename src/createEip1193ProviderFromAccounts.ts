@@ -75,7 +75,7 @@ export function createEip1193ProviderFromAccounts(
           }
 
           // add capsules
-          const capsules = request.capsules.map((capsule) =>
+          const capsules = (request.capsules ?? []).map((capsule) =>
             capsule.map((x) => new Fr(BigInt(x))),
           );
           for (const capsule of capsules) {

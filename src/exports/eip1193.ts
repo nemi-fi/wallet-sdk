@@ -10,7 +10,6 @@ import {
   type Wallet,
 } from "@aztec/aztec.js";
 import { type ContractInstance } from "@aztec/circuits.js";
-import type { MinimalAztecNode } from "../base.js";
 import type { Capsule, Contract, IntentAction } from "../contract.js";
 import { createEip1193ProviderFromAccounts } from "../createEip1193ProviderFromAccounts.js";
 import { encodeFunctionCall, encodeRegisterContracts } from "../serde.js";
@@ -27,7 +26,7 @@ export class Eip1193Account {
     readonly address: AztecAddress,
     provider: Eip1193Provider,
     /** Aztec node to fetch public data */
-    readonly aztecNode: MinimalAztecNode,
+    readonly aztecNode: AztecNode,
   ) {
     this.provider = provider as TypedEip1193Provider;
   }

@@ -1,5 +1,6 @@
 import type {
   Contract as AztecContract,
+  AztecNode,
   ContractArtifact,
   ContractInstanceWithAddress,
   Fr,
@@ -21,7 +22,6 @@ import { bufferAsFields, getInitializer } from "@aztec/foundation/abi";
 import { ProtocolContractAddress } from "@aztec/protocol-contracts";
 import { getCanonicalClassRegisterer } from "@aztec/protocol-contracts/class-registerer";
 import { getCanonicalInstanceDeployer } from "@aztec/protocol-contracts/instance-deployer";
-import type { MinimalAztecNode } from "./base.js";
 import {
   Contract,
   ContractFunctionInteraction,
@@ -173,7 +173,7 @@ export type DeployOptions = Pick<
 
 export class DeploySentTx<TContract extends AztecContract> extends SentTx {
   constructor(
-    aztecNode: MinimalAztecNode,
+    aztecNode: AztecNode,
     txHash: Promise<TxHash>,
     private contract: () => Promise<Contract<TContract>>,
   ) {
