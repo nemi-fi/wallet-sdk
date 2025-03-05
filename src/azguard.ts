@@ -3,11 +3,7 @@ import {
   AZTEC_EIP6963_ANNOUNCE_PROVIDER,
   AZTEC_EIP6963_REQUEST_PROVIDERS,
 } from "./injected.js";
-import type {
-  RpcRequestMap,
-  SerializedFunctionCall,
-  TypedEip1193Provider,
-} from "./types.js";
+import type { RpcRequestMap, TypedEip1193Provider } from "./types.js";
 import { lazyValue } from "./utils.js";
 
 export const startAzguardEip6963Announcing = lazyValue(async () => {
@@ -115,7 +111,9 @@ class ShieldSwapAzguardProvider implements TypedEip1193Provider {
             kind: "register_contract",
             chain,
             address: x.address,
-            instance: x.instance ? {...x.instance, address: x.address} : undefined,
+            instance: x.instance
+              ? { ...x.instance, address: x.address }
+              : undefined,
             artifact: x.artifact ? JSON.parse(x.artifact) : undefined,
           })),
         );
@@ -124,15 +122,17 @@ class ShieldSwapAzguardProvider implements TypedEip1193Provider {
       const actions = [];
 
       if (request.capsules) {
-          throw new Error("Capsules need to be updated: there must be also contract and storage slot");
-          // txActions.push(
-          //   ...request.capsules.map((x) => ({
-          //     kind: "add_capsule",
-          //     capsule: x.capsule,
-          //     contract: x.contract,
-          //     storageSlot: x.storageSlot,
-          //   })),
-          // );
+        throw new Error(
+          "Capsules need to be updated: there must be also contract and storage slot",
+        );
+        // txActions.push(
+        //   ...request.capsules.map((x) => ({
+        //     kind: "add_capsule",
+        //     capsule: x.capsule,
+        //     contract: x.contract,
+        //     storageSlot: x.storageSlot,
+        //   })),
+        // );
       }
 
       actions.push(
@@ -163,9 +163,11 @@ class ShieldSwapAzguardProvider implements TypedEip1193Provider {
         actions,
       });
 
-      const results = await this.#azguard.execute(operations) as [any];
+      const results = (await this.#azguard.execute(operations)) as [any];
       if (results.at(-1).status !== "ok") {
-          throw new Error(`Operation failed: ${results.find(x => x.status === "failed").error}`);
+        throw new Error(
+          `Operation failed: ${results.find((x) => x.status === "failed").error}`,
+        );
       }
 
       return results.at(-1).result;
@@ -188,7 +190,9 @@ class ShieldSwapAzguardProvider implements TypedEip1193Provider {
             kind: "register_contract",
             chain,
             address: x.address,
-            instance: x.instance ? {...x.instance, address: x.address} : undefined,
+            instance: x.instance
+              ? { ...x.instance, address: x.address }
+              : undefined,
             artifact: x.artifact ? JSON.parse(x.artifact) : undefined,
           })),
         );
@@ -205,9 +209,11 @@ class ShieldSwapAzguardProvider implements TypedEip1193Provider {
         })),
       });
 
-      const results = await this.#azguard.execute(operations) as [any];
+      const results = (await this.#azguard.execute(operations)) as [any];
       if (results.at(-1).status !== "ok") {
-          throw new Error(`Simulation failed: ${results.find(x => x.status === "failed").error}`);
+        throw new Error(
+          `Simulation failed: ${results.find((x) => x.status === "failed").error}`,
+        );
       }
 
       return results.at(-1).result.encoded;
