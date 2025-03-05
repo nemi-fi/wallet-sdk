@@ -3,11 +3,7 @@ import {
   AZTEC_EIP6963_ANNOUNCE_PROVIDER,
   AZTEC_EIP6963_REQUEST_PROVIDERS,
 } from "./injected.js";
-import type {
-  RpcRequestMap,
-  SerializedFunctionCall,
-  TypedEip1193Provider,
-} from "./types.js";
+import type { RpcRequestMap, TypedEip1193Provider } from "./types.js";
 import { lazyValue } from "./utils.js";
 
 /**
@@ -80,9 +76,11 @@ class ShieldSwapAzguardProvider implements TypedEip1193Provider {
             "aztec:41337", // azguard's shared sandbox
           ],
           methods: [
+            "register_contract",
             "send_transaction",
             "simulate_views",
             "encoded_call",
+            "add_capsule",
             "add_private_authwit",
           ],
         },
@@ -106,8 +104,39 @@ class ShieldSwapAzguardProvider implements TypedEip1193Provider {
       if (!account) {
         throw new Error("Unauthorized account");
       }
+      const chain = account.substring(0, account.lastIndexOf(":"));
+
+      const operations = [];
+
+      if (request.registerContracts) {
+        operations.push(
+          ...request.registerContracts.map((x) => ({
+            kind: "register_contract",
+            chain,
+            address: x.address,
+            instance: x.instance
+              ? { ...x.instance, address: x.address }
+              : undefined,
+            artifact: x.artifact ? JSON.parse(x.artifact) : undefined,
+          })),
+        );
+      }
 
       const actions = [];
+
+      if (request.capsules) {
+        throw new Error(
+          "Capsules need to be updated: there must be also contract and storage slot",
+        );
+        // txActions.push(
+        //   ...request.capsules.map((x) => ({
+        //     kind: "add_capsule",
+        //     capsule: x.capsule,
+        //     contract: x.contract,
+        //     storageSlot: x.storageSlot,
+        //   })),
+        // );
+      }
 
       actions.push(
         ...request.authWitnesses.map((x) => ({
@@ -131,42 +160,66 @@ class ShieldSwapAzguardProvider implements TypedEip1193Provider {
         })),
       );
 
-      const [result] = await this.#azguard.execute([
-        { kind: "send_transaction", account, actions },
-      ]);
-      if (result.status !== "ok") {
-        throw new Error(`Operation failed: ${(result as any)?.error}`);
+      operations.push({
+        kind: "send_transaction",
+        account,
+        actions,
+      });
+
+      const results = (await this.#azguard.execute(operations)) as [any];
+      if (results.at(-1).status !== "ok") {
+        throw new Error(
+          `Operation failed: ${results.find((x) => x.status === "failed").error}`,
+        );
       }
 
-      return result.result;
+      return results.at(-1).result;
     },
 
-    aztec_call: async (request: {
-      from: string;
-      calls: SerializedFunctionCall[];
-    }): Promise<string[][]> => {
+    aztec_call: async (request) => {
       const account = this.#azguard.accounts.find((x: string) =>
         x.endsWith(request.from),
       );
       if (!account) {
         throw new Error("Unauthorized account");
       }
+      const chain = account.substring(0, account.lastIndexOf(":"));
 
-      const calls = request.calls.map((x) => ({
-        kind: "encoded_call",
-        to: x.to,
-        selector: x.selector,
-        args: x.args,
-      }));
+      const operations = [];
 
-      const [result] = await this.#azguard.execute([
-        { kind: "simulate_views", account, calls },
-      ]);
-      if (result.status !== "ok") {
-        throw new Error(`Simulation failed: ${result?.error}`);
+      if (request.registerContracts) {
+        operations.push(
+          ...request.registerContracts.map((x) => ({
+            kind: "register_contract",
+            chain,
+            address: x.address,
+            instance: x.instance
+              ? { ...x.instance, address: x.address }
+              : undefined,
+            artifact: x.artifact ? JSON.parse(x.artifact) : undefined,
+          })),
+        );
       }
 
-      return result.result.encoded;
+      operations.push({
+        kind: "simulate_views",
+        account,
+        calls: request.calls.map((x) => ({
+          kind: "encoded_call",
+          to: x.to,
+          selector: x.selector,
+          args: x.args,
+        })),
+      });
+
+      const results = (await this.#azguard.execute(operations)) as [any];
+      if (results.at(-1).status !== "ok") {
+        throw new Error(
+          `Simulation failed: ${results.find((x) => x.status === "failed").error}`,
+        );
+      }
+
+      return results.at(-1).result.encoded;
     },
 
     wallet_watchAssets: async () => {
