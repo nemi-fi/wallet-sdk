@@ -1,12 +1,13 @@
 import { readonly, writable, type Writable } from "svelte/store";
-import type { Eip6963ProviderInfo, IAdapter } from "./base.js";
-import type { Eip1193Provider, TypedEip1193Provider } from "./types.js";
+import { startAzguardEip6963Announcing } from "./azguard.js";
+import type { Eip6963ProviderDetail, IAdapter } from "./base.js";
+import type { TypedEip1193Provider } from "./types.js";
 
 export class InjectedAdapter implements IAdapter {
   readonly #account = writable<string | undefined>(undefined);
   readonly accountObservable = readonly(this.#account);
 
-  constructor(private detail: Eip963ProviderDetail) {}
+  constructor(private detail: Eip6963ProviderDetail) {}
 
   async connect() {
     const [address] = await this.provider.request({
@@ -39,14 +40,17 @@ export class InjectedAdapter implements IAdapter {
   }
 }
 
-let providers: Writable<readonly Eip963ProviderDetail[]>;
+let providers: Writable<readonly Eip6963ProviderDetail[]>;
 export function requestEip6963Providers() {
   if (providers) {
     // request only once
     return readonly(providers);
   }
 
-  providers = writable<readonly Eip963ProviderDetail[]>([]);
+  // TODO: nuke this when azguard properly implements EIP-6963
+  startAzguardEip6963Announcing();
+
+  providers = writable<readonly Eip6963ProviderDetail[]>([]);
 
   if (typeof window === "undefined") {
     // no effect on server
@@ -54,24 +58,23 @@ export function requestEip6963Providers() {
   }
 
   // request providers
-  const prefix = "azip6963"; // deviate from EIP-6963 spec to not clash with EVM wallets
-  window.addEventListener(`${prefix}:announceProvider`, (event: any) => {
+  window.addEventListener(AZTEC_EIP6963_ANNOUNCE_PROVIDER, (event: any) => {
     const detail = {
-      info: event.info,
-      provider: event.provider,
+      info: event.detail.info,
+      provider: event.detail.provider,
     };
     if (!detail.info || !detail.provider) {
+      console.warn("got invalid Aztec EIP6963 announce", detail);
       return;
     }
     providers.update((providers) => [...providers, detail]);
   });
 
-  window.dispatchEvent(new CustomEvent(`${prefix}:requestProviders`));
+  window.dispatchEvent(new CustomEvent(AZTEC_EIP6963_REQUEST_PROVIDERS));
 
   return readonly(providers);
 }
 
-interface Eip963ProviderDetail {
-  readonly info: Eip6963ProviderInfo;
-  readonly provider: Eip1193Provider;
-}
+const AZTEC_EIP6963_PREFIX = "azip6963"; // deviate from EIP-6963 spec to not clash with EVM wallets
+export const AZTEC_EIP6963_REQUEST_PROVIDERS = `${AZTEC_EIP6963_PREFIX}:requestProviders`;
+export const AZTEC_EIP6963_ANNOUNCE_PROVIDER = `${AZTEC_EIP6963_PREFIX}:announceProvider`;

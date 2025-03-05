@@ -154,9 +154,7 @@ export class AztecWalletSdk {
   }
 }
 
-export interface IAdapter {
-  readonly info: Eip6963ProviderInfo;
-  readonly provider: Eip1193Provider;
+export interface IAdapter extends Eip6963ProviderDetail {
   readonly accountObservable: Readable<string | undefined>;
   connect(): Promise<string | undefined>;
   reconnect(): Promise<string | undefined>;
@@ -168,6 +166,11 @@ export interface Eip6963ProviderInfo {
   readonly name: string;
   readonly icon: string;
   // readonly rdns: string; // TODO: careful with this field. Check EIP-6963 spec
+}
+
+export interface Eip6963ProviderDetail {
+  readonly info: Eip6963ProviderInfo;
+  readonly provider: Eip1193Provider;
 }
 
 export type AztecNodeInput =

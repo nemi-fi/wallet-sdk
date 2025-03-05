@@ -19,6 +19,6 @@ export function obsidion(params: PartialReownPopupAdapterOptions) {
 
       uuid: "obsidion",
       name: "Obsidion",
-      icon: "https://picsum.photos/id/237/200/200",
+      icon: "https://pbs.twimg.com/profile_images/1849068253685116928/MzTzv03r_400x400.jpg",
     });
 }
