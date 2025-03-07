@@ -10,6 +10,10 @@ import {
   type Wallet,
 } from "@aztec/aztec.js";
 import { type ContractInstance } from "@aztec/circuits.js";
+import {
+  LiteralArtifactStrategy,
+  type IArtifactStrategy,
+} from "../artifacts.js";
 import type { Capsule, Contract, IntentAction } from "../contract.js";
 import { createEip1193ProviderFromAccounts } from "../createEip1193ProviderFromAccounts.js";
 import { encodeFunctionCall, encodeRegisterContracts } from "../serde.js";
@@ -27,6 +31,7 @@ export class Eip1193Account {
     provider: Eip1193Provider,
     /** Aztec node to fetch public data */
     readonly aztecNode: AztecNode,
+    private readonly artifactStrategy: IArtifactStrategy,
   ) {
     this.provider = provider as TypedEip1193Provider;
   }
@@ -57,9 +62,10 @@ export class Eip1193Account {
             capsules: (txRequest_?.capsules ?? []).map((capsule) =>
               capsule.map((x) => x.toString()),
             ),
-            registerContracts: await encodeRegisterContracts(
-              txRequest_.registerContracts ?? [],
-            ),
+            registerContracts: await encodeRegisterContracts({
+              contracts: txRequest_?.registerContracts ?? [],
+              artifactStrategy: this.artifactStrategy,
+            }),
           },
         ],
       });
@@ -80,9 +86,10 @@ export class Eip1193Account {
           calls: await Promise.all(
             txRequest.calls.map((x) => encodeFunctionCall(x)),
           ),
-          registerContracts: await encodeRegisterContracts(
-            txRequest.registerContracts ?? [],
-          ),
+          registerContracts: await encodeRegisterContracts({
+            contracts: txRequest.registerContracts ?? [],
+            artifactStrategy: this.artifactStrategy,
+          }),
         },
       ],
     });
@@ -95,7 +102,13 @@ export class Eip1193Account {
    */
   static fromAztec(account: Wallet, aztecNode: AztecNode): Eip1193Account {
     const provider = createEip1193ProviderFromAccounts(aztecNode, [account]);
-    return new this(account.getAddress(), provider, aztecNode);
+    const artifactStrategy = new LiteralArtifactStrategy();
+    return new this(
+      account.getAddress(),
+      provider,
+      aztecNode,
+      artifactStrategy,
+    );
   }
 }
 

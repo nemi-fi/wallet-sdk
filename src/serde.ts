@@ -7,6 +7,7 @@ import type {
 } from "@aztec/aztec.js";
 import type { ContractInstance } from "@aztec/circuits.js";
 import { Hex } from "ox";
+import type { IArtifactStrategy } from "./artifacts.js";
 import type { RegisterContract } from "./exports/eip1193.js";
 import type {
   SerializedContractArtifact,
@@ -14,6 +15,7 @@ import type {
   SerializedFunctionCall,
   SerializedRegisterContract,
 } from "./types.js";
+import { request } from "./utils.js";
 
 export async function encodeFunctionCall(call: FunctionCall) {
   return {
@@ -84,7 +86,13 @@ export async function getContractFunctionAbiFromPxe(
   return artifact;
 }
 
-export async function encodeRegisterContracts(contracts: RegisterContract[]) {
+export async function encodeRegisterContracts({
+  contracts,
+  artifactStrategy,
+}: {
+  contracts: RegisterContract[];
+  artifactStrategy: IArtifactStrategy;
+}) {
   return await Promise.all(
     contracts.map(async (x) => ({
       address: x.address.toString(),
@@ -92,7 +100,7 @@ export async function encodeRegisterContracts(contracts: RegisterContract[]) {
         ? await encodeContractInstance(x.instance)
         : undefined,
       artifact: x.artifact
-        ? await encodeContractArtifact(x.artifact)
+        ? await artifactStrategy.serializeArtifact(x.artifact)
         : undefined,
     })),
   );
@@ -144,15 +152,24 @@ async function decodeContractInstance(
   };
 }
 
-async function encodeContractArtifact(
-  artifact: ContractArtifact,
-): Promise<SerializedContractArtifact> {
-  return artifact;
-}
-
+const cachedArtifactDownloads = new Map<string, Promise<ContractArtifact>>();
 async function decodeContractArtifact(
   data: SerializedContractArtifact,
 ): Promise<ContractArtifact> {
+  if (data.type === "url") {
+    let artifactPromise = cachedArtifactDownloads.get(data.url);
+    if (!artifactPromise) {
+      // TODO: support IPFS
+      artifactPromise = request({ method: "GET", url: data.url });
+      cachedArtifactDownloads.set(data.url, artifactPromise);
+    }
+    const artifact = await artifactPromise;
+    data = {
+      type: "literal",
+      literal: artifact,
+    };
+  }
+
   const { ContractArtifactSchema } = await import("@aztec/foundation/abi");
-  return ContractArtifactSchema.parse(data);
+  return ContractArtifactSchema.parse(data.literal);
 }

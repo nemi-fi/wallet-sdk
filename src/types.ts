@@ -116,7 +116,15 @@ export type SerializedContractInstance = {
   publicKeys: string;
 };
 
-export type SerializedContractArtifact = object;
+export type SerializedContractArtifact =
+  | {
+      type: "url";
+      url: string;
+    }
+  | {
+      type: "literal";
+      literal: object;
+    };
 
 export interface Eip1193Provider {
   request(request: {

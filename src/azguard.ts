@@ -1,9 +1,14 @@
+import { assert } from "ts-essentials";
 import type { Eip6963ProviderDetail } from "./base.js";
 import {
   AZTEC_EIP6963_ANNOUNCE_PROVIDER,
   AZTEC_EIP6963_REQUEST_PROVIDERS,
 } from "./injected.js";
-import type { RpcRequestMap, TypedEip1193Provider } from "./types.js";
+import type {
+  RpcRequestMap,
+  SerializedContractArtifact,
+  TypedEip1193Provider,
+} from "./types.js";
 import { lazyValue } from "./utils.js";
 
 /**
@@ -117,7 +122,7 @@ class ShieldSwapAzguardProvider implements TypedEip1193Provider {
             instance: x.instance
               ? { ...x.instance, address: x.address }
               : undefined,
-            artifact: x.artifact,
+            artifact: getArtifact(x.artifact),
           })),
         );
       }
@@ -196,7 +201,7 @@ class ShieldSwapAzguardProvider implements TypedEip1193Provider {
             instance: x.instance
               ? { ...x.instance, address: x.address }
               : undefined,
-            artifact: x.artifact,
+            artifact: getArtifact(x.artifact),
           })),
         );
       }
@@ -230,6 +235,17 @@ class ShieldSwapAzguardProvider implements TypedEip1193Provider {
   #accountsChanged = async () => {
     // TODO: emit RpcEventsMap.accountsChanged(await this.#aztec_accounts())
   };
+}
+
+function getArtifact(artifact: SerializedContractArtifact | undefined) {
+  if (!artifact) {
+    return undefined;
+  }
+  assert(
+    artifact.type === "literal",
+    "azguard only supports literal artifacts strategy",
+  );
+  return artifact.literal;
 }
 
 // Note: not depending on azguard npm package because this file will be nuked anyway

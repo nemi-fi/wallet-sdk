@@ -64,3 +64,27 @@ export type ParametersExceptFirst<F> = F extends (
 ) => any
   ? R
   : never;
+
+export async function request({
+  url,
+  method,
+  body,
+}: {
+  url: string;
+  method: string;
+  body?: unknown;
+}) {
+  const response = await fetch(url, {
+    method,
+    body: body ? JSON.stringify(body) : undefined,
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+  if (!response.ok) {
+    throw new Error(
+      `Failed to fetch ${url}: ${response.status} ${response.statusText} | ${await response.text()}`,
+    );
+  }
+  return await response.json();
+}

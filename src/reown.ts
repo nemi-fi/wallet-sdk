@@ -2,6 +2,7 @@ import type { WalletConnectModalSignOptions } from "@walletconnect/modal-sign-ht
 import { getSdkError } from "@walletconnect/utils";
 import { readonly, writable, type Writable } from "svelte/store";
 import { assert } from "ts-essentials";
+import type { IArtifactStrategy } from "./artifacts.js";
 import type { Eip6963ProviderInfo, IAdapter } from "./base.js";
 import type { PopupAdapter } from "./popup.js";
 import type {
@@ -28,11 +29,9 @@ export class ReownAdapter implements IAdapter {
   >[0];
 
   readonly #onRequest: OnRpcConfirmationRequest;
+  readonly artifactStrategy: IArtifactStrategy;
 
-  constructor(
-    options: ReownAdapterOptions,
-    onRequest: OnRpcConfirmationRequest,
-  ) {
+  constructor(options: ReownAdapterOptions) {
     this.info = {
       uuid: options.uuid,
       name: "Reown",
@@ -42,7 +41,8 @@ export class ReownAdapter implements IAdapter {
       projectId: options.projectId,
       metadata: options.metadata ?? DEFAULT_METADATA,
     };
-    this.#onRequest = onRequest ?? (() => {});
+    this.#onRequest = options.onRequest ?? (() => {});
+    this.artifactStrategy = options.artifactStrategy;
   }
 
   #getWeb3Modal = lazyValue(async () => {
@@ -178,6 +178,9 @@ export type ReownAdapterOptions = {
   projectId: string;
   /** Reown metadata */
   metadata?: WalletConnectModalSignOptions["metadata"];
+
+  artifactStrategy: IArtifactStrategy;
+  onRequest?: OnRpcConfirmationRequest;
 };
 
 export type OnRpcConfirmationRequest<

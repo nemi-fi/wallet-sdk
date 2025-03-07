@@ -2,6 +2,7 @@ import type { UniversalProviderOpts } from "@walletconnect/universal-provider";
 import { persisted } from "svelte-persisted-store";
 import { derived, type Readable, type Writable } from "svelte/store";
 import { joinURL } from "ufo";
+import type { IArtifactStrategy } from "./artifacts.js";
 import type { Eip6963ProviderInfo, IAdapter } from "./base.js";
 import { Communicator } from "./Communicator.js";
 import type { PopupAdapterOptions } from "./popup.js";
@@ -28,6 +29,7 @@ export class ReownPopupAdapter implements IAdapter {
   readonly accountObservable: Readable<string | undefined>;
 
   readonly #options: UniversalProviderOpts;
+  readonly artifactStrategy: IArtifactStrategy;
 
   readonly walletUrl: string;
 
@@ -39,6 +41,7 @@ export class ReownPopupAdapter implements IAdapter {
     };
 
     this.walletUrl = params.walletUrl;
+    this.artifactStrategy = params.artifactStrategy;
     this.#communicator = new Communicator({
       url: joinURL(this.walletUrl, "/sign"),
       ...params,

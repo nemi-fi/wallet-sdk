@@ -11,6 +11,10 @@ import {
   type Writable,
 } from "svelte/store";
 import type { AsyncOrSync } from "ts-essentials";
+import {
+  LiteralArtifactStrategy,
+  type IArtifactStrategy,
+} from "./artifacts.js";
 import type { FallbackOpenPopup } from "./Communicator.js";
 import { InjectedAdapter, requestEip6963Providers } from "./injected.js";
 import type { Account, Eip1193Provider, RpcRequestMap } from "./types.js";
@@ -150,12 +154,14 @@ export class AztecWalletSdk {
       AztecAddress.fromString(address),
       this.#provider,
       await this.#aztecNode(),
+      this.#adapter?.artifactStrategy ?? new LiteralArtifactStrategy(),
     );
   }
 }
 
 export interface IAdapter extends Eip6963ProviderDetail {
   readonly accountObservable: Readable<string | undefined>;
+  readonly artifactStrategy?: IArtifactStrategy;
   connect(): Promise<string | undefined>;
   reconnect(): Promise<string | undefined>;
   disconnect(): Promise<void>;
