@@ -117,7 +117,7 @@ class ShieldSwapAzguardProvider implements TypedEip1193Provider {
             instance: x.instance
               ? { ...x.instance, address: x.address }
               : undefined,
-            artifact: x.artifact ? JSON.parse(x.artifact) : undefined,
+            artifact: x.artifact,
           })),
         );
       }
@@ -196,7 +196,7 @@ class ShieldSwapAzguardProvider implements TypedEip1193Provider {
             instance: x.instance
               ? { ...x.instance, address: x.address }
               : undefined,
-            artifact: x.artifact ? JSON.parse(x.artifact) : undefined,
+            artifact: x.artifact,
           })),
         );
       }

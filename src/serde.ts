@@ -147,14 +147,12 @@ async function decodeContractInstance(
 async function encodeContractArtifact(
   artifact: ContractArtifact,
 ): Promise<SerializedContractArtifact> {
-  const { jsonStringify } = await import("@aztec/foundation/json-rpc");
-  return jsonStringify(artifact);
+  return artifact;
 }
 
 async function decodeContractArtifact(
   data: SerializedContractArtifact,
 ): Promise<ContractArtifact> {
-  const { jsonParseWithSchema } = await import("@aztec/foundation/json-rpc");
   const { ContractArtifactSchema } = await import("@aztec/foundation/abi");
-  return jsonParseWithSchema(data, ContractArtifactSchema);
+  return ContractArtifactSchema.parse(data);
 }

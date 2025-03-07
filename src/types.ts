@@ -116,8 +116,7 @@ export type SerializedContractInstance = {
   publicKeys: string;
 };
 
-/** JSON string of the contract artifact. Requires aztec.js deserialization */
-export type SerializedContractArtifact = string;
+export type SerializedContractArtifact = object;
 
 export interface Eip1193Provider {
   request(request: {
