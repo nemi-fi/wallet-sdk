@@ -7,11 +7,7 @@ import type { Eip6963ProviderInfo, IAdapter } from "./base.js";
 import { Communicator } from "./Communicator.js";
 import type { PopupAdapterOptions } from "./popup.js";
 import { DEFAULT_METADATA, type ReownAdapterOptions } from "./reown.js";
-import type {
-  RpcRequest,
-  RpcRequestMap,
-  TypedEip1193Provider,
-} from "./types.js";
+import type { TypedEip1193Provider } from "./types.js";
 import {
   CAIP,
   FINAL_METHODS,
@@ -172,9 +168,7 @@ export class ReownPopupAdapter implements IAdapter {
     },
   };
 
-  async #requestPopup<M extends keyof RpcRequestMap>(
-    request: RpcRequest<M>,
-  ): Promise<ReturnType<RpcRequestMap[M]>> {
+  #requestPopup: TypedEip1193Provider["request"] = async (request) => {
     this.#pendingRequestsCount++;
     // TODO: handle batch requests
     try {
@@ -209,7 +203,7 @@ export class ReownPopupAdapter implements IAdapter {
         setTimeout(disconnectIfNoPendingRequests, 1000);
       }
     }
-  }
+  };
 }
 
 export interface ReownPopupAdapterOptions

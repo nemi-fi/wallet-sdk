@@ -24,3 +24,26 @@ await sdk.connect("obsidion");
 const account = await sdk.getAccount();
 const token = await Token.at(address, account);
 ```
+
+## React
+
+```tsx
+import { useAccount } from "@shieldswap/wallet-sdk/react";
+
+function App() {
+  const account = useAccount(sdk);
+  return <div>{account.address.toString()}</div>;
+}
+```
+
+## Convert aztec.js Wallet to Account
+
+```ts
+import { createAztecNodeClient } from "@aztec/aztec.js";
+import { type Account, Eip1193Account } from "@shieldswap/wallet-sdk/eip1193";
+
+const [wallet] = await getInitialTestAccountsWallets(pxe);
+
+const aztecNode = createAztecNodeClient("http://localhost:8080");
+const account: Account = Eip1193Account.fromAztec(wallet, aztecNode);
+```

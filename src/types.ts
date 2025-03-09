@@ -146,5 +146,6 @@ export interface Account extends Eip1193Account {}
  * @example
  * ```ts
  * import { type Account } from "@shieldswap/wallet-sdk";
+ * ```
  */
 export type Wallet = Account;

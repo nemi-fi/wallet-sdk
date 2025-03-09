@@ -21,9 +21,7 @@ export class LiteralArtifactStrategy implements IArtifactStrategy {
 export class ShieldSwapArtifactStrategy implements IArtifactStrategy {
   #cachedUrls = new Map<string, Promise<string>>();
 
-  constructor(
-    readonly apiUrl = "https://app.shieldswap.org/api/artifacts/v1",
-  ) {}
+  constructor(readonly apiUrl = "https://registry.obsidion.xyz/artifacts") {}
 
   static getDefaultSingleton = lazyValue(
     () => new ShieldSwapArtifactStrategy(),
