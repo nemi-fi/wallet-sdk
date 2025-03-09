@@ -38,9 +38,13 @@ export const startAzguardEip6963Announcing = lazyValue(async () => {
   });
 
   window.addEventListener(AZTEC_EIP6963_REQUEST_PROVIDERS, async () => {
+    const d = await detail();
+    if (!d) {
+      return;
+    }
     window.dispatchEvent(
       new CustomEvent(AZTEC_EIP6963_ANNOUNCE_PROVIDER, {
-        detail: await detail(),
+        detail: d,
       }),
     );
   });
