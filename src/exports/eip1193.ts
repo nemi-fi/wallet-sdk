@@ -52,13 +52,11 @@ export class Eip1193Account {
         params: [
           {
             from: this.address.toString(),
-            calls: await Promise.all(txRequest_.calls.map(encodeFunctionCall)),
-            authWitnesses: await Promise.all(
-              (txRequest_?.authWitnesses ?? []).map(async (x) => ({
-                caller: x.caller.toString(),
-                action: await encodeFunctionCall(x.action),
-              })),
-            ),
+            calls: txRequest_.calls.map(encodeFunctionCall),
+            authWitnesses: (txRequest_?.authWitnesses ?? []).map((x) => ({
+              caller: x.caller.toString(),
+              action: encodeFunctionCall(x.action),
+            })),
             capsules: (txRequest_?.capsules ?? []).map((capsule) =>
               capsule.map((x) => x.toString()),
             ),
@@ -83,9 +81,7 @@ export class Eip1193Account {
       params: [
         {
           from: this.address.toString(),
-          calls: await Promise.all(
-            txRequest.calls.map((x) => encodeFunctionCall(x)),
-          ),
+          calls: txRequest.calls.map((x) => encodeFunctionCall(x)),
           registerContracts: await encodeRegisterContracts({
             contracts: txRequest.registerContracts ?? [],
             artifactStrategy: this.artifactStrategy,

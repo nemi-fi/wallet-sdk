@@ -10,6 +10,7 @@ import {
   type Wallet,
 } from "@aztec/aztec.js";
 import {
+  ContractArtifactSchema,
   decodeFromAbi,
   encodeArguments,
   FunctionSelector,
@@ -96,9 +97,13 @@ export class Contract<T extends AztecContract> extends ContractBase<T> {
     TClass extends AztecContractClass<any>,
     T extends AztecContractInstance<TClass>,
   >(original: TClass) {
+    // TODO: remove this when aztec.js artifacts are deterministic.
+    const artifact = ContractArtifactSchema.parse(
+      JSON.parse(JSON.stringify(original.artifact)),
+    );
     const ContractClass = class extends ContractBase<T> {
       static async at(address: AztecAddress, account: Account) {
-        return await Contract.at<T>(address, original.artifact, account);
+        return await Contract.at<T>(address, artifact, account);
       }
 
       static deploy(
@@ -127,7 +132,7 @@ export class Contract<T extends AztecContract> extends ContractBase<T> {
         );
       }
 
-      static artifact: TClass["artifact"] = original.artifact;
+      static artifact: TClass["artifact"] = artifact;
       static events: TClass["events"] = original.events ?? {};
       static notes: TClass["notes"] = original.notes ?? {};
       static storage: TClass["storage"] = original.storage ?? {};

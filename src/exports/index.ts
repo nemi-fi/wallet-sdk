@@ -11,6 +11,7 @@ export type {
   IntentAction,
   SendOptions,
 } from "../contract.js";
+export type { TransactionRequest } from "../exports/eip1193.js";
 export * from "../popup.js";
 export * from "../reown.js";
 export * from "../reownPopup.js";

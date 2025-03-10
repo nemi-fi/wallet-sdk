@@ -17,7 +17,7 @@ import type {
 } from "./types.js";
 import { request } from "./utils.js";
 
-export async function encodeFunctionCall(call: FunctionCall) {
+export function encodeFunctionCall(call: FunctionCall) {
   return {
     to: call.to.toString(),
     selector: call.selector.toString(),
@@ -86,6 +86,7 @@ export async function getContractFunctionAbiFromPxe(
   return artifact;
 }
 
+// TODO: this function must be sync in order for browser popups to work. `serializeArtifact` takes too much time and browser blocks the popup because the time difference between user clicking the button and the window.open call is too big.
 export async function encodeRegisterContracts({
   contracts,
   artifactStrategy,
@@ -96,9 +97,7 @@ export async function encodeRegisterContracts({
   return await Promise.all(
     contracts.map(async (x) => ({
       address: x.address.toString(),
-      instance: x.instance
-        ? await encodeContractInstance(x.instance)
-        : undefined,
+      instance: x.instance ? encodeContractInstance(x.instance) : undefined,
       artifact: x.artifact
         ? await artifactStrategy.serializeArtifact(x.artifact)
         : undefined,
@@ -123,9 +122,9 @@ export async function decodeRegisterContracts(
   );
 }
 
-async function encodeContractInstance(
+function encodeContractInstance(
   instance: ContractInstance,
-): Promise<SerializedContractInstance> {
+): SerializedContractInstance {
   return {
     version: Hex.fromNumber(instance.version),
     salt: instance.salt.toString(),
