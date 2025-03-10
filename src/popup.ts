@@ -2,12 +2,12 @@ import { persisted } from "svelte-persisted-store";
 import { derived, type Readable, type Writable } from "svelte/store";
 import { assert } from "ts-essentials";
 import { joinURL } from "ufo";
-import type { Eip6963ProviderInfo, IAdapter } from "./base.js";
+import type { Eip6963ProviderInfo, IConnector } from "./base.js";
 import { Communicator, type FallbackOpenPopup } from "./Communicator.js";
 import type { TypedEip1193Provider } from "./types.js";
 import { FINAL_METHODS } from "./utils.js";
 
-export class PopupAdapter implements IAdapter {
+export class PopupConnector implements IConnector {
   readonly info: Eip6963ProviderInfo;
   readonly #communicator: Communicator;
 
@@ -18,7 +18,7 @@ export class PopupAdapter implements IAdapter {
 
   readonly walletUrl: string;
 
-  constructor(params: PopupAdapterOptions) {
+  constructor(params: PopupConnectorOptions) {
     this.info = { uuid: params.uuid, name: params.name, icon: params.icon };
     this.walletUrl = params.walletUrl;
     this.#communicator = new Communicator({
@@ -95,7 +95,7 @@ export class PopupAdapter implements IAdapter {
   };
 }
 
-export interface PopupAdapterOptions extends Eip6963ProviderInfo {
+export interface PopupConnectorOptions extends Eip6963ProviderInfo {
   /**
    * Called when user browser blocks a popup. Use this to attempt to re-open the popup.
    * Must call the provided callback right after user clicks a button, so browser does not block it.

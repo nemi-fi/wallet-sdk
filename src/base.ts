@@ -16,7 +16,7 @@ import {
   type IArtifactStrategy,
 } from "./artifacts.js";
 import type { FallbackOpenPopup } from "./Communicator.js";
-import { InjectedAdapter, requestEip6963Providers } from "./injected.js";
+import { InjectedConnector, requestEip6963Providers } from "./injected.js";
 import type { Account, Eip1193Provider, RpcRequestMap } from "./types.js";
 import { resolveAztecNode } from "./utils.js";
 
@@ -25,47 +25,49 @@ export class AztecWalletSdk {
   readonly #account = writable<Account | undefined>(undefined);
   readonly accountObservable = readonly(this.#account);
 
-  readonly #currentAdapterUuid = persisted<string | null>(
-    "aztec-wallet-current-adapter-uuid",
+  readonly #currentConnectorUuid = persisted<string | null>(
+    "aztec-wallet-current-connector-uuid",
     null,
   );
-  readonly #specifiedAdapters: Writable<readonly IAdapter[]>;
-  readonly #injectedAdapters: Readable<readonly IAdapter[]>;
-  readonly #adapters: Readable<readonly IAdapter[]>;
-  readonly #currentAdapter: Readable<IAdapter | undefined>;
+  readonly #specifiedConnectors: Writable<readonly IConnector[]>;
+  readonly #injectedConnectors: Readable<readonly IConnector[]>;
+  readonly #connectors: Readable<readonly IConnector[]>;
+  readonly #currentConnector: Readable<IConnector | undefined>;
   readonly fallbackOpenPopup: FallbackOpenPopup | undefined;
 
   constructor(params: {
     aztecNode: AztecNodeInput;
-    adapters: (IAdapter | ((sdk: AztecWalletSdk) => IAdapter))[];
+    connectors: (IConnector | ((sdk: AztecWalletSdk) => IConnector))[];
     fallbackOpenPopup?: FallbackOpenPopup;
   }) {
     this.#aztecNode = resolveAztecNode(params.aztecNode);
     this.fallbackOpenPopup = params.fallbackOpenPopup;
 
-    this.#specifiedAdapters = writable(
-      params.adapters.map((x) => (typeof x === "function" ? x(this) : x)),
+    this.#specifiedConnectors = writable(
+      params.connectors.map((x) => (typeof x === "function" ? x(this) : x)),
     );
-    this.#injectedAdapters = derived(requestEip6963Providers(), (providers) =>
-      providers.map((p) => new InjectedAdapter(p)),
+    this.#injectedConnectors = derived(requestEip6963Providers(), (providers) =>
+      providers.map((p) => new InjectedConnector(p)),
     );
-    this.#adapters = reactive(($) =>
+    this.#connectors = reactive(($) =>
       uniqBy(
-        [...$(this.#specifiedAdapters), ...$(this.#injectedAdapters)],
+        [...$(this.#specifiedConnectors), ...$(this.#injectedConnectors)],
         (x) => x.info.uuid,
       ),
     );
-    this.#currentAdapter = reactive(($) => {
-      const currentAdapterUuid = $(this.#currentAdapterUuid);
-      return $(this.#adapters).find((a) => a.info.uuid === currentAdapterUuid);
+    this.#currentConnector = reactive(($) => {
+      const currentConnectorUuid = $(this.#currentConnectorUuid);
+      return $(this.#connectors).find(
+        (a) => a.info.uuid === currentConnectorUuid,
+      );
     });
 
     const currentAddress = reactive(($) => {
-      const adapter = $(this.#currentAdapter);
-      if (!adapter) {
+      const connector = $(this.#currentConnector);
+      if (!connector) {
         return undefined;
       }
-      return $(adapter.accountObservable);
+      return $(connector.accountObservable);
     });
 
     let accountId = 0;
@@ -93,11 +95,11 @@ export class AztecWalletSdk {
   }
 
   async connect(providerUuid: string) {
-    this.#currentAdapterUuid.set(providerUuid);
-    if (!this.#adapter) {
+    this.#currentConnectorUuid.set(providerUuid);
+    if (!this.#connector) {
       throw new Error(`no provider found for ${providerUuid}`);
     }
-    const address = await this.#adapter.connect();
+    const address = await this.#connector.connect();
     if (!address) {
       throw new Error("Failed to connect");
     }
@@ -105,11 +107,11 @@ export class AztecWalletSdk {
   }
 
   async reconnect() {
-    if (!this.#adapter) {
+    if (!this.#connector) {
       return;
     }
 
-    const address = await this.#adapter.reconnect();
+    const address = await this.#connector.reconnect();
     if (!address) {
       return undefined;
     }
@@ -117,10 +119,10 @@ export class AztecWalletSdk {
   }
 
   async disconnect() {
-    if (!this.#adapter) {
+    if (!this.#connector) {
       return;
     }
-    await this.#adapter.disconnect();
+    await this.#connector.disconnect();
   }
 
   async watchAssets(
@@ -132,19 +134,19 @@ export class AztecWalletSdk {
     });
   }
 
-  get adapters(): readonly Eip6963ProviderInfo[] {
-    return get(this.#adapters).map((x) => x.info);
+  get connectors(): readonly Eip6963ProviderInfo[] {
+    return get(this.#connectors).map((x) => ({ ...x.info })); // clone
   }
 
-  get #adapter() {
-    return get(this.#currentAdapter);
+  get #connector() {
+    return get(this.#currentConnector);
   }
 
   get #provider() {
-    if (!this.#adapter) {
+    if (!this.#connector) {
       throw new Error("provider not connected");
     }
-    return this.#adapter.provider;
+    return this.#connector.provider;
   }
 
   async #toAccount(address: string) {
@@ -154,12 +156,12 @@ export class AztecWalletSdk {
       AztecAddress.fromString(address),
       this.#provider,
       await this.#aztecNode(),
-      this.#adapter?.artifactStrategy ?? new LiteralArtifactStrategy(),
+      this.#connector?.artifactStrategy ?? new LiteralArtifactStrategy(),
     );
   }
 }
 
-export interface IAdapter extends Eip6963ProviderDetail {
+export interface IConnector extends Eip6963ProviderDetail {
   readonly accountObservable: Readable<string | undefined>;
   readonly artifactStrategy?: IArtifactStrategy;
   connect(): Promise<string | undefined>;

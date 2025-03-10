@@ -3,8 +3,8 @@ import { getSdkError } from "@walletconnect/utils";
 import { readonly, writable, type Writable } from "svelte/store";
 import { assert } from "ts-essentials";
 import type { IArtifactStrategy } from "./artifacts.js";
-import type { Eip6963ProviderInfo, IAdapter } from "./base.js";
-import type { PopupAdapter } from "./popup.js";
+import type { Eip6963ProviderInfo, IConnector } from "./base.js";
+import type { PopupConnector } from "./popup.js";
 import type {
   RpcRequest,
   RpcRequestMap,
@@ -17,9 +17,9 @@ import {
 } from "./utils.js";
 
 /**
- * @deprecated Use {@link PopupAdapter} instead.
+ * @deprecated Use {@link PopupConnector} instead.
  */
-export class ReownAdapter implements IAdapter {
+export class ReownConnector implements IConnector {
   readonly info: Eip6963ProviderInfo;
   readonly #account: Writable<string | undefined> = writable(undefined);
   readonly accountObservable = readonly(this.#account);
@@ -31,7 +31,7 @@ export class ReownAdapter implements IAdapter {
   readonly #onRequest: OnRpcConfirmationRequest;
   readonly artifactStrategy: IArtifactStrategy;
 
-  constructor(options: ReownAdapterOptions) {
+  constructor(options: ReownConnectorOptions) {
     this.info = {
       uuid: options.uuid,
       name: "Reown",
@@ -170,7 +170,7 @@ export const DEFAULT_METADATA = {
   icons: [],
 };
 
-export type ReownAdapterOptions = {
+export type ReownConnectorOptions = {
   /** EIP-6963 provider UUID */
   readonly uuid: string;
 

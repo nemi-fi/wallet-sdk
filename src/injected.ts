@@ -1,9 +1,9 @@
 import { readonly, writable, type Writable } from "svelte/store";
 import { startAzguardEip6963Announcing } from "./azguard.js";
-import type { Eip6963ProviderDetail, IAdapter } from "./base.js";
+import type { Eip6963ProviderDetail, IConnector } from "./base.js";
 import type { TypedEip1193Provider } from "./types.js";
 
-export class InjectedAdapter implements IAdapter {
+export class InjectedConnector implements IConnector {
   readonly #account = writable<string | undefined>(undefined);
   readonly accountObservable = readonly(this.#account);
 

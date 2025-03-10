@@ -18,7 +18,7 @@ class Token extends Contract.fromAztec(TokenContract) {}
 
 const sdk = new AztecWalletSdk({
   aztecNode: "http://localhost:8080",
-  adapters: [obsidion({ projectId: "reown-project-id" })],
+  connectors: [obsidion({ projectId: "reown-project-id" })],
 });
 await sdk.connect("obsidion");
 const account = await sdk.getAccount();

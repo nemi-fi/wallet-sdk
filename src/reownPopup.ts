@@ -3,10 +3,10 @@ import { persisted } from "svelte-persisted-store";
 import { derived, type Readable, type Writable } from "svelte/store";
 import { joinURL } from "ufo";
 import type { IArtifactStrategy } from "./artifacts.js";
-import type { Eip6963ProviderInfo, IAdapter } from "./base.js";
+import type { Eip6963ProviderInfo, IConnector } from "./base.js";
 import { Communicator } from "./Communicator.js";
-import type { PopupAdapterOptions } from "./popup.js";
-import { DEFAULT_METADATA, type ReownAdapterOptions } from "./reown.js";
+import type { PopupConnectorOptions } from "./popup.js";
+import { DEFAULT_METADATA, type ReownConnectorOptions } from "./reown.js";
 import type { TypedEip1193Provider } from "./types.js";
 import {
   CAIP,
@@ -16,7 +16,7 @@ import {
 } from "./utils.js";
 
 // TODO: remove this class. It's a temporary hack to make Obsidion wallet work. Needed to not show a popup on every `aztec_call` RPC call.
-export class ReownPopupAdapter implements IAdapter {
+export class ReownPopupConnector implements IConnector {
   readonly info: Eip6963ProviderInfo;
   readonly #communicator: Communicator;
   #pendingRequestsCount = 0;
@@ -29,7 +29,7 @@ export class ReownPopupAdapter implements IAdapter {
 
   readonly walletUrl: string;
 
-  constructor(params: ReownPopupAdapterOptions) {
+  constructor(params: ReownPopupConnectorOptions) {
     this.info = { uuid: params.uuid, name: params.name, icon: params.icon };
     this.#options = {
       metadata: DEFAULT_METADATA,
@@ -206,6 +206,6 @@ export class ReownPopupAdapter implements IAdapter {
   };
 }
 
-export interface ReownPopupAdapterOptions
-  extends ReownAdapterOptions,
-    PopupAdapterOptions {}
+export interface ReownPopupConnectorOptions
+  extends ReownConnectorOptions,
+    PopupConnectorOptions {}

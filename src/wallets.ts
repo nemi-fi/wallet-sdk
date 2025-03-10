@@ -1,19 +1,19 @@
 import { ShieldSwapArtifactStrategy } from "./artifacts.js";
 import type { AztecWalletSdk } from "./base.js";
 import {
-  ReownPopupAdapter,
-  type ReownPopupAdapterOptions,
+  ReownPopupConnector,
+  type ReownPopupConnectorOptions,
 } from "./reownPopup.js";
 
-type PartialReownPopupAdapterOptions = Pick<
-  ReownPopupAdapterOptions,
+type PartialReownPopupConnectorOptions = Pick<
+  ReownPopupConnectorOptions,
   "projectId" | "metadata"
 > &
-  Partial<Pick<ReownPopupAdapterOptions, "walletUrl" | "artifactStrategy">>;
+  Partial<Pick<ReownPopupConnectorOptions, "walletUrl" | "artifactStrategy">>;
 
-export function obsidion(params: PartialReownPopupAdapterOptions) {
+export function obsidion(params: PartialReownPopupConnectorOptions) {
   return (sdk: AztecWalletSdk) =>
-    new ReownPopupAdapter({
+    new ReownPopupConnector({
       ...params,
       fallbackOpenPopup: sdk.fallbackOpenPopup,
       walletUrl: params.walletUrl ?? "https://app.obsidion.xyz",
