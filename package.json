@@ -1,6 +1,6 @@
 {
   "name": "@shieldswap/wallet-sdk",
-  "version": "0.76.1-next.10",
+  "version": "0.76.1-next.11",
   "type": "module",
   "main": "src/exports/index.ts",
   "module": "src/exports/index.ts",
@@ -43,6 +43,8 @@
     "_chore": "pnpm i"
   },
   "devDependencies": {
+    "@aztec/accounts": "0.76.1",
+    "@aztec/noir-contracts.js": "0.76.1",
     "@types/lodash-es": "^4.17.12",
     "@types/react": "^18.3.11",
     "prettier": "^3.2.5",

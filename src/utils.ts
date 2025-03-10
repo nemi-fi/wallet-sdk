@@ -42,20 +42,21 @@ export function resolveAztecNode(
   const getAztecNodeFn =
     typeof getAztecNode === "function" ? getAztecNode : () => getAztecNode;
   return lazyValue(async () => {
-    const { createAztecNodeClient, makeFetch } = await import(
-      "@aztec/aztec.js"
-    );
+    const { createAztecNodeClient } = await import("@aztec/aztec.js");
     let aztecNode = getAztecNodeFn();
     if (typeof aztecNode === "string" || aztecNode instanceof URL) {
-      const noRetryFetch = makeFetch([], true); // disable retires. May need to enable in the future for resilience. Probably retries even mutating requests.
       aztecNode = createAztecNodeClient(
         new URL(aztecNode).href,
         undefined,
-        noRetryFetch,
+        await noRetryFetch(),
       );
     }
     return aztecNode;
   });
+}
+export async function noRetryFetch() {
+  const { makeFetch } = await import("@aztec/aztec.js");
+  return makeFetch([], true); // disable retires. May need to enable in the future for resilience. Probably retries even mutating requests.
 }
 
 export type ParametersExceptFirst<F> = F extends (

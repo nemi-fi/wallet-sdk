@@ -110,6 +110,10 @@ export class DeployMethod<TContract extends AztecContract> {
     );
   }
 
+  async request() {
+    return await this.#txRequest();
+  }
+
   async #getDeploymentFunctionCalls() {
     const calls: FunctionCall[] = [];
     const capsules: Capsule[] = [];
@@ -180,7 +184,7 @@ export class DeploySentTx<TContract extends AztecContract> extends SentTx {
     super(aztecNode as unknown as PXE, txHash);
   }
 
-  async deployed(options: WaitOpts) {
+  async deployed(options?: WaitOpts) {
     const receipt = await this.wait(options);
     return receipt.contract;
   }
