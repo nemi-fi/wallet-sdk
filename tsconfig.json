@@ -19,5 +19,6 @@
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "noUncheckedIndexedAccess": true
-  }
+  },
+  "include": ["src"]
 }
