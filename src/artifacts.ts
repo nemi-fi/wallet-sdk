@@ -60,6 +60,6 @@ export class ShieldSwapArtifactStrategy implements IArtifactStrategy {
 }
 
 export async function getContractArtifactId(artifact: ContractArtifact) {
-  const { computeArtifactHash } = await import("@aztec/circuits.js");
+  const { computeArtifactHash } = await import("@aztec/stdlib/contract");
   return (await computeArtifactHash(artifact)).toString();
 }

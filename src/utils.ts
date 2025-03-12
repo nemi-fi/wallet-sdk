@@ -56,7 +56,7 @@ export function resolveAztecNode(
 }
 export async function noRetryFetch() {
   const { makeFetch } = await import("@aztec/aztec.js");
-  return makeFetch([], true); // disable retires. May need to enable in the future for resilience. Probably retries even mutating requests.
+  return makeFetch([], true) as any; // disable retires. May need to enable in the future for resilience. Probably retries even mutating requests.
 }
 
 export type ParametersExceptFirst<F> = F extends (

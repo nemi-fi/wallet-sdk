@@ -134,17 +134,14 @@ class ShieldSwapAzguardProvider implements TypedEip1193Provider {
       const actions = [];
 
       if (request.capsules) {
-        throw new Error(
-          "Capsules need to be updated: there must be also contract and storage slot",
+        actions.push(
+          ...request.capsules.map((x) => ({
+            kind: "add_capsule",
+            capsule: x.data,
+            contract: x.contract,
+            storageSlot: x.storageSlot,
+          })),
         );
-        // txActions.push(
-        //   ...request.capsules.map((x) => ({
-        //     kind: "add_capsule",
-        //     capsule: x.capsule,
-        //     contract: x.contract,
-        //     storageSlot: x.storageSlot,
-        //   })),
-        // );
       }
 
       actions.push(

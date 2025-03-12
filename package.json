@@ -1,6 +1,6 @@
 {
   "name": "@shieldswap/wallet-sdk",
-  "version": "0.76.1-next.13",
+  "version": "0.80.0-next.0",
   "type": "module",
   "main": "src/exports/index.ts",
   "module": "src/exports/index.ts",
@@ -43,8 +43,8 @@
     "_chore": "pnpm i"
   },
   "devDependencies": {
-    "@aztec/accounts": "0.76.1",
-    "@aztec/noir-contracts.js": "0.76.1",
+    "@aztec/accounts": "0.80.0",
+    "@aztec/noir-contracts.js": "0.80.0",
     "@types/lodash-es": "^4.17.12",
     "@types/react": "^18.3.11",
     "prettier": "^3.2.5",
@@ -53,11 +53,10 @@
     "vitest": "^3.0.7"
   },
   "dependencies": {
-    "@aztec/aztec.js": "0.76.1",
-    "@aztec/circuit-types": "0.76.1",
-    "@aztec/circuits.js": "0.76.1",
-    "@aztec/foundation": "0.76.1",
-    "@aztec/protocol-contracts": "0.76.1",
+    "@aztec/aztec.js": "0.80.0",
+    "@aztec/constants": "0.80.0",
+    "@aztec/protocol-contracts": "0.80.0",
+    "@aztec/stdlib": "0.80.0",
     "@walletconnect/modal-sign-html": "^2.6.2",
     "@walletconnect/universal-provider": "^2.18.0",
     "@walletconnect/utils": "^2.11.2",

@@ -4,19 +4,24 @@ import {
   SentTx,
   TxHash,
   type AztecNode,
+  type Capsule,
   type ContractArtifact,
+  type FeePaymentMethod,
   type FunctionCall,
-  type PXE,
   type Wallet,
 } from "@aztec/aztec.js";
-import { type ContractInstance } from "@aztec/circuits.js";
+import type { ContractInstance } from "@aztec/stdlib/contract";
 import {
   LiteralArtifactStrategy,
   type IArtifactStrategy,
 } from "../artifacts.js";
-import type { Capsule, Contract, IntentAction } from "../contract.js";
+import type { Contract, IntentAction } from "../contract.js";
 import { createEip1193ProviderFromAccounts } from "../createEip1193ProviderFromAccounts.js";
-import { encodeFunctionCall, encodeRegisterContracts } from "../serde.js";
+import {
+  encodeCapsules,
+  encodeFunctionCall,
+  encodeRegisterContracts,
+} from "../serde.js";
 import type { Eip1193Provider, TypedEip1193Provider } from "../types.js";
 
 export { BatchCall, Contract, type IntentAction } from "../contract.js";
@@ -57,9 +62,7 @@ export class Eip1193Account {
               caller: x.caller.toString(),
               action: encodeFunctionCall(x.action),
             })),
-            capsules: (txRequest_?.capsules ?? []).map((capsule) =>
-              capsule.map((x) => x.toString()),
-            ),
+            capsules: encodeCapsules(txRequest_?.capsules ?? []),
             registerContracts: await encodeRegisterContracts({
               contracts: txRequest_?.registerContracts ?? [],
               artifactStrategy: this.artifactStrategy,
@@ -69,7 +72,7 @@ export class Eip1193Account {
       });
     })().then((x) => TxHash.fromString(x));
 
-    return new SentTx(this.aztecNode as unknown as PXE, txHashPromise);
+    return new SentTx(this.aztecNode, txHashPromise);
   }
 
   // TODO: rename to either `call` or `view` or `readContract` or something more descriptive
@@ -96,8 +99,16 @@ export class Eip1193Account {
   /**
    * @deprecated only use to convert aztec.js account to `Eip1193Account` for compatibility reasons
    */
-  static fromAztec(account: Wallet, aztecNode: AztecNode): Eip1193Account {
-    const provider = createEip1193ProviderFromAccounts(aztecNode, [account]);
+  static fromAztec(
+    account: Wallet,
+    aztecNode: AztecNode,
+    paymentMethod: FeePaymentMethod,
+  ): Eip1193Account {
+    const provider = createEip1193ProviderFromAccounts(
+      aztecNode,
+      [account],
+      paymentMethod,
+    );
     const artifactStrategy = new LiteralArtifactStrategy();
     return new this(
       account.getAddress(),

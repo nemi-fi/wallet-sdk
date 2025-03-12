@@ -1,15 +1,17 @@
 import type {
   AztecAddress,
+  Capsule,
   ContractArtifact,
   FunctionCall,
   FunctionSelector,
   PXE,
 } from "@aztec/aztec.js";
-import type { ContractInstance } from "@aztec/circuits.js";
+import type { ContractInstance } from "@aztec/stdlib/contract";
 import { Hex } from "ox";
 import type { IArtifactStrategy } from "./artifacts.js";
 import type { RegisterContract } from "./exports/eip1193.js";
 import type {
+  SerializedCapsule,
   SerializedContractArtifact,
   SerializedContractInstance,
   SerializedFunctionCall,
@@ -48,12 +50,36 @@ export async function decodeFunctionCall(pxe: PXE, fc: SerializedFunctionCall) {
   return call;
 }
 
+export function encodeCapsules(capsules: Capsule[]): SerializedCapsule[] {
+  return capsules.map((c) => ({
+    contract: c.contractAddress.toString(),
+    storageSlot: c.storageSlot.toString(),
+    data: c.data.map((x) => x.toString()),
+  }));
+}
+
+export async function decodeCapsules(
+  capsules: SerializedCapsule[],
+): Promise<Capsule[]> {
+  const { Capsule, Fr, AztecAddress } = await import("@aztec/aztec.js");
+  return capsules.map(
+    (capsule) =>
+      new Capsule(
+        AztecAddress.fromString(capsule.contract),
+        Fr.fromString(capsule.storageSlot),
+        capsule.data.map((x) => Fr.fromString(x)),
+      ),
+  );
+}
+
 export async function getContractFunctionAbiFromPxe(
   pxe: PXE,
   address: AztecAddress,
   selector: FunctionSelector,
 ) {
-  const { FunctionSelector } = await import("@aztec/aztec.js");
+  const { FunctionSelector, getAllFunctionAbis } = await import(
+    "@aztec/aztec.js"
+  );
 
   const instance = await pxe.getContractMetadata(address);
   if (!instance.contractInstance) {
@@ -61,7 +87,7 @@ export async function getContractFunctionAbiFromPxe(
     throw new Error(`no contract instance found for ${address}`);
   }
   const contractArtifact = await pxe.getContractClassMetadata(
-    instance.contractInstance.contractClassId,
+    instance.contractInstance.currentContractClassId,
     true,
   );
   if (!contractArtifact.artifact) {
@@ -70,7 +96,7 @@ export async function getContractFunctionAbiFromPxe(
   }
   const artifact = (
     await Promise.all(
-      contractArtifact.artifact.functions.map(async (f) => {
+      getAllFunctionAbis(contractArtifact.artifact).map(async (f) => {
         const s = await FunctionSelector.fromNameAndParameters(
           f.name,
           f.parameters,
@@ -129,7 +155,8 @@ function encodeContractInstance(
     version: Hex.fromNumber(instance.version),
     salt: instance.salt.toString(),
     deployer: instance.deployer.toString(),
-    contractClassId: instance.contractClassId.toString(),
+    originalContractClassId: instance.originalContractClassId.toString(),
+    currentContractClassId: instance.currentContractClassId.toString(),
     initializationHash: instance.initializationHash.toString(),
     publicKeys: instance.publicKeys.toString(),
   };
@@ -145,7 +172,8 @@ async function decodeContractInstance(
     ) as ContractInstance["version"],
     salt: Fr.fromString(data.salt),
     deployer: AztecAddress.fromString(data.deployer),
-    contractClassId: Fr.fromString(data.contractClassId),
+    originalContractClassId: Fr.fromString(data.originalContractClassId),
+    currentContractClassId: Fr.fromString(data.currentContractClassId),
     initializationHash: Fr.fromString(data.initializationHash),
     publicKeys: PublicKeys.fromString(data.publicKeys),
   };
@@ -169,6 +197,6 @@ async function decodeContractArtifact(
     };
   }
 
-  const { ContractArtifactSchema } = await import("@aztec/foundation/abi");
+  const { ContractArtifactSchema } = await import("@aztec/stdlib/abi");
   return ContractArtifactSchema.parse(data.literal);
 }

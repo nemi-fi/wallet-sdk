@@ -1,21 +1,21 @@
 import {
+  decodeFromAbi,
+  encodeArguments,
+  FunctionSelector,
   PublicKeys,
   type AztecAddress,
   type Contract as AztecContract,
   type DeployMethod as AztecDeployMethod,
   type ContractArtifact,
   type ContractInstanceWithAddress,
-  type Fr,
   type FunctionCall,
   type Wallet,
 } from "@aztec/aztec.js";
 import {
   ContractArtifactSchema,
-  decodeFromAbi,
-  encodeArguments,
-  FunctionSelector,
+  getAllFunctionAbis,
   type FunctionAbi,
-} from "@aztec/foundation/abi";
+} from "@aztec/stdlib/abi";
 import { DeployMethod, type DeployOptions } from "./contract-deploy.js";
 import type { TransactionRequest } from "./exports/eip1193.js";
 import type { Account } from "./types.js";
@@ -35,7 +35,7 @@ export class ContractBase<T extends AztecContract> {
     /** The account used for interacting with this contract. */
     readonly account: Account,
   ) {
-    this.methods = artifact.functions.reduce(
+    this.methods = getAllFunctionAbis(artifact).reduce(
       (acc, f) => {
         acc[f.name as keyof T["methods"]] = Object.assign(
           (...argsAndOptions: any[]) => {
@@ -237,8 +237,6 @@ export type IntentAction = {
   caller: AztecAddress;
   action: FunctionCall;
 };
-
-export type Capsule = Fr[];
 
 export type SendOptions = Pick<
   TransactionRequest,

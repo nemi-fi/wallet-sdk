@@ -5,7 +5,6 @@ export type {
   DeploySentTx,
 } from "../contract-deploy.js";
 export type {
-  Capsule,
   Contract,
   ContractFunctionInteraction,
   IntentAction,

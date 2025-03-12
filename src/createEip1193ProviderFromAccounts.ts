@@ -2,24 +2,25 @@ import {
   AztecAddress,
   encodeArguments,
   Fr,
-  NoFeePaymentMethod,
   SentTx,
   type AztecNode,
+  type FeePaymentMethod,
   type FunctionCall,
   type PXE,
   type Wallet,
 } from "@aztec/aztec.js";
-import type { TxSimulationResult } from "@aztec/circuit-types";
-import { GasSettings } from "@aztec/circuits.js";
 import {
   decodeFromAbi,
   FunctionType,
   type ABIParameter,
   type FunctionAbi,
-} from "@aztec/foundation/abi";
+} from "@aztec/stdlib/abi";
+import { GasSettings } from "@aztec/stdlib/gas";
+import type { TxSimulationResult } from "@aztec/stdlib/tx";
 import { assert } from "ts-essentials";
 import type { IntentAction } from "./contract.js";
 import {
+  decodeCapsules,
   decodeFunctionCall,
   decodeRegisterContracts,
   getContractFunctionAbiFromPxe,
@@ -33,6 +34,7 @@ import type {
 export function createEip1193ProviderFromAccounts(
   aztecNode: AztecNode,
   accounts: Wallet[],
+  paymentMethod: FeePaymentMethod,
 ) {
   function getAccount(address: string) {
     const account = accounts.find((a) => a.getAddress().toString() === address);
@@ -75,17 +77,18 @@ export function createEip1193ProviderFromAccounts(
           }
 
           // add capsules
-          const capsules = (request.capsules ?? []).map((capsule) =>
-            capsule.map((x) => new Fr(BigInt(x))),
-          );
-          for (const capsule of capsules) {
-            await account.addCapsule(capsule);
+          for (const capsule of await decodeCapsules(request.capsules ?? [])) {
+            await account.storeCapsule(
+              capsule.contractAddress,
+              capsule.storageSlot,
+              capsule.data,
+            );
           }
 
           // sign the tx
           const txRequest = await account.createTxExecutionRequest({
             calls,
-            fee: await getDefaultFee(account),
+            fee: await getDefaultFee(account, paymentMethod),
           });
           const simulatedTx = await account.simulateTx(txRequest, true);
           const tx = await account.proveTx(
@@ -168,7 +171,7 @@ export function createEip1193ProviderFromAccounts(
           if (indexedCalls.length !== 0) {
             const txRequest = await account.createTxExecutionRequest({
               calls: indexedCalls.map(([call]) => call),
-              fee: await getDefaultFee(account),
+              fee: await getDefaultFee(account, paymentMethod),
             });
             simulatedTxPromise = account.simulateTx(
               txRequest,
@@ -235,12 +238,12 @@ export function createEip1193ProviderFromAccounts(
   return provider;
 }
 
-async function getDefaultFee(aztecNode: Pick<AztecNode, "getCurrentBaseFees">) {
+async function getDefaultFee(account: Wallet, paymentMethod: FeePaymentMethod) {
   return {
     gasSettings: GasSettings.default({
-      maxFeesPerGas: await aztecNode.getCurrentBaseFees(),
+      maxFeesPerGas: await account.getCurrentBaseFees(),
     }),
-    paymentMethod: new NoFeePaymentMethod(),
+    paymentMethod,
   };
 }
 
@@ -260,8 +263,12 @@ async function registerContracts(
       const artifact =
         c.artifact ??
         // TODO: try to fetch artifact from aztecscan or a similar service
-        (await pxe.getContractClassMetadata(instance.contractClassId, true))
-          .artifact;
+        (
+          await pxe.getContractClassMetadata(
+            instance.currentContractClassId,
+            true,
+          )
+        ).artifact;
       if (!artifact) {
         // fails the whole RPC call if artifact not found
         throw new Error(`no contract artifact found for ${c.address}`);

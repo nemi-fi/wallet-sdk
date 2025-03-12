@@ -23,15 +23,9 @@ export type RpcRequestMap = {
     /** `FunctionCall[]` to be executed in the transaction */
     calls: SerializedFunctionCall[];
     /** Authentication witnesses required for the transaction */
-    authWitnesses: {
-      /** `AztecAddress` */
-      caller: string;
-      /** `FunctionCall` */
-      // TODO: rename to `call`?
-      action: SerializedFunctionCall;
-    }[];
-    /** `Fr[][]` a list of capsules required for the transaction */
-    capsules?: string[][];
+    authWitnesses: SerializedAuthWitness[];
+    /** `Capsule[]` a list of capsules required for the transaction */
+    capsules?: SerializedCapsule[];
     /** Contracts required to send the transaction */
     registerContracts?: SerializedRegisterContract[];
   }) => string;
@@ -92,6 +86,23 @@ export type SerializedFunctionCall = {
   args: string[];
 };
 
+export type SerializedAuthWitness = {
+  /** `AztecAddress` */
+  caller: string;
+  /** `FunctionCall` */
+  // TODO: rename to `call`?
+  action: SerializedFunctionCall;
+};
+
+export type SerializedCapsule = {
+  /** `AztecAddress` of the contract */
+  contract: string;
+  /** `Fr` */
+  storageSlot: string;
+  /** `Fr[]` */
+  data: string[];
+};
+
 export type SerializedRegisterContract = {
   /** `AztecAddress` of the contract to register */
   address: string;
@@ -109,7 +120,9 @@ export type SerializedContractInstance = {
   /** `AztecAddress` */
   deployer: string;
   /** `Fr` */
-  contractClassId: string;
+  originalContractClassId: string;
+  /** `Fr` */
+  currentContractClassId: string;
   /** `Fr` */
   initializationHash: string;
   /** `PublicKeys` */

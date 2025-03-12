@@ -3,20 +3,19 @@ import {
   AztecAddress,
   createAztecNodeClient,
   createPXEClient,
+  FeeJuicePaymentMethod,
   Fr,
   type AztecNode,
   type PXE,
   type Wallet,
 } from "@aztec/aztec.js";
 import { CounterContract } from "@aztec/noir-contracts.js/Counter";
-import { TokenContract } from "@aztec/noir-contracts.js/Token";
 import { beforeAll, describe, expect, test } from "vitest";
 import { Contract } from "./contract.js";
 import { Eip1193Account } from "./exports/eip1193.js";
 import { noRetryFetch } from "./utils.js";
 
 class Counter extends Contract.fromAztec(CounterContract) {}
-class Token extends Contract.fromAztec(TokenContract) {}
 
 describe("wallet-sdk", () => {
   let pxe: PXE;
@@ -35,7 +34,11 @@ describe("wallet-sdk", () => {
     const params = [0, account.getAddress()] as const;
     const deploy = await Counter.deployWithOpts(
       {
-        account: Eip1193Account.fromAztec(account, aztecNode),
+        account: Eip1193Account.fromAztec(
+          account,
+          aztecNode,
+          new FeeJuicePaymentMethod(account.getAddress()),
+        ),
         contractAddressSalt: salt,
       },
       ...params,
