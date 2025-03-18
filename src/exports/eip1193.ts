@@ -1,14 +1,12 @@
 import {
-  AztecAddress,
   Fr,
-  SentTx,
   TxHash,
-  type AztecNode,
-  type Capsule,
-  type ContractArtifact,
-  type FeePaymentMethod,
+  Capsule,
+  SentTx,
   type FunctionCall,
   type Wallet,
+  type FeePaymentMethod,
+  type ContractArtifact,
 } from "@aztec/aztec.js";
 import type { ContractInstance } from "@aztec/stdlib/contract";
 import {
@@ -23,6 +21,8 @@ import {
   encodeRegisterContracts,
 } from "../serde.js";
 import type { Eip1193Provider, TypedEip1193Provider } from "../types.js";
+import type { AztecNode } from "@aztec/stdlib/interfaces/client";
+import type { AztecAddress } from "@aztec/stdlib/aztec-address";
 
 export { BatchCall, Contract, type IntentAction } from "../contract.js";
 

@@ -1,13 +1,11 @@
 import {
-  AztecAddress,
   encodeArguments,
   Fr,
   SentTx,
-  type AztecNode,
-  type FeePaymentMethod,
   type FunctionCall,
   type PXE,
   type Wallet,
+  type FeePaymentMethod,
 } from "@aztec/aztec.js";
 import {
   decodeFromAbi,
@@ -15,6 +13,8 @@ import {
   type ABIParameter,
   type FunctionAbi,
 } from "@aztec/stdlib/abi";
+import type { AztecNode } from "@aztec/stdlib/interfaces/client";
+import { AztecAddress } from "@aztec/stdlib/aztec-address";
 import { GasSettings } from "@aztec/stdlib/gas";
 import type { TxSimulationResult } from "@aztec/stdlib/tx";
 import { assert } from "ts-essentials";
