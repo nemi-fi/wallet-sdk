@@ -47,6 +47,7 @@ const [wallet] = await getDeployedTestAccountsWallets(pxe);
 const aztecNode = createAztecNodeClient("http://localhost:8080");
 const account: Account = Eip1193Account.fromAztec(
   wallet,
+  pxe,
   aztecNode,
   paymentMethod,
 );

@@ -8,6 +8,7 @@ import {
   type ContractArtifact,
   type FeePaymentMethod,
   type FunctionCall,
+  type PXE,
   type Wallet,
 } from "@aztec/aztec.js";
 import type { ContractInstance } from "@aztec/stdlib/contract";
@@ -102,10 +103,12 @@ export class Eip1193Account {
   static fromAztec(
     account: Wallet,
     aztecNode: AztecNode,
+    pxe: PXE,
     paymentMethod: FeePaymentMethod,
   ): Eip1193Account {
     const provider = createEip1193ProviderFromAccounts(
       aztecNode,
+      pxe,
       [account],
       paymentMethod,
     );

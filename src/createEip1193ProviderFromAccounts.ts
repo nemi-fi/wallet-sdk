@@ -9,6 +9,7 @@ import {
   type PXE,
   type Wallet,
 } from "@aztec/aztec.js";
+import { ExecutionPayload } from "@aztec/entrypoints/payload";
 import {
   decodeFromAbi,
   FunctionType,
@@ -33,6 +34,7 @@ import type {
 
 export function createEip1193ProviderFromAccounts(
   aztecNode: AztecNode,
+  pxe: PXE,
   accounts: Wallet[],
   paymentMethod: FeePaymentMethod,
 ) {
@@ -56,40 +58,40 @@ export function createEip1193ProviderFromAccounts(
           // register contracts
           await registerContracts(
             aztecNode,
-            account,
+            pxe,
             request.registerContracts ?? [],
           );
 
           // decode calls
           const calls = await Promise.all(
-            request.calls.map((x) => decodeFunctionCall(account, x)),
+            request.calls.map((x) => decodeFunctionCall(pxe, x)),
           );
 
           // approve auth witnesses
           const authWitRequests: IntentAction[] = await Promise.all(
             request.authWitnesses.map(async (authWitness) => ({
               caller: AztecAddress.fromString(authWitness.caller),
-              action: await decodeFunctionCall(account, authWitness.action),
+              action: await decodeFunctionCall(pxe, authWitness.action),
             })),
           );
-          for (const authWitRequest of authWitRequests) {
-            await account.createAuthWit(authWitRequest);
-          }
+          const authWitnesses = await Promise.all(
+            authWitRequests.map((authWitRequest) =>
+              account.createAuthWit(authWitRequest),
+            ),
+          );
 
-          // add capsules
-          for (const capsule of await decodeCapsules(request.capsules ?? [])) {
-            await account.storeCapsule(
-              capsule.contractAddress,
-              capsule.storageSlot,
-              capsule.data,
-            );
-          }
+          const payload = new ExecutionPayload(
+            calls,
+            authWitnesses,
+            await decodeCapsules(request.capsules ?? []),
+          );
 
           // sign the tx
-          const txRequest = await account.createTxExecutionRequest({
-            calls,
-            fee: await getDefaultFee(account, paymentMethod),
-          });
+          const txRequest = await account.createTxExecutionRequest(
+            payload,
+            await getDefaultFee(account, paymentMethod),
+            {},
+          );
           const simulatedTx = await account.simulateTx(txRequest, true);
           const tx = await account.proveTx(
             txRequest,
@@ -107,12 +109,12 @@ export function createEip1193ProviderFromAccounts(
           // register contracts
           await registerContracts(
             aztecNode,
-            account,
+            pxe,
             request.registerContracts ?? [],
           );
 
           const deserializedCalls = await Promise.all(
-            request.calls.map((x) => decodeFunctionCall(account, x)),
+            request.calls.map((x) => decodeFunctionCall(pxe, x)),
           );
           const { indexedCalls, unconstrained } = deserializedCalls.reduce<{
             /** Keep track of the number of private calls to retrieve the return values */
@@ -149,7 +151,7 @@ export function createEip1193ProviderFromAccounts(
           const unconstrainedCalls = unconstrained.map(
             async ([call, index]) => {
               const fnAbi = await getContractFunctionAbiFromPxe(
-                account,
+                pxe,
                 call.to,
                 call.selector,
               );
@@ -160,6 +162,7 @@ export function createEip1193ProviderFromAccounts(
                     decodeFromAbi([fnAbi.parameters[i]!.type], [arg]),
                   ),
                   call.to,
+                  [],
                   account.getAddress(),
                 ),
                 index,
@@ -169,10 +172,16 @@ export function createEip1193ProviderFromAccounts(
 
           let simulatedTxPromise: Promise<TxSimulationResult> | undefined;
           if (indexedCalls.length !== 0) {
-            const txRequest = await account.createTxExecutionRequest({
-              calls: indexedCalls.map(([call]) => call),
-              fee: await getDefaultFee(account, paymentMethod),
-            });
+            const payload = new ExecutionPayload(
+              indexedCalls.map(([call]) => call),
+              [],
+              [],
+            );
+            const txRequest = await account.createTxExecutionRequest(
+              payload,
+              await getDefaultFee(account, paymentMethod),
+              {},
+            );
             simulatedTxPromise = account.simulateTx(
               txRequest,
               true, // simulatePublic

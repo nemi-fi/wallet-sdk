@@ -37,6 +37,7 @@ describe("wallet-sdk", () => {
         account: Eip1193Account.fromAztec(
           account,
           aztecNode,
+          pxe,
           new FeeJuicePaymentMethod(account.getAddress()),
         ),
         contractAddressSalt: salt,
