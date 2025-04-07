@@ -11,8 +11,8 @@ const account: Wallet;
 const token = await TokenContract.at(address, account);
 
 // after
-import { AztecWalletSdk, obsidion } from "@shieldswap/wallet-sdk";
-import { Contract } from "@shieldswap/wallet-sdk/eip1193";
+import { AztecWalletSdk, obsidion } from "@nemi-fi/wallet-sdk";
+import { Contract } from "@nemi-fi/wallet-sdk/eip1193";
 
 class Token extends Contract.fromAztec(TokenContract) {}
 
@@ -28,7 +28,7 @@ const token = await Token.at(address, account);
 ## React
 
 ```tsx
-import { useAccount } from "@shieldswap/wallet-sdk/react";
+import { useAccount } from "@nemi-fi/wallet-sdk/react";
 
 function App() {
   const account = useAccount(sdk);
@@ -40,7 +40,7 @@ function App() {
 
 ```ts
 import { createAztecNodeClient } from "@aztec/aztec.js";
-import { type Account, Eip1193Account } from "@shieldswap/wallet-sdk/eip1193";
+import { type Account, Eip1193Account } from "@nemi-fi/wallet-sdk/eip1193";
 
 const [wallet] = await getDeployedTestAccountsWallets(pxe);
 

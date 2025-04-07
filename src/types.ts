@@ -158,7 +158,7 @@ export interface Account extends Eip1193Account {}
  * @deprecated use {@link Account} instead
  * @example
  * ```ts
- * import { type Account } from "@shieldswap/wallet-sdk";
+ * import { type Account } from "@nemi-fi/wallet-sdk";
  * ```
  */
 export type Wallet = Account;
