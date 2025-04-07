@@ -45,10 +45,5 @@ import { type Account, Eip1193Account } from "@shieldswap/wallet-sdk/eip1193";
 const [wallet] = await getDeployedTestAccountsWallets(pxe);
 
 const aztecNode = createAztecNodeClient("http://localhost:8080");
-const account: Account = Eip1193Account.fromAztec(
-  wallet,
-  pxe,
-  aztecNode,
-  paymentMethod,
-);
+const account: Account = Eip1193Account.fromAztec(wallet, pxe, aztecNode);
 ```

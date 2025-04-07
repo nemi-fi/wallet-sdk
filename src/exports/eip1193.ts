@@ -104,7 +104,7 @@ export class Eip1193Account {
     account: Wallet,
     aztecNode: AztecNode,
     pxe: PXE,
-    paymentMethod: FeePaymentMethod,
+    paymentMethod?: FeePaymentMethod,
   ): Eip1193Account {
     const provider = createEip1193ProviderFromAccounts(
       aztecNode,

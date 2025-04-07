@@ -1,6 +1,7 @@
 import {
   AztecAddress,
   encodeArguments,
+  FeeJuicePaymentMethod,
   Fr,
   SentTx,
   type AztecNode,
@@ -23,7 +24,7 @@ import type { IntentAction } from "./contract.js";
 import {
   decodeCapsules,
   decodeFunctionCall,
-  decodeRegisterContracts,
+  decodeRegisterContract,
   getContractFunctionAbiFromPxe,
 } from "./serde.js";
 import type {
@@ -36,7 +37,7 @@ export function createEip1193ProviderFromAccounts(
   aztecNode: AztecNode,
   pxe: PXE,
   accounts: Wallet[],
-  paymentMethod: FeePaymentMethod,
+  paymentMethod?: FeePaymentMethod,
 ) {
   function getAccount(address: string) {
     const account = accounts.find((a) => a.getAddress().toString() === address);
@@ -127,7 +128,7 @@ export function createEip1193ProviderFromAccounts(
             unconstrained: [FunctionCall, number][];
           }>(
             (acc, current, index) => {
-              if (current.type === FunctionType.UNCONSTRAINED) {
+              if (current.type === FunctionType.UTILITY) {
                 acc.unconstrained.push([current, index]);
               } else {
                 acc.indexedCalls.push([
@@ -156,7 +157,7 @@ export function createEip1193ProviderFromAccounts(
                 call.selector,
               );
               return [
-                await account.simulateUnconstrained(
+                await account.simulateUtility(
                   call.name,
                   call.args.map((arg, i) =>
                     decodeFromAbi([fnAbi.parameters[i]!.type], [arg]),
@@ -247,7 +248,11 @@ export function createEip1193ProviderFromAccounts(
   return provider;
 }
 
-async function getDefaultFee(account: Wallet, paymentMethod: FeePaymentMethod) {
+async function getDefaultFee(
+  account: Wallet,
+  paymentMethod: FeePaymentMethod | undefined,
+) {
+  paymentMethod ??= new FeeJuicePaymentMethod(account.getAddress());
   return {
     gasSettings: GasSettings.default({
       maxFeesPerGas: await account.getCurrentBaseFees(),
@@ -256,13 +261,21 @@ async function getDefaultFee(account: Wallet, paymentMethod: FeePaymentMethod) {
   };
 }
 
+registerContracts.wasRegistered = new Set<string>();
 async function registerContracts(
   aztecNode: AztecNode,
   pxe: PXE,
   serialized: SerializedRegisterContract[],
 ) {
-  const contracts = await Promise.all(
-    (await decodeRegisterContracts(serialized)).map(async (c) => {
+  await Promise.all(
+    serialized.map(async (data) => {
+      const registeringKey = data.address.toLowerCase();
+      // deduplicate registration requests
+      if (registerContracts.wasRegistered.has(registeringKey)) {
+        return;
+      }
+
+      const c = await decodeRegisterContract(data);
       const instance = c.instance ?? (await aztecNode.getContract(c.address));
       if (!instance) {
         // fails the whole RPC call if instance not found
@@ -283,16 +296,16 @@ async function registerContracts(
         throw new Error(`no contract artifact found for ${c.address}`);
       }
 
-      return {
+      const contract = {
         instance: {
           ...instance,
           address: c.address,
         },
         artifact,
       };
+
+      await pxe.registerContract(contract);
+      registerContracts.wasRegistered.add(registeringKey);
     }),
   );
-  for (const contract of contracts) {
-    await pxe.registerContract(contract);
-  }
 }

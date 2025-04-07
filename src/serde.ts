@@ -131,21 +131,23 @@ export async function encodeRegisterContracts({
   );
 }
 
+export async function decodeRegisterContract(data: SerializedRegisterContract) {
+  const { AztecAddress } = await import("@aztec/aztec.js");
+  return {
+    address: AztecAddress.fromString(data.address),
+    instance: data.instance
+      ? await decodeContractInstance(data.instance)
+      : undefined,
+    artifact: data.artifact
+      ? await decodeContractArtifact(data.artifact)
+      : undefined,
+  };
+}
+
 export async function decodeRegisterContracts(
   data: SerializedRegisterContract[],
 ) {
-  const { AztecAddress } = await import("@aztec/aztec.js");
-  return await Promise.all(
-    data.map(async (x) => ({
-      address: AztecAddress.fromString(x.address),
-      instance: x.instance
-        ? await decodeContractInstance(x.instance)
-        : undefined,
-      artifact: x.artifact
-        ? await decodeContractArtifact(x.artifact)
-        : undefined,
-    })),
-  );
+  return await Promise.all(data.map(decodeRegisterContract));
 }
 
 function encodeContractInstance(

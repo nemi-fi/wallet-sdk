@@ -3,7 +3,6 @@ import {
   AztecAddress,
   createAztecNodeClient,
   createPXEClient,
-  FeeJuicePaymentMethod,
   Fr,
   type AztecNode,
   type PXE,
@@ -34,12 +33,7 @@ describe("wallet-sdk", () => {
     const params = [0, account.getAddress()] as const;
     const deploy = await Counter.deployWithOpts(
       {
-        account: Eip1193Account.fromAztec(
-          account,
-          aztecNode,
-          pxe,
-          new FeeJuicePaymentMethod(account.getAddress()),
-        ),
+        account: Eip1193Account.fromAztec(account, aztecNode, pxe),
         contractAddressSalt: salt,
       },
       ...params,
