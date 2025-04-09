@@ -1,3 +1,4 @@
+import type { StrictOmit } from "ts-essentials";
 import type { Eip1193Account } from "./exports/eip1193.js";
 
 export type RpcRequestMap = {
@@ -153,7 +154,7 @@ export interface TypedEip1193Provider {
 }
 
 // TODO: list all the methods instead of inheriting from Eip1193Account
-export interface Account extends Eip1193Account {}
+export interface Account extends StrictOmit<Eip1193Account, "provider"> {}
 /**
  * @deprecated use {@link Account} instead
  * @example

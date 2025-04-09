@@ -88,7 +88,7 @@ export class Contract<T extends AztecContract> extends ContractBase<T> {
   ) {
     const contractInstance = await account.aztecNode.getContract(address);
     if (contractInstance == null) {
-      throw new Error(`Contract at ${address.toString()} not found`);
+      throw new Error(`Contract at ${address} not found`);
     }
     return new Contract<T>(contractInstance, artifact, account);
   }

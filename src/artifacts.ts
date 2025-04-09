@@ -1,4 +1,4 @@
-import type { ContractArtifact } from "@aztec/aztec.js";
+import type { ContractArtifact, Fr } from "@aztec/aztec.js";
 import { joinURL } from "ufo";
 import type { SerializedContractArtifact } from "./types.js";
 import { lazyValue, request } from "./utils.js";
@@ -18,14 +18,12 @@ export class LiteralArtifactStrategy implements IArtifactStrategy {
   }
 }
 
-export class ShieldSwapArtifactStrategy implements IArtifactStrategy {
+export class RemoteArtifactStrategy implements IArtifactStrategy {
   #cachedUrls = new Map<string, Promise<string>>();
 
   constructor(readonly apiUrl = "https://registry.obsidion.xyz/artifacts") {}
 
-  static getDefaultSingleton = lazyValue(
-    () => new ShieldSwapArtifactStrategy(),
-  );
+  static getDefaultSingleton = lazyValue(() => new RemoteArtifactStrategy());
 
   async serializeArtifact(artifact: ContractArtifact) {
     const url = await this.#fetchOrUpload(artifact);
@@ -61,5 +59,6 @@ export class ShieldSwapArtifactStrategy implements IArtifactStrategy {
 
 export async function getContractArtifactId(artifact: ContractArtifact) {
   const { computeArtifactHash } = await import("@aztec/stdlib/contract");
-  return (await computeArtifactHash(artifact)).toString();
+  const hash: Fr = await computeArtifactHash(artifact);
+  return hash.toString();
 }

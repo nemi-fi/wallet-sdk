@@ -1,4 +1,4 @@
-import { ShieldSwapArtifactStrategy } from "./artifacts.js";
+import { RemoteArtifactStrategy } from "./artifacts.js";
 import type { AztecWalletSdk } from "./base.js";
 import {
   ReownPopupConnector,
@@ -18,8 +18,7 @@ export function obsidion(params: PartialReownPopupConnectorOptions) {
       fallbackOpenPopup: sdk.fallbackOpenPopup,
       walletUrl: params.walletUrl ?? "https://app.obsidion.xyz",
       artifactStrategy:
-        params.artifactStrategy ??
-        ShieldSwapArtifactStrategy.getDefaultSingleton(),
+        params.artifactStrategy ?? RemoteArtifactStrategy.getDefaultSingleton(),
 
       uuid: "obsidion",
       name: "Obsidion",

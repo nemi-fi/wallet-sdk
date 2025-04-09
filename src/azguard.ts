@@ -29,7 +29,7 @@ export const startAzguardEip6963Announcing = lazyValue(async () => {
     if (!azguard) {
       return;
     }
-    const provider = new ShieldSwapAzguardProvider(azguard);
+    const provider = new AzguardEip6963Provider(azguard);
     const detail: Eip6963ProviderDetail = {
       info,
       provider,
@@ -50,8 +50,8 @@ export const startAzguardEip6963Announcing = lazyValue(async () => {
   });
 });
 
-/** Azguard Wallet provider compatible with ShieldSwap's RPC spec */
-class ShieldSwapAzguardProvider implements TypedEip1193Provider {
+/** Azguard Wallet provider compatible with Aztec RPC spec */
+class AzguardEip6963Provider implements TypedEip1193Provider {
   readonly #azguard: AzguardClient;
 
   constructor(azguard: AzguardClient) {
