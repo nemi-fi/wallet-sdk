@@ -1,6 +1,6 @@
 {
   "name": "@nemi-fi/wallet-sdk",
-  "version": "0.84.0-next.1",
+  "version": "obsidion-0.84.0-next.1",
   "type": "module",
   "main": "src/exports/index.ts",
   "module": "src/exports/index.ts",
@@ -43,8 +43,10 @@
     "_chore": "pnpm i"
   },
   "devDependencies": {
-    "@aztec/accounts": "0.84.0-alpha-testnet.2",
-    "@aztec/noir-contracts.js": "0.84.0-alpha-testnet.2",
+    "@aztec/accounts": "0.84.0-alpha-testnet.1",
+    "@aztec/noir-contracts.js": "0.84.0-alpha-testnet.1",
+    "@obsidion/bridge": "0.4.2",
+    "@noble/ciphers": "^1.2.1",
     "@types/lodash-es": "^4.17.12",
     "@types/react": "^18.3.11",
     "prettier": "^3.2.5",
@@ -53,11 +55,11 @@
     "vitest": "^3.0.7"
   },
   "dependencies": {
-    "@aztec/aztec.js": "0.84.0-alpha-testnet.2",
-    "@aztec/constants": "0.84.0-alpha-testnet.2",
-    "@aztec/entrypoints": "0.84.0-alpha-testnet.2",
-    "@aztec/protocol-contracts": "0.84.0-alpha-testnet.2",
-    "@aztec/stdlib": "0.84.0-alpha-testnet.2",
+    "@aztec/aztec.js": "0.84.0-alpha-testnet.1",
+    "@aztec/constants": "0.84.0-alpha-testnet.1",
+    "@aztec/entrypoints": "0.84.0-alpha-testnet.1",
+    "@aztec/protocol-contracts": "0.84.0-alpha-testnet.1",
+    "@aztec/stdlib": "0.84.0-alpha-testnet.1",
     "@walletconnect/modal-sign-html": "^2.6.2",
     "@walletconnect/universal-provider": "^2.18.0",
     "@walletconnect/utils": "^2.11.2",
