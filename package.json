@@ -1,6 +1,6 @@
 {
   "name": "@nemi-fi/wallet-sdk",
-  "version": "obsidion-0.84.0-next.1",
+  "version": "0.84.0-obsidion.1",
   "type": "module",
   "main": "src/exports/index.ts",
   "module": "src/exports/index.ts",
