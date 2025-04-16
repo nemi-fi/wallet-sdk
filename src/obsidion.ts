@@ -1,11 +1,11 @@
+import { Bridge, BridgeInterface, KeyPair } from "@obsidion/bridge";
+import { Bytes } from "ox";
 import { persisted } from "svelte-persisted-store";
 import { derived, type Readable, type Writable } from "svelte/store";
 import type { IArtifactStrategy } from "./artifacts.js";
 import type { Eip6963ProviderInfo, IConnector } from "./base.js";
 import type { TypedEip1193Provider } from "./types.js";
 import { METHODS_NOT_REQUIRING_CONFIRMATION } from "./utils.js";
-import { Bridge, BridgeInterface, KeyPair } from "@obsidion/bridge";
-import { hexToBytes } from "@noble/ciphers/utils";
 
 export class ObsidionBridgeConnector implements IConnector {
   readonly info: Eip6963ProviderInfo;
@@ -295,7 +295,7 @@ export class ObsidionBridgeConnector implements IConnector {
         // saveRemotePublicKey(bridgeConnection.getRemotePublicKey())
         saveBridgeSession(
           bridgeConnection.getKeyPair(),
-          hexToBytes(bridgeConnection.getRemotePublicKey()),
+          Bytes.fromHex(bridgeConnection.getRemotePublicKey()),
         );
         // Only add a minimal delay (10ms) for state propagation
         setTimeout(resolve, 10);

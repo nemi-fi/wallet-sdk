@@ -46,7 +46,6 @@
     "@aztec/accounts": "0.85.0",
     "@aztec/noir-contracts.js": "0.85.0",
     "@obsidion/bridge": "0.4.2",
-    "@noble/ciphers": "^1.2.1",
     "@types/lodash-es": "^4.17.12",
     "@types/react": "^18.3.11",
     "prettier": "^3.2.5",
