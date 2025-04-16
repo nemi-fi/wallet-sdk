@@ -1,4 +1,4 @@
-import { Bridge, BridgeInterface, KeyPair } from "@obsidion/bridge";
+import { Bridge, type BridgeInterface, type KeyPair } from "@obsidion/bridge";
 import { Bytes } from "ox";
 import { persisted } from "svelte-persisted-store";
 import { derived, type Readable, type Writable } from "svelte/store";
