@@ -89,3 +89,18 @@ export async function request({
   }
   return await response.json();
 }
+
+export class DefaultMap<K, V> extends Map<K, V> {
+  constructor(private readonly defaultValue: () => V) {
+    super();
+  }
+
+  get(key: K): V {
+    let value = super.get(key);
+    if (value == null) {
+      value = this.defaultValue();
+      this.set(key, value);
+    }
+    return value;
+  }
+}
