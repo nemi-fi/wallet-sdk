@@ -9,7 +9,7 @@
       "import": "./src/exports/index.ts"
     },
     "./*": {
-      "import": "./src/exports/*.js"
+      "import": "./src/exports/*.ts"
     }
   },
   "publishConfig": {
@@ -72,7 +72,7 @@
     "ufo": "^1.5.4"
   },
   "peerDependencies": {
-    "react": "^18.0.0"
+    "react": ">=18.0.0"
   },
   "peerDependenciesMeta": {
     "react": {

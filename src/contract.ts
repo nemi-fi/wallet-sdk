@@ -6,6 +6,7 @@ import {
   type AztecAddress,
   type Contract as AztecContract,
   type DeployMethod as AztecDeployMethod,
+  type AztecNode,
   type ContractArtifact,
   type ContractInstanceWithAddress,
   type FunctionCall,
@@ -19,7 +20,7 @@ import {
 import { DeployMethod, type DeployOptions } from "./contract-deploy.js";
 import type { TransactionRequest } from "./exports/eip1193.js";
 import type { Account } from "./types.js";
-import { lazyValue, type ParametersExceptFirst } from "./utils.js";
+import { DefaultMap, lazyValue, type ParametersExceptFirst } from "./utils.js";
 
 // TODO: consider changing the API to be more viem-like. I.e., use `contract.write.methodName` and `contract.read.methodName`
 export class ContractBase<T extends AztecContract> {
@@ -80,16 +81,30 @@ export class ContractBase<T extends AztecContract> {
   }
 }
 
+const cachedContractInstances = /*#__PURE__*/ new DefaultMap<
+  AztecNode,
+  Map<string, Promise<ContractInstanceWithAddress | undefined>>
+>(() => new Map());
 export class Contract<T extends AztecContract> extends ContractBase<T> {
   static async at<T extends AztecContract = AztecContract>(
     address: AztecAddress,
     artifact: ContractArtifact,
     account: Account,
   ) {
-    const contractInstance = await account.aztecNode.getContract(address);
+    // Get cached contract instance. Resets cache if user reloads the page.
+    // This may be a problem for upgradeable contracts as their "instance" is changed on each upgrade.
+    const addressKey = address.toString().toLowerCase();
+    const aztecNodeCache = cachedContractInstances.get(account.aztecNode);
+    let contractInstancePromise = aztecNodeCache.get(addressKey);
+    if (!contractInstancePromise) {
+      contractInstancePromise = account.aztecNode.getContract(address);
+      aztecNodeCache.set(addressKey, contractInstancePromise);
+    }
+    const contractInstance = await contractInstancePromise;
     if (contractInstance == null) {
       throw new Error(`Contract at ${address} not found`);
     }
+
     return new Contract<T>(contractInstance, artifact, account);
   }
 
