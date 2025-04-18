@@ -295,7 +295,7 @@ export class ObsidionBridgeConnector implements IConnector {
         // saveRemotePublicKey(bridgeConnection.getRemotePublicKey())
         saveBridgeSession(
           bridgeConnection.getKeyPair(),
-          Bytes.fromHex(bridgeConnection.getRemotePublicKey()),
+          Bytes.fromHex(`0x${bridgeConnection.getRemotePublicKey()}`),
         );
         // Only add a minimal delay (10ms) for state propagation
         setTimeout(resolve, 10);
@@ -444,9 +444,6 @@ export class ObsidionBridgeConnector implements IConnector {
               `ROUTER: Removed handler for ${requestId}, ${pendingRequests.size} pending requests remain`,
             );
           }
-          // Handshake messages don't need specific handler processing
-        } else {
-          console.error("ROUTER: Message is not an RPC response:", message);
         }
       } catch (e) {
         console.error("ROUTER: Error processing message:", e);
