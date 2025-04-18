@@ -39,11 +39,14 @@ function App() {
 ## Convert aztec.js Wallet to Account
 
 ```ts
-import { createAztecNodeClient } from "@aztec/aztec.js";
+import { getDeployedTestAccountsWallets } from "@aztec/accounts/testing";
+import { createAztecNodeClient, createPXEClient } from "@aztec/aztec.js";
 import { type Account, Eip1193Account } from "@nemi-fi/wallet-sdk/eip1193";
 
+const sandboxUrl = "http://localhost:8080";
+const aztecNode = createAztecNodeClient(sandboxUrl);
+const pxe = createPXEClient(sandboxUrl);
 const [wallet] = await getDeployedTestAccountsWallets(pxe);
 
-const aztecNode = createAztecNodeClient("http://localhost:8080");
-const account: Account = Eip1193Account.fromAztec(wallet, pxe, aztecNode);
+const account: Account = Eip1193Account.fromAztec(wallet, aztecNode, pxe);
 ```
