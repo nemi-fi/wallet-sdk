@@ -45,7 +45,6 @@
   "devDependencies": {
     "@aztec/accounts": "0.85.0-alpha-testnet.0",
     "@aztec/noir-contracts.js": "0.85.0-alpha-testnet.0",
-    "@obsidion/bridge": "0.4.2",
     "@types/lodash-es": "^4.17.12",
     "@types/react": "^18.3.11",
     "prettier": "^3.2.5",
@@ -59,6 +58,7 @@
     "@aztec/entrypoints": "0.85.0-alpha-testnet.0",
     "@aztec/protocol-contracts": "0.85.0-alpha-testnet.0",
     "@aztec/stdlib": "0.85.0-alpha-testnet.0",
+    "@obsidion/bridge": "0.4.2",
     "@walletconnect/modal-sign-html": "^2.6.2",
     "@walletconnect/universal-provider": "^2.18.0",
     "@walletconnect/utils": "^2.11.2",
