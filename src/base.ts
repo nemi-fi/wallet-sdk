@@ -85,6 +85,8 @@ export class AztecWalletSdk {
 
       this.#account.set(account);
     });
+
+    this.#reconnect();
   }
 
   /**
@@ -106,16 +108,11 @@ export class AztecWalletSdk {
     return await this.#toAccount(address);
   }
 
-  async reconnect() {
+  async #reconnect() {
     if (!this.#connector) {
       return;
     }
-
-    const address = await this.#connector.reconnect();
-    if (!address) {
-      return undefined;
-    }
-    return await this.#toAccount(address);
+    await this.#connector.reconnect();
   }
 
   async disconnect() {
