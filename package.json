@@ -60,7 +60,6 @@
     "@aztec/stdlib": "0.85.0-alpha-testnet.2",
     "@obsidion/bridge": "0.4.2",
     "@walletconnect/modal-sign-html": "^2.6.2",
-    "@walletconnect/universal-provider": "^2.18.0",
     "@walletconnect/utils": "^2.11.2",
     "lodash-es": "^4.17.21",
     "ox": "^0.6.9",
