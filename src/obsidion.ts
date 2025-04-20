@@ -440,9 +440,6 @@ export class ObsidionBridgeConnector implements IConnector {
             // Remove the handler after processing
             pendingRequests.delete(requestId);
             outgoingRequestIds.delete(requestId); // Clean up tracking
-            console.log(
-              `ROUTER: Removed handler for ${requestId}, ${pendingRequests.size} pending requests remain`,
-            );
           }
         }
       } catch (e) {
@@ -476,7 +473,7 @@ export class ObsidionBridgeConnector implements IConnector {
           pendingRequests.delete(id);
           outgoingRequestIds.delete(id); // Clean up tracking
         }
-      }, 300000);
+      }, 500000);
 
       pendingRequests.set(id, { resolve, reject, method, timeout });
     };
