@@ -127,7 +127,6 @@ export type TransactionRequest = {
   authWitnesses?: IntentAction[];
   capsules?: Capsule[];
   registerContracts?: RegisterContract[];
-  registerSenders?: AztecAddress[];
 };
 
 export type RegisterContract =

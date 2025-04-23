@@ -81,10 +81,6 @@ export function createEip1193ProviderFromAccounts(
             ),
           );
 
-          const registerSenders = (request.registerSenders ?? []).map((x) =>
-            AztecAddress.fromString(x),
-          );
-
           const payload = new ExecutionPayload(
             calls,
             authWitnesses,
@@ -106,12 +102,6 @@ export function createEip1193ProviderFromAccounts(
             account,
             account.sendTx(tx.toTx()),
           ).getTxHash();
-
-          // only after the tx is sent, register senders
-          for (const sender of registerSenders) {
-            await pxe.registerSender(sender);
-          }
-
           return txHash.toString();
         },
         aztec_call: async (request) => {
