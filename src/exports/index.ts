@@ -13,6 +13,5 @@ export type {
 export type { TransactionRequest } from "./eip1193.js";
 export * from "../popup.js";
 export * from "../reown.js";
-export * from "../reownPopup.js";
 export type { Account, Wallet } from "../types.js";
 export * from "../wallets.js";

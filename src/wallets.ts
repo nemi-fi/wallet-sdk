@@ -1,19 +1,17 @@
 import { RemoteArtifactStrategy } from "./artifacts.js";
 import type { AztecWalletSdk } from "./base.js";
 import {
-  ReownPopupConnector,
-  type ReownPopupConnectorOptions,
-} from "./reownPopup.js";
+  type ObsidionBridgeConnectorOptions,
+  ObsidionBridgeConnector,
+} from "./obsidion.js";
 
-type PartialReownPopupConnectorOptions = Pick<
-  ReownPopupConnectorOptions,
-  "projectId" | "metadata"
-> &
-  Partial<Pick<ReownPopupConnectorOptions, "walletUrl" | "artifactStrategy">>;
+type PartialObsidionPopupConnectorOptions = Partial<
+  Pick<ObsidionBridgeConnectorOptions, "walletUrl" | "artifactStrategy">
+>;
 
-export function obsidion(params: PartialReownPopupConnectorOptions) {
+export function obsidion(params: PartialObsidionPopupConnectorOptions) {
   return (sdk: AztecWalletSdk) =>
-    new ReownPopupConnector({
+    new ObsidionBridgeConnector({
       ...params,
       fallbackOpenPopup: sdk.fallbackOpenPopup,
       walletUrl: params.walletUrl ?? "https://app.obsidion.xyz",
