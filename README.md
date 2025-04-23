@@ -17,8 +17,8 @@ import { Contract } from "@nemi-fi/wallet-sdk/eip1193";
 class Token extends Contract.fromAztec(TokenContract) {}
 
 const sdk = new AztecWalletSdk({
-	aztecNode: "https://l2.testnet.nemi.fi",
-	connectors: [obsidion()],
+  aztecNode: "https://l2.testnet.nemi.fi",
+  connectors: [obsidion()],
 });
 await sdk.connect("obsidion");
 const account = await sdk.getAccount();
@@ -31,8 +31,8 @@ const token = await Token.at(address, account);
 import { useAccount } from "@nemi-fi/wallet-sdk/react";
 
 function App() {
-	const account = useAccount(sdk);
-	return <div>{account.address.toString()}</div>;
+  const account = useAccount(sdk);
+  return <div>{account.address.toString()}</div>;
 }
 ```
 
