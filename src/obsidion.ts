@@ -208,8 +208,7 @@ export class ObsidionBridgeConnector implements IConnector {
       const abortController = new AbortController();
 
       if (this.#pendingRequestsCount > 20) {
-        console.error("can't send request while pending requests count > 20");
-        return;
+        throw new Error("can't send request while pending requests count > 20");
       }
 
       const bridgeConnection = await this.#getOrCreateConnection();
