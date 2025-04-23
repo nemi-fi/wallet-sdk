@@ -212,8 +212,6 @@ export class ObsidionBridgeConnector implements IConnector {
         return;
       }
 
-      this.#pendingRequestsCount++;
-
       const bridgeConnection = await this.#getOrCreateConnection();
 
       const rpcRequest = {
@@ -222,6 +220,7 @@ export class ObsidionBridgeConnector implements IConnector {
         method: request.method,
         params: request.params || [],
       };
+
       this.#pendingRequestsCount++;
 
       this.#setupMessageRouter(bridgeConnection);
