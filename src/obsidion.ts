@@ -153,7 +153,7 @@ export class ObsidionBridgeConnector implements IConnector {
   }
 
   async reconnect() {
-    console.error("Not implemented");
+    console.log("Reconnect not supported in ObsidionBridgeConnector");
     return undefined;
   }
 
