@@ -29,6 +29,8 @@ export type RpcRequestMap = {
     capsules?: SerializedCapsule[];
     /** Contracts required to send the transaction */
     registerContracts?: SerializedRegisterContract[];
+    /** `AztecAddress[]` of the accounts that should be registered as note senders */
+    registerSenders?: string[];
   }) => string;
 
   // TODO: add aztec_estimateGas

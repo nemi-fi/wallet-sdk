@@ -207,6 +207,7 @@ export class ContractFunctionInteraction {
         authWitnesses: options?.authWitnesses ?? [],
         capsules: options?.capsules ?? [],
         registerContracts: [contract, ...(options?.registerContracts ?? [])],
+        registerSenders: options?.registerSenders ?? [],
       };
     });
   }
@@ -255,7 +256,7 @@ export type IntentAction = {
 
 export type SendOptions = Pick<
   TransactionRequest,
-  "authWitnesses" | "capsules" | "registerContracts"
+  "authWitnesses" | "capsules" | "registerContracts" | "registerSenders"
 >;
 
 type ContractMethod<T extends AztecContract, K extends keyof T["methods"]> = ((
