@@ -304,6 +304,10 @@ async function registerContracts(
         artifact,
       };
 
+      if (typeof process !== "undefined" && process.env.CI) {
+        // TODO: fails CI without this line. More info: https://discord.com/channels/1144692727120937080/1365069273281724486
+        await aztecNode.getNodeInfo();
+      }
       await pxe.registerContract(contract);
       registerContracts.wasRegistered.add(registeringKey);
     }),

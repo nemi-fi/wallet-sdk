@@ -4,6 +4,7 @@ import {
   createAztecNodeClient,
   createPXEClient,
   Fr,
+  waitForNode,
   type AztecNode,
   type PXE,
   type Wallet,
@@ -12,7 +13,6 @@ import { CounterContract } from "@aztec/noir-contracts.js/Counter";
 import { beforeAll, describe, expect, test } from "vitest";
 import { Contract } from "./contract.js";
 import { Eip1193Account } from "./exports/eip1193.js";
-import { noRetryFetch } from "./utils.js";
 
 class Counter extends Contract.fromAztec(CounterContract) {}
 
@@ -22,9 +22,11 @@ describe("wallet-sdk", () => {
   let account: Wallet;
   beforeAll(async () => {
     const url = "http://localhost:8080";
-    const f = await noRetryFetch();
-    pxe = createPXEClient(url, undefined, f);
-    aztecNode = createAztecNodeClient(url, undefined, f);
+    aztecNode = createAztecNodeClient(url);
+    console.log("Waiting for node to be ready");
+    await waitForNode(aztecNode);
+    console.log("Node is ready");
+    pxe = createPXEClient(url);
     account = (await getInitialTestAccountsWallets(pxe))[0]!;
   });
 
