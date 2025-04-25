@@ -10,8 +10,13 @@ export type {
   IntentAction,
   SendOptions,
 } from "../contract.js";
-export type { TransactionRequest } from "./eip1193.js";
 export * from "../popup.js";
 export * from "../reown.js";
 export type { Account, Wallet } from "../types.js";
+export { mergeTransactionRequests } from "../utils.js";
 export * from "../wallets.js";
+export type {
+  RegisterContract,
+  SimulateTransactionRequest,
+  TransactionRequest,
+} from "./eip1193.js";

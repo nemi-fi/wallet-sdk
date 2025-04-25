@@ -35,7 +35,7 @@ import {
 } from "./contract.js";
 import type { TransactionRequest } from "./exports/eip1193.js";
 import type { Account } from "./types.js";
-import { lazyValue } from "./utils.js";
+import { lazyValue, mergeTransactionRequests } from "./utils.js";
 
 export class DeployMethod<TContract extends AztecContract> {
   #contract: () => Promise<ContractInfo>;
@@ -94,11 +94,14 @@ export class DeployMethod<TContract extends AztecContract> {
         );
       }
 
-      return {
-        calls: [...deployment.calls, ...bootstrap.calls],
-        capsules: [...deployment.capsules, ...bootstrap.capsules],
-        registerContracts: [await this.#contract()],
-      } satisfies TransactionRequest;
+      return mergeTransactionRequests([
+        deployment,
+        bootstrap,
+        {
+          calls: [],
+          registerContracts: [await this.#contract()],
+        },
+      ]);
     });
   }
 

@@ -25,7 +25,7 @@ import {
 } from "../serde.js";
 import type { Eip1193Provider, TypedEip1193Provider } from "../types.js";
 
-export { BatchCall, Contract, type IntentAction } from "../contract.js";
+export { BatchCall, Contract } from "../contract.js";
 
 export class Eip1193Account {
   /** The RPC provider to send requests to the wallet. */
@@ -78,8 +78,13 @@ export class Eip1193Account {
 
   // TODO: rename to either `call` or `view` or `readContract` or something more descriptive
   async simulateTransaction(
-    txRequest: Pick<TransactionRequest, "calls" | "registerContracts">,
+    txRequest: SimulateTransactionRequest,
   ): Promise<Fr[][]> {
+    // avoid unnecessary calls
+    if (txRequest.calls.length === 0) {
+      return [];
+    }
+
     const results = await this.provider.request({
       method: "aztec_call",
       params: [
@@ -128,6 +133,11 @@ export type TransactionRequest = {
   capsules?: Capsule[];
   registerContracts?: RegisterContract[];
 };
+
+export type SimulateTransactionRequest = Pick<
+  TransactionRequest,
+  "calls" | "registerContracts"
+>;
 
 export type RegisterContract =
   // for easy API

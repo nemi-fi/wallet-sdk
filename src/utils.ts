@@ -1,5 +1,6 @@
 import type { AztecNode } from "@aztec/aztec.js";
 import type { AztecNodeInput } from "./base.js";
+import type { TransactionRequest } from "./exports/index.js";
 import type { RpcRequestMap } from "./types.js";
 
 const CAIP_PREFIX = "aztec";
@@ -45,18 +46,10 @@ export function resolveAztecNode(
     const { createAztecNodeClient } = await import("@aztec/aztec.js");
     let aztecNode = getAztecNodeFn();
     if (typeof aztecNode === "string" || aztecNode instanceof URL) {
-      aztecNode = createAztecNodeClient(
-        new URL(aztecNode).href,
-        undefined,
-        await noRetryFetch(),
-      );
+      aztecNode = createAztecNodeClient(new URL(aztecNode).href);
     }
     return aztecNode;
   });
-}
-export async function noRetryFetch() {
-  const { makeFetch } = await import("@aztec/aztec.js");
-  return makeFetch([], true) as any; // disable retires. May need to enable in the future for resilience. Probably retries even mutating requests.
 }
 
 export type ParametersExceptFirst<F> = F extends (
@@ -103,4 +96,15 @@ export class DefaultMap<K, V> extends Map<K, V> {
     }
     return value;
   }
+}
+
+export function mergeTransactionRequests(
+  requests: TransactionRequest[],
+): Required<TransactionRequest> {
+  return {
+    calls: requests.flatMap((r) => r.calls),
+    authWitnesses: requests.flatMap((r) => r.authWitnesses ?? []),
+    capsules: requests.flatMap((r) => r.capsules ?? []),
+    registerContracts: requests.flatMap((r) => r.registerContracts ?? []),
+  };
 }
