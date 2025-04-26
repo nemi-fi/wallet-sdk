@@ -79,6 +79,8 @@ export type RpcEventsMap = {
 export type SerializedFunctionCall = {
   /** `AztecAddress` of the contract */
   to: string;
+  /** Name of the function to call */
+  name: string;
   // TODO: replace selector and args with encoded `data` similar to Ethereum?
   /** `FunctionSelector` of the contract method */
   selector: string;
