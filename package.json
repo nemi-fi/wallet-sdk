@@ -33,12 +33,13 @@
     "src"
   ],
   "scripts": {
-    "dev": "turbo _chore && tsc -w",
-    "build": "turbo _chore && rm -rf dist && tsc",
+    "dev": "pnpm _chore && tsc -w",
+    "build": "pnpm _chore && rm -rf dist && tsc",
     "test:unit": "vitest run",
     "test:lint": "tsc --noEmit --emitDeclarationOnly false && prettier --check .",
     "test:lint:fix": "prettier --write .",
-    "prepublishOnly": "turbo test && pnpm build"
+    "prepublishOnly": "pnpm test && pnpm build",
+    "_chore": "pnpm i"
   },
   "devDependencies": {
     "@aztec/accounts": "0.85.0-alpha-testnet.2",
@@ -56,7 +57,7 @@
     "@aztec/entrypoints": "0.85.0-alpha-testnet.2",
     "@aztec/protocol-contracts": "0.85.0-alpha-testnet.2",
     "@aztec/stdlib": "0.85.0-alpha-testnet.2",
-    "@obsidion/bridge": "0.5.0",
+    "@obsidion/bridge": "0.6.0",
     "@walletconnect/modal-sign-html": "^2.6.2",
     "@walletconnect/utils": "^2.11.2",
     "lodash-es": "^4.17.21",
