@@ -161,6 +161,7 @@ export interface Account
     | "aztecNode"
     | "sendTransaction"
     | "simulateTransaction"
+    | "setPublicAuthWit"
   > {}
 /**
  * @deprecated use {@link Account} instead

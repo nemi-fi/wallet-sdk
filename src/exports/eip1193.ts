@@ -1,13 +1,17 @@
 import {
   AztecAddress,
+  computeAuthWitMessageHash,
   Fr,
+  FunctionType,
   SentTx,
   TxHash,
   type AztecNode,
   type Capsule,
   type ContractArtifact,
   type FeePaymentMethod,
+  type FunctionAbi,
   type FunctionCall,
+  type IntentInnerHash,
   type PXE,
   type Wallet,
 } from "@aztec/aztec.js";
@@ -16,7 +20,8 @@ import {
   LiteralArtifactStrategy,
   type IArtifactStrategy,
 } from "../artifacts.js";
-import type { Contract, IntentAction } from "../contract.js";
+import type { Contract, IntentAction, SendOptions } from "../contract.js";
+import { ContractFunctionInteraction } from "../contract.js";
 import { createEip1193ProviderFromAccounts } from "../createEip1193ProviderFromAccounts.js";
 import {
   encodeCapsules,
@@ -24,6 +29,8 @@ import {
   encodeRegisterContracts,
 } from "../serde.js";
 import type { Eip1193Provider, TypedEip1193Provider } from "../types.js";
+import type { ABIParameterVisibility } from "@aztec/stdlib/abi";
+import { getCanonicalAuthRegistry } from "@aztec/protocol-contracts/auth-registry";
 
 export { BatchCall, Contract } from "../contract.js";
 
@@ -124,6 +131,58 @@ export class Eip1193Account {
       aztecNode,
       artifactStrategy,
     );
+  }
+
+  public async setPublicAuthWit(
+    messageHashOrIntent: Fr | Buffer | IntentInnerHash | IntentAction,
+    authorized: boolean,
+    options?: SendOptions,
+  ): Promise<ContractFunctionInteraction> {
+    let messageHash: Fr;
+    if (Buffer.isBuffer(messageHashOrIntent)) {
+      messageHash = Fr.fromBuffer(messageHashOrIntent);
+    } else if (messageHashOrIntent instanceof Fr) {
+      messageHash = messageHashOrIntent;
+    } else {
+      const chainId = new Fr(await this.aztecNode.getChainId());
+      const version = new Fr(await this.aztecNode.getVersion());
+      messageHash = await computeAuthWitMessageHash(messageHashOrIntent, {
+        chainId,
+        version,
+      });
+    }
+
+    return new ContractFunctionInteraction(
+      await getCanonicalAuthRegistry(),
+      this,
+      this.getSetAuthorizedAbi(),
+      [messageHash, authorized],
+      options,
+    );
+  }
+
+  private getSetAuthorizedAbi(): FunctionAbi {
+    return {
+      name: "set_authorized",
+      isInitializer: false,
+      functionType: FunctionType.PUBLIC,
+      isInternal: true,
+      isStatic: false,
+      parameters: [
+        {
+          name: "message_hash",
+          type: { kind: "field" },
+          visibility: "private" as ABIParameterVisibility,
+        },
+        {
+          name: "authorize",
+          type: { kind: "boolean" },
+          visibility: "private" as ABIParameterVisibility,
+        },
+      ],
+      returnTypes: [],
+      errorTypes: {},
+    };
   }
 }
 
