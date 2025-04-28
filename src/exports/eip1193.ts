@@ -15,6 +15,8 @@ import {
   type PXE,
   type Wallet,
 } from "@aztec/aztec.js";
+import { getCanonicalAuthRegistry } from "@aztec/protocol-contracts/auth-registry";
+import type { ABIParameterVisibility } from "@aztec/stdlib/abi";
 import type { ContractInstance } from "@aztec/stdlib/contract";
 import {
   LiteralArtifactStrategy,
@@ -29,8 +31,6 @@ import {
   encodeRegisterContracts,
 } from "../serde.js";
 import type { Eip1193Provider, TypedEip1193Provider } from "../types.js";
-import type { ABIParameterVisibility } from "@aztec/stdlib/abi";
-import { getCanonicalAuthRegistry } from "@aztec/protocol-contracts/auth-registry";
 
 export { BatchCall, Contract } from "../contract.js";
 

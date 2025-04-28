@@ -85,22 +85,36 @@ const cachedContractInstances = /*#__PURE__*/ new DefaultMap<
   AztecNode,
   Map<string, Promise<ContractInstanceWithAddress | undefined>>
 >(() => new Map());
+
+// TODO: remove caching?
+/**
+ * Caches contract instances for a given node to avoid re-fetching the same contract instance. The cache is reset if the user reloads the page.
+ * This may be a problem for upgradeable contracts as their "instance" is changed on each upgrade.
+ */
+export function experimental_getInstanceCached(
+  address: AztecAddress,
+  node: AztecNode,
+) {
+  const addressKey = address.toString().toLowerCase();
+  const aztecNodeCache = cachedContractInstances.get(node);
+  let contractInstancePromise = aztecNodeCache.get(addressKey);
+  if (!contractInstancePromise) {
+    contractInstancePromise = node.getContract(address);
+    aztecNodeCache.set(addressKey, contractInstancePromise);
+  }
+  return contractInstancePromise;
+}
+
 export class Contract<T extends AztecContract> extends ContractBase<T> {
   static async at<T extends AztecContract = AztecContract>(
     address: AztecAddress,
     artifact: ContractArtifact,
     account: Account,
   ) {
-    // Get cached contract instance. Resets cache if user reloads the page.
-    // This may be a problem for upgradeable contracts as their "instance" is changed on each upgrade.
-    const addressKey = address.toString().toLowerCase();
-    const aztecNodeCache = cachedContractInstances.get(account.aztecNode);
-    let contractInstancePromise = aztecNodeCache.get(addressKey);
-    if (!contractInstancePromise) {
-      contractInstancePromise = account.aztecNode.getContract(address);
-      aztecNodeCache.set(addressKey, contractInstancePromise);
-    }
-    const contractInstance = await contractInstancePromise;
+    const contractInstance = await experimental_getInstanceCached(
+      address,
+      account.aztecNode,
+    );
     if (contractInstance == null) {
       throw new Error(`Contract at ${address} not found`);
     }

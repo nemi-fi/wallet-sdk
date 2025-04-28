@@ -255,7 +255,7 @@ async function getDefaultFee(
   paymentMethod ??= new FeeJuicePaymentMethod(account.getAddress());
   return {
     gasSettings: GasSettings.default({
-      maxFeesPerGas: await account.getCurrentBaseFees(),
+      maxFeesPerGas: (await account.getCurrentBaseFees()).mul(2n), // TODO: find a better fee strategy
     }),
     paymentMethod,
   };
