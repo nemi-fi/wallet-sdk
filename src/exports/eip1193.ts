@@ -134,13 +134,13 @@ export class Eip1193Account {
   }
 
   public async setPublicAuthWit(
-    messageHashOrIntent: Fr | Buffer | IntentInnerHash | IntentAction,
+    messageHashOrIntent: Fr | Uint8Array | IntentInnerHash | IntentAction,
     authorized: boolean,
     options?: SendOptions,
   ): Promise<ContractFunctionInteraction> {
     let messageHash: Fr;
-    if (Buffer.isBuffer(messageHashOrIntent)) {
-      messageHash = Fr.fromBuffer(messageHashOrIntent);
+    if (messageHashOrIntent instanceof Uint8Array) {
+      messageHash = Fr.fromBuffer(Buffer.from(messageHashOrIntent));
     } else if (messageHashOrIntent instanceof Fr) {
       messageHash = messageHashOrIntent;
     } else {
