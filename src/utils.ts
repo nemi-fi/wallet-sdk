@@ -4,7 +4,7 @@ import type { TransactionRequest } from "./exports/index.js";
 import type { RpcRequestMap } from "./types.js";
 
 const CAIP_PREFIX = "aztec";
-const AZTEC_CHAIN_ID = "1";
+const AZTEC_CHAIN_ID = "418719321"; // TODO
 export const CAIP = {
   chain() {
     return `${CAIP_PREFIX}:${AZTEC_CHAIN_ID}`;

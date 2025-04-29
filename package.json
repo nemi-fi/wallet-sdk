@@ -1,6 +1,6 @@
 {
   "name": "@nemi-fi/wallet-sdk",
-  "version": "0.85.0-next.3",
+  "version": "0.85.0-next.4",
   "type": "module",
   "main": "src/exports/index.ts",
   "module": "src/exports/index.ts",
@@ -33,13 +33,12 @@
     "src"
   ],
   "scripts": {
-    "dev": "pnpm _chore && tsc -w",
-    "build": "pnpm _chore && rm -rf dist && tsc",
+    "dev": "tsc -w",
+    "build": "rm -rf dist && tsc",
     "test:unit": "vitest run",
     "test:lint": "tsc --noEmit --emitDeclarationOnly false && prettier --check .",
     "test:lint:fix": "prettier --write .",
-    "prepublishOnly": "pnpm test && pnpm build",
-    "_chore": "pnpm i"
+    "prepublishOnly": "turbo test && turbo build"
   },
   "devDependencies": {
     "@aztec/accounts": "0.85.0-alpha-testnet.2",
