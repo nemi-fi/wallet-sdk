@@ -1,6 +1,6 @@
 {
   "name": "@nemi-fi/wallet-sdk",
-  "version": "0.85.0-next.4",
+  "version": "0.85.0-next.5",
   "type": "module",
   "main": "src/exports/index.ts",
   "module": "src/exports/index.ts",
@@ -54,7 +54,9 @@
     "@aztec/aztec.js": "0.85.0-alpha-testnet.2",
     "@aztec/constants": "0.85.0-alpha-testnet.2",
     "@aztec/entrypoints": "0.85.0-alpha-testnet.2",
+    "@aztec/foundation": "0.85.0-alpha-testnet.2",
     "@aztec/protocol-contracts": "0.85.0-alpha-testnet.2",
+    "@aztec/noir-protocol-circuits-types": "0.85.0-alpha-testnet.2",
     "@aztec/stdlib": "0.85.0-alpha-testnet.2",
     "@obsidion/bridge": "0.6.0",
     "@walletconnect/modal-sign-html": "^2.6.2",

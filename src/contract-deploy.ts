@@ -34,7 +34,7 @@ import {
   type ContractInfo,
 } from "./contract.js";
 import type { TransactionRequest } from "./exports/eip1193.js";
-import type { Account } from "./types.js";
+import type { Account } from "./exports/index.js";
 import { lazyValue, mergeTransactionRequests } from "./utils.js";
 
 export class DeployMethod<TContract extends AztecContract> {

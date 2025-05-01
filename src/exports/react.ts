@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { AztecWalletSdk } from "../base.js";
-import type { Account } from "../types.js";
+import type { Account } from "../exports/index.js";
 
 export function useAccount(wallet: Pick<AztecWalletSdk, "accountObservable">) {
   const [account, setAccount] = useState<Account | undefined>(undefined);

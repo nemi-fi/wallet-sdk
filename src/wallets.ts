@@ -9,7 +9,7 @@ type PartialObsidionPopupConnectorOptions = Partial<
   Pick<ObsidionBridgeConnectorOptions, "walletUrl" | "artifactStrategy">
 >;
 
-export function obsidion(params: PartialObsidionPopupConnectorOptions) {
+export function obsidion(params: PartialObsidionPopupConnectorOptions = {}) {
   return (sdk: AztecWalletSdk) =>
     new ObsidionBridgeConnector({
       ...params,

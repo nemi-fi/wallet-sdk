@@ -16,8 +16,9 @@ import {
   type IArtifactStrategy,
 } from "./artifacts.js";
 import type { FallbackOpenPopup } from "./Communicator.js";
+import type { Account } from "./exports/index.js";
 import { InjectedConnector, requestEip6963Providers } from "./injected.js";
-import type { Account, Eip1193Provider, RpcRequestMap } from "./types.js";
+import type { Eip1193Provider, RpcRequestMap } from "./types.js";
 import { resolveAztecNode } from "./utils.js";
 
 export class AztecWalletSdk {

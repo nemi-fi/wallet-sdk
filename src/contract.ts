@@ -14,12 +14,13 @@ import {
 } from "@aztec/aztec.js";
 import {
   ContractArtifactSchema,
+  FunctionType,
   getAllFunctionAbis,
   type FunctionAbi,
 } from "@aztec/stdlib/abi";
 import { DeployMethod, type DeployOptions } from "./contract-deploy.js";
 import type { TransactionRequest } from "./exports/eip1193.js";
-import type { Account } from "./types.js";
+import type { Account } from "./exports/index.js";
 import { DefaultMap, lazyValue, type ParametersExceptFirst } from "./utils.js";
 
 // TODO: consider changing the API to be more viem-like. I.e., use `contract.write.methodName` and `contract.read.methodName`
@@ -230,9 +231,12 @@ export class ContractFunctionInteraction {
   }
 
   async simulate() {
-    const results = await this.#account.simulateTransaction(
-      await this.#txRequest(),
-    );
+    const txRequest = await this.#txRequest();
+    const results =
+      this.#functionAbi.functionType === FunctionType.PUBLIC
+        ? await this.#account.simulatePublicCalls(txRequest.calls)
+        : await this.#account.simulateTransaction(txRequest);
+
     if (results.length !== 1) {
       throw new Error(`invalid results length: ${results.length}`);
     }

@@ -1,4 +1,4 @@
-import type { Eip1193Account } from "./exports/eip1193.js";
+import type { BaseAccount } from "./account.js";
 
 export type RpcRequestMap = {
   /**
@@ -152,17 +152,18 @@ export interface TypedEip1193Provider {
   ): Promise<ReturnType<RpcRequestMap[M]>>;
 }
 
-// TODO: list all the methods instead of inheriting from Eip1193Account
 export interface Account
   extends Pick<
-    Eip1193Account,
+    BaseAccount,
     | "address"
     | "getAddress"
     | "aztecNode"
     | "sendTransaction"
     | "simulateTransaction"
+    | "simulatePublicCalls"
     | "setPublicAuthWit"
   > {}
+
 /**
  * @deprecated use {@link Account} instead
  * @example
