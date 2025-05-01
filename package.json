@@ -58,7 +58,7 @@
     "@aztec/protocol-contracts": "0.85.0-alpha-testnet.2",
     "@aztec/noir-protocol-circuits-types": "0.85.0-alpha-testnet.2",
     "@aztec/stdlib": "0.85.0-alpha-testnet.2",
-    "@obsidion/bridge": "0.6.0",
+    "@obsidion/bridge": "0.7.0",
     "@walletconnect/modal-sign-html": "^2.6.2",
     "@walletconnect/utils": "^2.11.2",
     "lodash-es": "^4.17.21",
