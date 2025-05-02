@@ -414,7 +414,7 @@ class AzguardClient {
           clearInterval(interval);
           resolve(undefined);
         }
-      }, 30);
+      }, 100);
     })) as any;
     if (!windowAzguard) {
       return undefined;
