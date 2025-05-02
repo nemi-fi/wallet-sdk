@@ -80,9 +80,9 @@ class AzguardEip6963Provider implements TypedEip1193Provider {
       const optionalPermissions: unknown[] = [
         {
           chains: [
+            "aztec:11155111", // testnet
             "aztec:1337", // devnet
-            "aztec:31337", // local sandbox
-            "aztec:41337", // azguard's shared sandbox
+            "aztec:31337", // sandbox
           ],
           methods: [
             "register_contract",
@@ -404,7 +404,19 @@ class AzguardClient {
   };
 
   async #init() {
-    const windowAzguard = (window as any).azguard;
+    const windowAzguard = await new Promise((resolve) => {
+      let retries = 10;
+      const interval = setInterval(() => {
+          if ((window as any).azguard) {
+              clearInterval(interval);
+              resolve((window as any).azguard);
+          }
+          else if (--retries === 0) {
+              clearInterval(interval);
+              resolve(undefined);
+          }
+      }, 30);
+    }) as any;
     if (!windowAzguard) {
       return undefined;
     }
