@@ -17,7 +17,7 @@ import { Contract } from "@nemi-fi/wallet-sdk/eip1193";
 class Token extends Contract.fromAztec(TokenContract) {}
 
 const sdk = new AztecWalletSdk({
-  aztecNode: "https://l2.testnet.nemi.fi",
+  aztecNode: "http://localhost:8080",
   connectors: [obsidion()],
 });
 await sdk.connect("obsidion");
