@@ -404,19 +404,18 @@ class AzguardClient {
   };
 
   async #init() {
-    const windowAzguard = await new Promise((resolve) => {
+    const windowAzguard = (await new Promise((resolve) => {
       let retries = 10;
       const interval = setInterval(() => {
-          if ((window as any).azguard) {
-              clearInterval(interval);
-              resolve((window as any).azguard);
-          }
-          else if (--retries === 0) {
-              clearInterval(interval);
-              resolve(undefined);
-          }
+        if ((window as any).azguard) {
+          clearInterval(interval);
+          resolve((window as any).azguard);
+        } else if (--retries === 0) {
+          clearInterval(interval);
+          resolve(undefined);
+        }
       }, 30);
-    }) as any;
+    })) as any;
     if (!windowAzguard) {
       return undefined;
     }
