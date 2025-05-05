@@ -1,10 +1,12 @@
-import { Hex } from "ox";
-import { assert } from "ts-essentials";
 import type { Eip6963ProviderDetail } from "./base.js";
 import {
   AZTEC_EIP6963_ANNOUNCE_PROVIDER,
   AZTEC_EIP6963_REQUEST_PROVIDERS,
 } from "./injected.js";
+import {
+  decodeContractArtifact,
+  decodeContractInstance,
+} from "./serde.js";
 import type {
   RpcRequestMap,
   SerializedContractArtifact,
@@ -120,15 +122,15 @@ class AzguardEip6963Provider implements TypedEip1193Provider {
       const operations = [];
 
       if (request.registerContracts) {
-        operations.push(
-          ...request.registerContracts.map((x) => ({
+        for (const contract of request.registerContracts) {
+          operations.push({
             kind: "register_contract",
             chain,
-            address: x.address,
-            instance: getInstance(x.instance, x.address),
-            artifact: getArtifact(x.artifact),
-          })),
-        );
+            address: contract.address,
+            instance: await getInstance(contract.instance, contract.address),
+            artifact: await getArtifact(contract.artifact),
+          });
+        }
       }
 
       const actions = [];
@@ -194,15 +196,15 @@ class AzguardEip6963Provider implements TypedEip1193Provider {
       const operations = [];
 
       if (request.registerContracts) {
-        operations.push(
-          ...request.registerContracts.map((x) => ({
+        for (const contract of request.registerContracts) {
+          operations.push({
             kind: "register_contract",
             chain,
-            address: x.address,
-            instance: getInstance(x.instance, x.address),
-            artifact: getArtifact(x.artifact),
-          })),
-        );
+            address: contract.address,
+            instance: await getInstance(contract.instance, contract.address),
+            artifact: await getArtifact(contract.artifact),
+          });
+        }
       }
 
       operations.push({
@@ -236,26 +238,18 @@ class AzguardEip6963Provider implements TypedEip1193Provider {
   };
 }
 
-function getInstance(instance: SerializedContractInstance | undefined, address: string) {
+async function getInstance(instance: SerializedContractInstance | undefined, address: string) {
   if (!instance) {
     return undefined;
   }
-  return ({
-    ...instance,
-    version: Hex.toNumber(instance.version),
-    address,
-  });
+  return { ...await decodeContractInstance(instance), address };
 }
 
-function getArtifact(artifact: SerializedContractArtifact | undefined) {
+async function getArtifact(artifact: SerializedContractArtifact | undefined) {
   if (!artifact) {
     return undefined;
   }
-  assert(
-    artifact.type === "literal",
-    "azguard only supports literal artifacts strategy",
-  );
-  return artifact.literal;
+  return { ...await decodeContractArtifact(artifact) };
 }
 
 // Note: not depending on azguard npm package because this file will be nuked anyway
