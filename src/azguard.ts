@@ -1,3 +1,4 @@
+import { Hex } from "ox";
 import { assert } from "ts-essentials";
 import type { Eip6963ProviderDetail } from "./base.js";
 import {
@@ -7,6 +8,7 @@ import {
 import type {
   RpcRequestMap,
   SerializedContractArtifact,
+  SerializedContractInstance,
   TypedEip1193Provider,
 } from "./types.js";
 import { lazyValue } from "./utils.js";
@@ -123,9 +125,7 @@ class AzguardEip6963Provider implements TypedEip1193Provider {
             kind: "register_contract",
             chain,
             address: x.address,
-            instance: x.instance
-              ? { ...x.instance, address: x.address }
-              : undefined,
+            instance: getInstance(x.instance, x.address),
             artifact: getArtifact(x.artifact),
           })),
         );
@@ -199,9 +199,7 @@ class AzguardEip6963Provider implements TypedEip1193Provider {
             kind: "register_contract",
             chain,
             address: x.address,
-            instance: x.instance
-              ? { ...x.instance, address: x.address }
-              : undefined,
+            instance: getInstance(x.instance, x.address),
             artifact: getArtifact(x.artifact),
           })),
         );
@@ -236,6 +234,17 @@ class AzguardEip6963Provider implements TypedEip1193Provider {
   #accountsChanged = async () => {
     // TODO: emit RpcEventsMap.accountsChanged(await this.#aztec_accounts())
   };
+}
+
+function getInstance(instance: SerializedContractInstance | undefined, address: string) {
+  if (!instance) {
+    return undefined;
+  }
+  return ({
+    ...instance,
+    version: Hex.toNumber(instance.version),
+    address,
+  });
 }
 
 function getArtifact(artifact: SerializedContractArtifact | undefined) {
