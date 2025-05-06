@@ -3,17 +3,14 @@ import {
   AZTEC_EIP6963_ANNOUNCE_PROVIDER,
   AZTEC_EIP6963_REQUEST_PROVIDERS,
 } from "./injected.js";
-import {
-  decodeContractArtifact,
-  decodeContractInstance,
-} from "./serde.js";
+import { decodeContractInstance } from "./serde.js";
 import type {
   RpcRequestMap,
   SerializedContractArtifact,
   SerializedContractInstance,
   TypedEip1193Provider,
 } from "./types.js";
-import { lazyValue } from "./utils.js";
+import { lazyValue, request } from "./utils.js";
 
 /**
  * @deprecated nuke this and this whole file when azguard properly implements EIP-6963 & RPC spec
@@ -249,7 +246,11 @@ async function getArtifact(artifact: SerializedContractArtifact | undefined) {
   if (!artifact) {
     return undefined;
   }
-  return { ...await decodeContractArtifact(artifact) };
+  if (artifact.type === "url") {
+    const literal = await request({ method: "GET", url: artifact.url });
+    artifact = { type: "literal", literal };
+  }
+  return artifact.literal;
 }
 
 // Note: not depending on azguard npm package because this file will be nuked anyway
