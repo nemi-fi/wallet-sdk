@@ -63,6 +63,12 @@ export class AztecWalletSdk {
       );
     });
 
+    this.#currentConnector.subscribe((connector) => {
+      if (connector) {
+        this.#reconnect();
+      }
+    });
+
     const currentAddress = reactive(($) => {
       const connector = $(this.#currentConnector);
       if (!connector) {
