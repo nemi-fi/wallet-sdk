@@ -1,5 +1,6 @@
 import { Bridge, type BridgeInterface, type KeyPair } from "@obsidion/bridge";
 import { Bytes } from "ox";
+import { joinURL } from "ufo";
 import { persisted } from "svelte-persisted-store";
 import { derived, type Readable, type Writable } from "svelte/store";
 import type { IArtifactStrategy } from "./artifacts.js";
@@ -17,6 +18,7 @@ export class ObsidionBridgeConnector implements IConnector {
   #connectionInitPromise: Promise<BridgeInterface> | null = null;
   #messageHandlerInitialized = false;
   #iframe: HTMLIFrameElement | null = null;
+  #isInIframe: boolean = false;
   #iframeReady: boolean = false;
   #registerRequest: (
     id: string,
@@ -34,7 +36,7 @@ export class ObsidionBridgeConnector implements IConnector {
 
   constructor(params: ObsidionBridgeConnectorOptions) {
     this.info = { uuid: params.uuid, name: params.name, icon: params.icon };
-    this.walletUrl = params.walletUrl + "/sign";
+    this.walletUrl = joinURL(params.walletUrl, "/sign");
     this.artifactStrategy = params.artifactStrategy;
     this.#fallbackOpenPopup = params.fallbackOpenPopup;
 
@@ -56,9 +58,17 @@ export class ObsidionBridgeConnector implements IConnector {
 
     // Create and append the invisible iframe
     console.log("Creating invisible iframe: ", currentAddress);
-    if (currentAddress) {
+
+    this.#isInIframe = false;
+    try {
+      this.#isInIframe = window.self !== window.top;
+    } catch (e) {
+      this.#isInIframe = true;
+    }
+
+    if (currentAddress && this.#isInIframe) {
       this.#createInvisibleIframe(
-        params.iframeUrl ?? params.walletUrl + "/iframe",
+        params.iframeUrl ?? joinURL(params.walletUrl, "/iframe"),
       );
     }
   }
