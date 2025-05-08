@@ -222,8 +222,9 @@ export function createEip1193ProviderFromAccounts(
               // For public functions we retrieve the first values directly from the public output.
               const rawReturnValues =
                 call.type == FunctionType.PRIVATE
-                  ? simulatedTx.getPrivateReturnValues()?.nested?.[resultIndex]
-                      ?.values
+                  ? simulatedTx.getPrivateReturnValues()?.nested?.[
+                      resultIndex + 1 // +1 to skip the account entrypoint
+                    ]?.values
                   : simulatedTx.getPublicReturnValues()[resultIndex]?.values;
               results[callIndex] = rawReturnValues ?? [];
             }
@@ -276,7 +277,9 @@ async function registerContracts(
       }
 
       const c = await decodeRegisterContract(data);
+      console.log("getting instance for registering", c);
       const instance = c.instance ?? (await aztecNode.getContract(c.address));
+      console.log("got instance", instance);
       if (!instance) {
         // fails the whole RPC call if instance not found
         throw new Error(`no contract instance found for ${c.address}`);
