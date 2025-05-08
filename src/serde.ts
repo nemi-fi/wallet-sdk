@@ -164,7 +164,7 @@ function encodeContractInstance(
   };
 }
 
-async function decodeContractInstance(
+export async function decodeContractInstance(
   data: SerializedContractInstance,
 ): Promise<ContractInstance> {
   const { AztecAddress, Fr, PublicKeys } = await import("@aztec/aztec.js");
@@ -182,7 +182,7 @@ async function decodeContractInstance(
 }
 
 const cachedArtifactDownloads = new Map<string, Promise<ContractArtifact>>();
-async function decodeContractArtifact(
+export async function decodeContractArtifact(
   data: SerializedContractArtifact,
 ): Promise<ContractArtifact> {
   if (data.type === "url") {

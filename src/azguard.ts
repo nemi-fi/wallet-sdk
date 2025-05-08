@@ -1,15 +1,16 @@
-import { assert } from "ts-essentials";
 import type { Eip6963ProviderDetail } from "./base.js";
 import {
   AZTEC_EIP6963_ANNOUNCE_PROVIDER,
   AZTEC_EIP6963_REQUEST_PROVIDERS,
 } from "./injected.js";
+import { decodeContractInstance } from "./serde.js";
 import type {
   RpcRequestMap,
   SerializedContractArtifact,
+  SerializedContractInstance,
   TypedEip1193Provider,
 } from "./types.js";
-import { lazyValue } from "./utils.js";
+import { lazyValue, request } from "./utils.js";
 
 /**
  * @deprecated nuke this and this whole file when azguard properly implements EIP-6963 & RPC spec
@@ -80,9 +81,9 @@ class AzguardEip6963Provider implements TypedEip1193Provider {
       const optionalPermissions: unknown[] = [
         {
           chains: [
+            "aztec:11155111", // testnet
             "aztec:1337", // devnet
-            "aztec:31337", // local sandbox
-            "aztec:41337", // azguard's shared sandbox
+            "aztec:31337", // sandbox
           ],
           methods: [
             "register_contract",
@@ -118,17 +119,15 @@ class AzguardEip6963Provider implements TypedEip1193Provider {
       const operations = [];
 
       if (request.registerContracts) {
-        operations.push(
-          ...request.registerContracts.map((x) => ({
+        for (const contract of request.registerContracts) {
+          operations.push({
             kind: "register_contract",
             chain,
-            address: x.address,
-            instance: x.instance
-              ? { ...x.instance, address: x.address }
-              : undefined,
-            artifact: getArtifact(x.artifact),
-          })),
-        );
+            address: contract.address,
+            instance: await getInstance(contract.instance, contract.address),
+            artifact: await getArtifact(contract.artifact),
+          });
+        }
       }
 
       const actions = [];
@@ -194,17 +193,15 @@ class AzguardEip6963Provider implements TypedEip1193Provider {
       const operations = [];
 
       if (request.registerContracts) {
-        operations.push(
-          ...request.registerContracts.map((x) => ({
+        for (const contract of request.registerContracts) {
+          operations.push({
             kind: "register_contract",
             chain,
-            address: x.address,
-            instance: x.instance
-              ? { ...x.instance, address: x.address }
-              : undefined,
-            artifact: getArtifact(x.artifact),
-          })),
-        );
+            address: contract.address,
+            instance: await getInstance(contract.instance, contract.address),
+            artifact: await getArtifact(contract.artifact),
+          });
+        }
       }
 
       operations.push({
@@ -238,14 +235,24 @@ class AzguardEip6963Provider implements TypedEip1193Provider {
   };
 }
 
-function getArtifact(artifact: SerializedContractArtifact | undefined) {
+async function getInstance(
+  instance: SerializedContractInstance | undefined,
+  address: string,
+) {
+  if (!instance) {
+    return undefined;
+  }
+  return { ...(await decodeContractInstance(instance)), address };
+}
+
+async function getArtifact(artifact: SerializedContractArtifact | undefined) {
   if (!artifact) {
     return undefined;
   }
-  assert(
-    artifact.type === "literal",
-    "azguard only supports literal artifacts strategy",
-  );
+  if (artifact.type === "url") {
+    const literal = await request({ method: "GET", url: artifact.url });
+    artifact = { type: "literal", literal };
+  }
   return artifact.literal;
 }
 
@@ -404,7 +411,18 @@ class AzguardClient {
   };
 
   async #init() {
-    const windowAzguard = (window as any).azguard;
+    const windowAzguard = (await new Promise((resolve) => {
+      let retries = 10;
+      const interval = setInterval(() => {
+        if ((window as any).azguard) {
+          clearInterval(interval);
+          resolve((window as any).azguard);
+        } else if (--retries === 0) {
+          clearInterval(interval);
+          resolve(undefined);
+        }
+      }, 100);
+    })) as any;
     if (!windowAzguard) {
       return undefined;
     }
