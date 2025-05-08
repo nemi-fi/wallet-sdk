@@ -58,15 +58,16 @@ export class AztecWalletSdk {
     );
     this.#currentConnector = reactive(($) => {
       const currentConnectorUuid = $(this.#currentConnectorUuid);
-      return $(this.#connectors).find(
+      const connector = $(this.#connectors).find(
         (a) => a.info.uuid === currentConnectorUuid,
       );
-    });
 
-    this.#currentConnector.subscribe((connector) => {
+      // side effect. Is this correct?
       if (connector) {
-        this.#reconnect();
+        connector.reconnect();
       }
+
+      return connector;
     });
 
     const currentAddress = reactive(($) => {
