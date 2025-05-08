@@ -235,11 +235,14 @@ class AzguardEip6963Provider implements TypedEip1193Provider {
   };
 }
 
-async function getInstance(instance: SerializedContractInstance | undefined, address: string) {
+async function getInstance(
+  instance: SerializedContractInstance | undefined,
+  address: string,
+) {
   if (!instance) {
     return undefined;
   }
-  return { ...await decodeContractInstance(instance), address };
+  return { ...(await decodeContractInstance(instance)), address };
 }
 
 async function getArtifact(artifact: SerializedContractArtifact | undefined) {
