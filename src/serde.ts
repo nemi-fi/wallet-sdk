@@ -22,6 +22,7 @@ import { request } from "./utils.js";
 export function encodeFunctionCall(call: FunctionCall) {
   return {
     to: call.to.toString(),
+    name: call.name,
     selector: call.selector.toString(),
     args: call.args.map((x) => x.toString()),
   };
@@ -37,6 +38,12 @@ export async function decodeFunctionCall(pxe: PXE, fc: SerializedFunctionCall) {
   const args = fc.args.map((x) => Fr.fromHexString(x));
 
   const artifact = await getContractFunctionAbiFromPxe(pxe, to, selector);
+
+  if (fc.name !== artifact.name) {
+    throw new Error(
+      `Function call name mismatch: ${fc.name} !== ${artifact.name}`,
+    );
+  }
 
   const call: FunctionCall = {
     to,
