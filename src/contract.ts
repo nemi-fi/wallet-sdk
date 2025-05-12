@@ -140,16 +140,23 @@ export class Contract<T extends AztecContract> extends ContractBase<T> {
         account: Account,
         ...args: ParametersExceptFirst<TClass["deploy"]>
       ) {
-        return this.deployWithOpts({ account }, ...args);
+        return new DeployMethod(
+          PublicKeys.default(),
+          account,
+          this.artifact,
+          this.at,
+          args,
+          {},
+        );
       }
 
-      static deployWithOpts(
+      static deployWithOpts<M extends keyof T["methods"] & string>(
         options: DeployOptions & {
           account: Account;
           publicKeys?: PublicKeys;
-          method?: keyof T["methods"] & string;
+          method?: M;
         },
-        ...args: ParametersExceptFirst<TClass["deploy"]>
+        ...args: Parameters<T["methods"][M]>
       ) {
         return new DeployMethod(
           options.publicKeys ?? PublicKeys.default(),

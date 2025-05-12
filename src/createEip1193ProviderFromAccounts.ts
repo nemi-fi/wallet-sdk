@@ -151,23 +151,8 @@ export function createEip1193ProviderFromAccounts(
 
           const unconstrainedCalls = unconstrained.map(
             async ([call, index]) => {
-              const fnAbi = await getContractFunctionAbiFromPxe(
-                pxe,
-                call.to,
-                call.selector,
-              );
-              return [
-                await account.simulateUtility(
-                  call.name,
-                  call.args.map((arg, i) =>
-                    decodeFromAbi([fnAbi.parameters[i]!.type], [arg]),
-                  ),
-                  call.to,
-                  [],
-                  account.getAddress(),
-                ),
-                index,
-              ] as const;
+              const result = await simulateUtilityEncoded(pxe, account, call);
+              return [result, index] as const;
             },
           );
 
@@ -199,21 +184,7 @@ export function createEip1193ProviderFromAccounts(
           const results: Fr[][] = [];
 
           for (const [result, index] of unconstrainedResults) {
-            // TODO: remove encoding logic when fixed https://github.com/AztecProtocol/aztec-packages/issues/11275
-            let returnTypes = deserializedCalls[index]!.returnTypes;
-            if (returnTypes.length === 1 && returnTypes[0]?.kind === "tuple") {
-              returnTypes = returnTypes[0]!.fields;
-            }
-            const paramsAbi: ABIParameter[] = returnTypes.map((type, i) => ({
-              type,
-              name: `result${i}`,
-              visibility: "public",
-            }));
-            const encoded = encodeArguments(
-              { parameters: paramsAbi } as FunctionAbi,
-              Array.isArray(result) ? result : [result],
-            );
-            results[index] = encoded;
+            results[index] = result;
           }
           if (simulatedTx) {
             for (const [call, callIndex, resultIndex] of indexedCalls) {
@@ -315,4 +286,64 @@ async function registerContracts(
       registerContracts.wasRegistered.add(registeringKey);
     }),
   );
+}
+
+async function simulateUtilityEncoded(
+  pxe: PXE,
+  account: Wallet,
+  call: FunctionCall,
+) {
+  // TODO: remove encoding logic when fixed https://github.com/AztecProtocol/aztec-packages/issues/11275
+  const fnAbi = await getContractFunctionAbiFromPxe(
+    pxe,
+    call.to,
+    call.selector,
+  );
+  let argsIndex = 0;
+  const decodedArgs = fnAbi.parameters.map((fnAbiParam) => {
+    let currentArgs: Fr[] = [];
+    if (fnAbiParam.type.kind === "array") {
+      currentArgs = call.args.slice(
+        argsIndex,
+        argsIndex + fnAbiParam.type.length,
+      );
+
+      argsIndex += fnAbiParam.type.length;
+    } else {
+      currentArgs = [call.args[argsIndex]!];
+      argsIndex++;
+    }
+    return decodeFromAbi([fnAbiParam.type], currentArgs);
+  });
+  assert(
+    argsIndex === call.args.length,
+    `argsIndex & length mismatch: ${argsIndex} !== ${call.args.length}`,
+  );
+  const decodedResult = await account.simulateUtility(
+    call.name,
+    decodedArgs,
+    call.to,
+    undefined,
+    account.getAddress(),
+  );
+
+  const firstReturnType = call.returnTypes[0];
+  const isTuple = firstReturnType?.kind === "tuple";
+  if (isTuple) {
+    call.returnTypes = firstReturnType.fields;
+  }
+  const paramsAbi: ABIParameter[] = call.returnTypes.map((type, i) => ({
+    type,
+    name: `result${i}`,
+    visibility: "public",
+  }));
+  const result = encodeArguments(
+    { parameters: paramsAbi } as FunctionAbi,
+    isTuple || firstReturnType?.kind === "array"
+      ? [decodedResult]
+      : Array.isArray(decodedResult)
+        ? decodedResult
+        : [decodedResult],
+  );
+  return result;
 }
