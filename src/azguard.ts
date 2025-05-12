@@ -87,6 +87,7 @@ class AzguardEip6963Provider implements TypedEip1193Provider {
           ],
           methods: [
             "register_contract",
+            "register_token",
             "send_transaction",
             "simulate_views",
             "encoded_call",
@@ -225,8 +226,20 @@ class AzguardEip6963Provider implements TypedEip1193Provider {
       return results.at(-1).result.encoded;
     },
 
-    wallet_watchAssets: async () => {
-      throw new Error("adding assets is not supported");
+    wallet_watchAssets: async (request) => {
+      const results = (await this.#azguard.execute(
+        request.assets.map(asset => ({
+          kind: "register_token",
+          account: this.#azguard.accounts[0], // TODO: fix when chainId is added to the request
+          address: asset.options.address,
+        })),
+      )) as [any];
+
+      if (results.at(-1).status !== "ok") {
+        throw new Error(
+          `Adding assets failed: ${results.find((x) => x.status === "failed").error}`,
+        );
+      }
     },
   };
 
