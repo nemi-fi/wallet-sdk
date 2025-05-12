@@ -228,7 +228,7 @@ class AzguardEip6963Provider implements TypedEip1193Provider {
 
     wallet_watchAssets: async (request) => {
       const results = (await this.#azguard.execute(
-        request.assets.map(asset => ({
+        request.assets.map((asset) => ({
           kind: "register_token",
           account: this.#azguard.accounts[0], // TODO: fix when chainId is added to the request
           address: asset.options.address,
