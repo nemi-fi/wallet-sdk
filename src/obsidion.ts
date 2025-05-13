@@ -1,5 +1,6 @@
 import { Bridge, type BridgeInterface, type KeyPair } from "@obsidion/bridge";
 import { Bytes } from "ox";
+import { joinURL } from "ufo";
 import { persisted } from "svelte-persisted-store";
 import { derived, type Readable, type Writable } from "svelte/store";
 import type { IArtifactStrategy } from "./artifacts.js";
@@ -16,6 +17,9 @@ export class ObsidionBridgeConnector implements IConnector {
   #connectionLock = false;
   #connectionInitPromise: Promise<BridgeInterface> | null = null;
   #messageHandlerInitialized = false;
+  #iframe: HTMLIFrameElement | null = null;
+  #isInIframe: boolean = false;
+  #iframeReady: boolean = false;
   #registerRequest: (
     id: string,
     method: string,
@@ -32,7 +36,7 @@ export class ObsidionBridgeConnector implements IConnector {
 
   constructor(params: ObsidionBridgeConnectorOptions) {
     this.info = { uuid: params.uuid, name: params.name, icon: params.icon };
-    this.walletUrl = params.walletUrl + "/sign";
+    this.walletUrl = joinURL(params.walletUrl, "/sign");
     this.artifactStrategy = params.artifactStrategy;
     this.#fallbackOpenPopup = params.fallbackOpenPopup;
 
@@ -46,6 +50,57 @@ export class ObsidionBridgeConnector implements IConnector {
       this.#connectedAccountAddress,
       (x) => x ?? undefined,
     );
+
+    let currentAddress;
+    this.#connectedAccountAddress.subscribe((value) => {
+      currentAddress = value;
+    })();
+
+    // Create and append the invisible iframe
+    console.log("Creating invisible iframe: ", currentAddress);
+
+    this.#isInIframe = false;
+    try {
+      this.#isInIframe = window.self !== window.top;
+    } catch (e) {
+      this.#isInIframe = true;
+    }
+
+    if (currentAddress && this.#isInIframe) {
+      this.#createInvisibleIframe(
+        params.iframeUrl ?? joinURL(params.walletUrl, "/iframe"),
+      );
+    }
+  }
+
+  // Add a new private method to create the invisible iframe
+  async #createInvisibleIframe(iframeUrl: string): Promise<void> {
+    if (!iframeUrl) return;
+
+    try {
+      const iframe = document.createElement("iframe");
+
+      // Make the iframe invisible but keep it running
+      iframe.style.position = "absolute";
+      iframe.style.width = "0";
+      iframe.style.height = "0";
+      iframe.style.border = "none";
+      iframe.style.visibility = "hidden";
+
+      // Set the source URL
+      iframe.src = iframeUrl;
+
+      // Append to the document
+      document.body.appendChild(iframe);
+
+      // Store the reference
+      this.#iframe = iframe;
+      this.#setupIframeMessageListener();
+
+      console.log("Invisible iframe created and attached");
+    } catch (error) {
+      console.error("Failed to create invisible iframe:", error);
+    }
   }
 
   /**
@@ -125,8 +180,16 @@ export class ObsidionBridgeConnector implements IConnector {
 
       if (address) {
         this.#connectedAccountAddress.set(address);
+        console.log(
+          "Creating invisible iframe: ",
+          this.walletUrl.replace("/sign", "/iframe"),
+        );
+        await this.#createInvisibleIframe(
+          this.walletUrl.replace("/sign", "/iframe"),
+        );
         return address;
       }
+
       return undefined;
     } catch (error) {
       console.error("Failed to connect:", error);
@@ -177,6 +240,7 @@ export class ObsidionBridgeConnector implements IConnector {
 
       // Clear account information
       this.#connectedAccountAddress.set(null);
+      this.#removeInvisibleIframe();
     } catch (error) {
       console.error("Failed to disconnect:", error);
     } finally {
@@ -184,6 +248,15 @@ export class ObsidionBridgeConnector implements IConnector {
       this.#bridgeConnection = null;
       this.#connectionInitPromise = null;
       this.#messageHandlerInitialized = false;
+    }
+  }
+
+  #removeInvisibleIframe(): void {
+    if (this.#iframe && this.#iframe.parentNode) {
+      this.#iframe.parentNode.removeChild(this.#iframe);
+      this.#iframe = null;
+      this.#iframeReady = false;
+      console.log("Invisible iframe removed");
     }
   }
 
@@ -277,11 +350,46 @@ export class ObsidionBridgeConnector implements IConnector {
     request: any,
   ): Promise<any> {
     try {
+      // Wait until iframe is ready before sending request
+      await this.#waitForIframeReady();
+
       // Send the request
       return await this.#createResponsePromise(bridgeConnection, request);
     } finally {
       this.#pendingRequestsCount--;
     }
+  }
+
+  #setupIframeMessageListener() {
+    window.addEventListener(
+      "message",
+      (event) => {
+        // Only accept messages from our iframe
+        if (event.source !== this.#iframe?.contentWindow) return;
+
+        const data = event.data;
+        if (data && data.type === "iframe_ready") {
+          console.log("Iframe reported ready status");
+          this.#iframeReady = true;
+        }
+      },
+      false,
+    );
+  }
+
+  async #waitForIframeReady(): Promise<void> {
+    if (this.#iframeReady) return;
+
+    return new Promise<void>((resolve) => {
+      const checkReady = () => {
+        if (this.#iframeReady) {
+          resolve();
+        } else {
+          setTimeout(checkReady, 100);
+        }
+      };
+      checkReady();
+    });
   }
 
   private async waitForSecureChannel(
@@ -525,6 +633,8 @@ export interface ObsidionBridgeConnectorOptions {
   readonly artifactStrategy: IArtifactStrategy;
   /** Fallback open popup function */
   fallbackOpenPopup?: FallbackOpenPopup;
+  /** Iframe URL */
+  iframeUrl?: string;
 }
 
 export type FallbackOpenPopup = (
