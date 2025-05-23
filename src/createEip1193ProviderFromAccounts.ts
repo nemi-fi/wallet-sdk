@@ -248,9 +248,7 @@ async function registerContracts(
       }
 
       const c = await decodeRegisterContract(data);
-      console.log("getting instance for registering", c);
       const instance = c.instance ?? (await aztecNode.getContract(c.address));
-      console.log("got instance", instance);
       if (!instance) {
         // fails the whole RPC call if instance not found
         throw new Error(`no contract instance found for ${c.address}`);
