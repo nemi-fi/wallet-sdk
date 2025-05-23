@@ -1,28 +1,19 @@
 {
   "name": "@nemi-fi/wallet-sdk",
-  "version": "0.85.0-next.7",
+  "version": "0.87.2-next.0",
   "type": "module",
-  "main": "src/exports/index.ts",
-  "module": "src/exports/index.ts",
   "exports": {
-    ".": {
-      "import": "./src/exports/index.ts"
-    },
-    "./*": {
-      "import": "./src/exports/*.ts"
-    }
+    ".": "./src/exports/index.ts",
+    "./*": "./src/exports/*.ts"
   },
   "publishConfig": {
-    "main": "dist/exports/index.js",
-    "module": "dist/exports/index.js",
-    "types": "dist/exports/index.d.ts",
     "exports": {
       ".": {
-        "import": "./dist/exports/index.js",
+        "default": "./dist/exports/index.js",
         "types": "./dist/exports/index.d.ts"
       },
       "./*": {
-        "import": "./dist/exports/*.js",
+        "default": "./dist/exports/*.js",
         "types": "./dist/exports/*.d.ts"
       }
     },
@@ -41,23 +32,23 @@
     "prepublishOnly": "turbo test && turbo build"
   },
   "devDependencies": {
-    "@aztec/accounts": "0.85.0-alpha-testnet.2",
-    "@aztec/noir-contracts.js": "0.85.0-alpha-testnet.2",
+    "@aztec/accounts": "0.87.2",
+    "@aztec/noir-contracts.js": "0.87.2",
     "@types/lodash-es": "^4.17.12",
     "@types/react": "^18.3.11",
-    "prettier": "^3.2.5",
+    "prettier": "^3.5.3",
     "react": "^18.3.1",
     "typescript": "^5.7.3",
     "vitest": "^3.0.7"
   },
   "dependencies": {
-    "@aztec/aztec.js": "0.85.0-alpha-testnet.2",
-    "@aztec/constants": "0.85.0-alpha-testnet.2",
-    "@aztec/entrypoints": "0.85.0-alpha-testnet.2",
-    "@aztec/foundation": "0.85.0-alpha-testnet.2",
-    "@aztec/protocol-contracts": "0.85.0-alpha-testnet.2",
-    "@aztec/noir-protocol-circuits-types": "0.85.0-alpha-testnet.2",
-    "@aztec/stdlib": "0.85.0-alpha-testnet.2",
+    "@aztec/aztec.js": "0.87.2",
+    "@aztec/constants": "0.87.2",
+    "@aztec/entrypoints": "0.87.2",
+    "@aztec/foundation": "0.87.2",
+    "@aztec/protocol-contracts": "0.87.2",
+    "@aztec/noir-protocol-circuits-types": "0.87.2",
+    "@aztec/stdlib": "0.87.2",
     "@obsidion/bridge": "0.6.0",
     "@walletconnect/modal-sign-html": "^2.6.2",
     "@walletconnect/utils": "^2.11.2",

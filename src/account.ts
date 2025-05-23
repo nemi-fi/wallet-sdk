@@ -22,6 +22,7 @@ import type {
   TransactionRequest,
 } from "./exports/index.js";
 import { lazyValue } from "./utils.js";
+import { ContractClassLogFields } from "@aztec/stdlib/logs";
 
 export abstract class BaseAccount {
   constructor(
@@ -205,7 +206,7 @@ async function createTxFromPublicCalls(
       forPublic,
     ),
     ClientIvcProof.empty(),
-    [ContractClassLog.empty()],
+    [ContractClassLogFields.empty()],
     allHashedValues,
   );
 }

@@ -319,7 +319,7 @@ async function simulateUtilityEncoded(
     argsIndex === call.args.length,
     `argsIndex & length mismatch: ${argsIndex} !== ${call.args.length}`,
   );
-  const decodedResult = await account.simulateUtility(
+  const { result: decodedResult } = await account.simulateUtility(
     call.name,
     decodedArgs,
     call.to,
