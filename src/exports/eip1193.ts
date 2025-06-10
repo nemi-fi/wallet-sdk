@@ -63,6 +63,9 @@ export class Eip1193Account extends BaseAccount {
               contracts: txRequest_?.registerContracts ?? [],
               artifactStrategy: this.artifactStrategy,
             }),
+            registerSenders: txRequest_?.registerSenders?.map((x) =>
+              x.toString(),
+            ),
           },
         ],
       });
@@ -90,6 +93,7 @@ export class Eip1193Account extends BaseAccount {
             contracts: txRequest.registerContracts ?? [],
             artifactStrategy: this.artifactStrategy,
           }),
+          registerSenders: txRequest.registerSenders?.map((x) => x.toString()),
         },
       ],
     });
@@ -127,11 +131,12 @@ export type TransactionRequest = {
   authWitnesses?: IntentAction[];
   capsules?: Capsule[];
   registerContracts?: RegisterContract[];
+  registerSenders?: AztecAddress[];
 };
 
 export type SimulateTransactionRequest = Pick<
   TransactionRequest,
-  "calls" | "registerContracts"
+  "calls" | "registerContracts" | "registerSenders"
 >;
 
 export type RegisterContract =

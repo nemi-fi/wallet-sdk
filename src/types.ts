@@ -28,6 +28,8 @@ export type RpcRequestMap = {
     capsules?: SerializedCapsule[];
     /** Contracts required to send the transaction */
     registerContracts?: SerializedRegisterContract[];
+    /** register senders */
+    registerSenders?: string[];
   }) => string;
 
   // TODO: add aztec_estimateGas
@@ -43,6 +45,8 @@ export type RpcRequestMap = {
     calls: SerializedFunctionCall[];
     /** Contracts required for this call to be simulated */
     registerContracts?: SerializedRegisterContract[];
+    /** register senders */
+    registerSenders?: string[];
   }) => string[][];
 
   /**

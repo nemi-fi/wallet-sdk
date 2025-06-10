@@ -106,5 +106,6 @@ export function mergeTransactionRequests(
     authWitnesses: requests.flatMap((r) => r.authWitnesses ?? []),
     capsules: requests.flatMap((r) => r.capsules ?? []),
     registerContracts: requests.flatMap((r) => r.registerContracts ?? []),
+    registerSenders: requests.flatMap((r) => r.registerSenders ?? []),
   };
 }
