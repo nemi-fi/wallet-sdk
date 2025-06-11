@@ -63,9 +63,6 @@ export function createEip1193ProviderFromAccounts(
             request.registerContracts ?? [],
           );
 
-          // register senders
-          await registerSenders(pxe, request.registerSenders ?? []);
-
           // decode calls
           const calls = await Promise.all(
             request.calls.map((x) => decodeFunctionCall(pxe, x)),
@@ -352,7 +349,7 @@ async function simulateUtilityEncoded(
   return result;
 }
 
-export async function registerSenders(pxe: PXE, senders: string[]) {
+async function registerSenders(pxe: PXE, senders: string[]) {
   await Promise.all(
     senders.map(
       async (sender) =>

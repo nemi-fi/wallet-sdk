@@ -48,6 +48,12 @@ export class Eip1193Account extends BaseAccount {
   ): SentTx {
     const txHashPromise = (async () => {
       const txRequest_ = await txRequest;
+      if (txRequest_.registerSenders && txRequest_.registerSenders.length > 0) {
+        throw new Error(
+          "registerSenders is not supported for send() operations.",
+        );
+      }
+
       return this.provider.request({
         method: "aztec_sendTransaction",
         params: [
@@ -63,9 +69,6 @@ export class Eip1193Account extends BaseAccount {
               contracts: txRequest_?.registerContracts ?? [],
               artifactStrategy: this.artifactStrategy,
             }),
-            registerSenders: txRequest_?.registerSenders?.map((x) =>
-              x.toString(),
-            ),
           },
         ],
       });
@@ -75,12 +78,20 @@ export class Eip1193Account extends BaseAccount {
   }
 
   // TODO: rename to either `call` or `view` or `readContract` or something more descriptive
-  async simulateTransaction(
-    txRequest: SimulateTransactionRequest,
-  ): Promise<Fr[][]> {
+  async simulateTransaction(txRequest: TransactionRequest): Promise<Fr[][]> {
     // avoid unnecessary calls
     if (txRequest.calls.length === 0) {
       return [];
+    }
+
+    if (txRequest.authWitnesses && txRequest.authWitnesses.length > 0) {
+      throw new Error(
+        "authWitnesses is not supported for simulate() operations.",
+      );
+    }
+
+    if (txRequest.capsules && txRequest.capsules.length > 0) {
+      throw new Error("capsules is not supported for simulate() operations.");
     }
 
     const results = await this.provider.request({
@@ -133,11 +144,6 @@ export type TransactionRequest = {
   registerContracts?: RegisterContract[];
   registerSenders?: AztecAddress[];
 };
-
-export type SimulateTransactionRequest = Pick<
-  TransactionRequest,
-  "calls" | "registerContracts" | "registerSenders"
->;
 
 export type RegisterContract =
   // for easy API

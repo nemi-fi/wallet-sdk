@@ -18,7 +18,6 @@ import { ContractFunctionInteraction } from "./contract.js";
 import type {
   IntentAction,
   SendOptions,
-  SimulateTransactionRequest,
   TransactionRequest,
 } from "./exports/index.js";
 import { lazyValue } from "./utils.js";
@@ -36,9 +35,7 @@ export abstract class BaseAccount {
     txRequest: TransactionRequest | Promise<TransactionRequest>,
   ): SentTx;
 
-  abstract simulateTransaction(
-    request: SimulateTransactionRequest,
-  ): Promise<Fr[][]>;
+  abstract simulateTransaction(request: TransactionRequest): Promise<Fr[][]>;
 
   async simulatePublicCalls(calls: FunctionCall[]): Promise<Fr[][]> {
     // avoid unnecessary calls to node
