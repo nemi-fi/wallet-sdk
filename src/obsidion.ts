@@ -4,9 +4,18 @@ import { joinURL } from "ufo";
 import { persisted } from "svelte-persisted-store";
 import { derived, type Readable, type Writable } from "svelte/store";
 import type { IArtifactStrategy } from "./artifacts.js";
-import type { Eip6963ProviderInfo, IConnector } from "./base.js";
+import type {
+  AztecNodeInput,
+  Eip6963ProviderInfo,
+  IConnector,
+} from "./base.js";
 import type { TypedEip1193Provider } from "./types.js";
-import { METHODS_NOT_REQUIRING_CONFIRMATION } from "./utils.js";
+import {
+  getAztecChainId,
+  METHODS_NOT_REQUIRING_CONFIRMATION,
+  resolveAztecNode,
+} from "./utils.js";
+import type { AztecNode } from "@aztec/aztec.js";
 
 export class ObsidionBridgeConnector implements IConnector {
   readonly info: Eip6963ProviderInfo;
@@ -30,13 +39,16 @@ export class ObsidionBridgeConnector implements IConnector {
   readonly accountObservable: Readable<string | undefined>;
   readonly artifactStrategy: IArtifactStrategy;
   readonly walletUrl: string;
+  readonly #aztecNode: Promise<AztecNode>;
   readonly #fallbackOpenPopup?: FallbackOpenPopup;
+  #aztecChainId: string | null = null;
 
   constructor(params: ObsidionBridgeConnectorOptions) {
     this.info = { uuid: params.uuid, name: params.name, icon: params.icon };
     this.walletUrl = joinURL(params.walletUrl, "/sign");
     this.artifactStrategy = params.artifactStrategy;
     this.#fallbackOpenPopup = params.fallbackOpenPopup;
+    this.#aztecNode = params.aztecNode;
 
     // Initialize the persisted stores
     this.#connectedAccountAddress = persisted<string | null>(
@@ -118,9 +130,11 @@ export class ObsidionBridgeConnector implements IConnector {
 
   async connect() {
     try {
+      const aztecChainId = await getAztecChainId(await this.#aztecNode);
+
       const result = await this.provider.request({
         method: "aztec_requestAccounts",
-        params: [],
+        params: [aztecChainId],
       });
 
       const [address] = result;
@@ -542,6 +556,8 @@ export interface ObsidionBridgeConnectorOptions {
   readonly artifactStrategy: IArtifactStrategy;
   /** Fallback open popup function */
   fallbackOpenPopup?: FallbackOpenPopup;
+
+  readonly aztecNode: Promise<AztecNode>;
 }
 
 export type FallbackOpenPopup = (

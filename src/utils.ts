@@ -109,3 +109,14 @@ export function mergeTransactionRequests(
     registerSenders: requests.flatMap((r) => r.registerSenders ?? []),
   };
 }
+
+export async function getAztecChainId(aztecNode: AztecNode) {
+  const l1ChainId = await aztecNode.getChainId();
+  if (l1ChainId === 1115511) {
+    return "418719321"; // keccak256('aztec-testnet')[0:4]
+  } else if (l1ChainId === 31337) {
+    return "147120760"; // keccak256('aztec-sandbox')[0:4]
+  } else {
+    throw new Error(`Unsupported L1 chain ID: ${l1ChainId}`);
+  }
+}

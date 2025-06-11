@@ -25,12 +25,14 @@ import {
   encodeRegisterContracts,
 } from "../serde.js";
 import type { Eip1193Provider, TypedEip1193Provider } from "../types.js";
+import { getAztecChainId } from "../utils.js";
 
 export { BatchCall, Contract } from "../contract.js";
 
 export class Eip1193Account extends BaseAccount {
   /** The RPC provider to send requests to the wallet. */
   readonly provider: TypedEip1193Provider;
+  aztecChainId: string | null = null;
 
   constructor(
     address: AztecAddress,
@@ -54,10 +56,13 @@ export class Eip1193Account extends BaseAccount {
         );
       }
 
+      const chainId = await getAztecChainId(this.aztecNode);
+
       return this.provider.request({
         method: "aztec_sendTransaction",
         params: [
           {
+            chainId,
             from: this.address.toString(),
             calls: txRequest_.calls.map(encodeFunctionCall),
             authWitnesses: (txRequest_?.authWitnesses ?? []).map((x) => ({
@@ -94,10 +99,13 @@ export class Eip1193Account extends BaseAccount {
       throw new Error("capsules is not supported for simulate() operations.");
     }
 
+    const chainId = await getAztecChainId(this.aztecNode);
+
     const results = await this.provider.request({
       method: "aztec_call",
       params: [
         {
+          chainId,
           from: this.address.toString(),
           calls: txRequest.calls.map((x) => encodeFunctionCall(x)),
           registerContracts: await encodeRegisterContracts({
@@ -110,6 +118,14 @@ export class Eip1193Account extends BaseAccount {
     });
 
     return results.map((result) => result.map((x) => new Fr(BigInt(x))));
+  }
+
+  async getAztecChainId() {
+    if (this.aztecChainId) {
+      return this.aztecChainId;
+    }
+    this.aztecChainId = await getAztecChainId(this.aztecNode);
+    return this.aztecChainId;
   }
 
   /**

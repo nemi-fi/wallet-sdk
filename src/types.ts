@@ -5,7 +5,7 @@ export type RpcRequestMap = {
    * Requests the user to connect 1 or more accounts to the app. Should trigger a confirmation popup/modal.
    * @returns `AztecAddress[]` of the connected accounts. The first one must be the currently selected account.
    */
-  aztec_requestAccounts: () => string[];
+  aztec_requestAccounts: (chainId?: string) => string[];
 
   /**
    * Must **NOT** trigger a confirmation popup/modal.
@@ -18,6 +18,7 @@ export type RpcRequestMap = {
    * @returns the transaction hash
    */
   aztec_sendTransaction: (request: {
+    chainId: string;
     /** `AztecAddress` of the account that will send the transaction */
     from: string;
     /** `FunctionCall[]` to be executed in the transaction */
@@ -37,6 +38,7 @@ export type RpcRequestMap = {
    * @returns an array of return values (each being `Fr[]`) of the calls
    */
   aztec_call: (request: {
+    chainId: string;
     /** `AztecAddress` of the account that will the call will be simulated from */
     from: string;
     /** `FunctionCall[]` to be simulated */
@@ -51,6 +53,7 @@ export type RpcRequestMap = {
    * Requests the user to add an asset to the wallet. Must trigger a confirmation popup.
    */
   wallet_watchAssets: (request: {
+    chainId: string;
     assets: {
       // TODO: is this type namespaced enough? Could this clash with other chains which names start with "A"? E.g., Aleo also has an "ARC20" standard
       type: "ARC20";

@@ -19,7 +19,7 @@ import type { FallbackOpenPopup } from "./Communicator.js";
 import type { Account } from "./exports/index.js";
 import { InjectedConnector, requestEip6963Providers } from "./injected.js";
 import type { Eip1193Provider, RpcRequestMap } from "./types.js";
-import { resolveAztecNode } from "./utils.js";
+import { getAztecChainId, resolveAztecNode } from "./utils.js";
 
 export class AztecWalletSdk {
   readonly #aztecNode: () => Promise<AztecNode>;
@@ -133,14 +133,19 @@ export class AztecWalletSdk {
   async watchAssets(
     assets: Parameters<RpcRequestMap["wallet_watchAssets"]>[0]["assets"],
   ) {
+    const chainId = await getAztecChainId(await this.#aztecNode());
     await this.#provider.request({
       method: "wallet_watchAssets",
-      params: [{ assets }],
+      params: [{ assets, chainId }],
     });
   }
 
   get connectors(): readonly Eip6963ProviderInfo[] {
     return get(this.#connectors).map((x) => ({ ...x.info })); // clone
+  }
+
+  get aztecNode() {
+    return this.#aztecNode;
   }
 
   get #connector() {

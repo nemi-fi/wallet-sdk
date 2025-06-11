@@ -6,7 +6,10 @@ import {
 } from "./obsidion.js";
 
 type PartialObsidionPopupConnectorOptions = Partial<
-  Pick<ObsidionBridgeConnectorOptions, "walletUrl" | "artifactStrategy">
+  Pick<
+    ObsidionBridgeConnectorOptions,
+    "walletUrl" | "artifactStrategy" | "aztecNode"
+  >
 >;
 
 export function obsidion(params: PartialObsidionPopupConnectorOptions = {}) {
@@ -21,5 +24,6 @@ export function obsidion(params: PartialObsidionPopupConnectorOptions = {}) {
       uuid: "obsidion",
       name: "Obsidion",
       icon: "https://pbs.twimg.com/profile_images/1849068253685116928/MzTzv03r_400x400.jpg",
+      aztecNode: sdk.aztecNode(),
     });
 }
