@@ -240,15 +240,6 @@ export class ContractFunctionInteraction {
 
   async simulate() {
     const txRequest = await this.#txRequest();
-    if (txRequest.authWitnesses && txRequest.authWitnesses.length > 0) {
-      throw new Error(
-        "authWitnesses is not supported for simulate() operations.",
-      );
-    }
-    if (txRequest.capsules && txRequest.capsules.length > 0) {
-      throw new Error("capsules is not supported for simulate() operations.");
-    }
-
     const results =
       this.#functionAbi.functionType === FunctionType.PUBLIC
         ? await this.#account.simulatePublicCalls(txRequest.calls)
