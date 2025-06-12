@@ -3,17 +3,6 @@ import type { AztecNodeInput } from "./base.js";
 import type { TransactionRequest } from "./exports/index.js";
 import type { RpcRequestMap } from "./types.js";
 
-const CAIP_PREFIX = "aztec";
-const AZTEC_CHAIN_ID = "418719321"; // TODO
-export const CAIP = {
-  chain() {
-    return `${CAIP_PREFIX}:${AZTEC_CHAIN_ID}`;
-  },
-  address(address: string) {
-    return `${CAIP_PREFIX}:${AZTEC_CHAIN_ID}:${address.toLowerCase()}`;
-  },
-};
-
 export const METHODS_NOT_REQUIRING_CONFIRMATION: (keyof RpcRequestMap)[] = [
   "aztec_accounts",
   "aztec_call",

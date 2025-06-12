@@ -11,7 +11,6 @@ export type {
   SendOptions,
 } from "../contract.js";
 export * from "../popup.js";
-export * from "../reown.js";
 export type { Account, Wallet } from "../types.js";
 export { mergeTransactionRequests } from "../utils.js";
 export * from "../wallets.js";
