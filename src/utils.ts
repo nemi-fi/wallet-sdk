@@ -1,5 +1,6 @@
 import type { AztecNode } from "@aztec/aztec.js";
 import type { AztecNodeInput } from "./base.js";
+import { chains } from "./chains.js";
 import type { TransactionRequest } from "./exports/index.js";
 import type { RpcRequestMap } from "./types.js";
 
@@ -110,14 +111,14 @@ export function mergeTransactionRequests(
   };
 }
 
-export async function getAztecChainId(aztecNode: AztecNode) {
+export async function getAztecChain(aztecNode: AztecNode) {
   const l1ChainId = await aztecNode.getChainId();
   switch (l1ChainId) {
     case 1115511: {
-      return 418719321; // keccak256('aztec-testnet')[0:4]
+      return chains.testnet;
     }
     case 31337: {
-      return 147120760; // keccak256('aztec-sandbox')[0:4]
+      return chains.sandbox;
     }
     default: {
       throw new Error(`Unsupported L1 chain ID: ${l1ChainId}`);

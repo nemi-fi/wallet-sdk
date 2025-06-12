@@ -18,6 +18,7 @@ import {
   LiteralArtifactStrategy,
   type IArtifactStrategy,
 } from "../artifacts.js";
+import type { AvmChain } from "../chains.js";
 import type {
   Contract,
   IntentAction,
@@ -31,7 +32,7 @@ import {
   encodeRegisterContracts,
 } from "../serde.js";
 import type { Eip1193Provider, TypedEip1193Provider } from "../types.js";
-import { getAztecChainId } from "../utils.js";
+import { getAztecChain } from "../utils.js";
 export { BatchCall, Contract } from "../contract.js";
 
 export class Eip1193Account extends BaseAccount {
@@ -43,7 +44,7 @@ export class Eip1193Account extends BaseAccount {
     provider: Eip1193Provider,
     aztecNode: AztecNode,
     private readonly artifactStrategy: IArtifactStrategy,
-    private readonly aztecChainId: number,
+    private readonly avmChain: AvmChain,
   ) {
     super(address, aztecNode);
     this.provider = provider as TypedEip1193Provider;
@@ -64,7 +65,7 @@ export class Eip1193Account extends BaseAccount {
         method: "aztec_sendTransaction",
         params: [
           {
-            chainId: Hex.fromNumber(this.aztecChainId),
+            chainId: Hex.fromNumber(this.avmChain.id),
             from: this.address.toString(),
             calls: txRequest_.calls.map(encodeFunctionCall),
             authWitnesses: (txRequest_?.authWitnesses ?? []).map((x) => ({
@@ -101,7 +102,7 @@ export class Eip1193Account extends BaseAccount {
       method: "aztec_call",
       params: [
         {
-          chainId: Hex.fromNumber(this.aztecChainId),
+          chainId: Hex.fromNumber(this.avmChain.id),
           from: this.address.toString(),
           calls: txRequest.calls.map((x) => encodeFunctionCall(x)),
           registerContracts: await encodeRegisterContracts({
@@ -132,13 +133,13 @@ export class Eip1193Account extends BaseAccount {
       paymentMethod,
     );
     const artifactStrategy = new LiteralArtifactStrategy();
-    const aztecChainId = await getAztecChainId(aztecNode);
+    const avmChain = await getAztecChain(aztecNode);
     return new this(
       account.getAddress(),
       provider,
       aztecNode,
       artifactStrategy,
-      aztecChainId,
+      avmChain,
     );
   }
 }
