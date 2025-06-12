@@ -1,6 +1,7 @@
 import type { AztecNode } from "@aztec/aztec.js";
 import type { AztecNodeInput } from "./base.js";
-import { chains, type TransactionRequest } from "./exports/index.js";
+import { chains } from "./chains.js";
+import type { TransactionRequest } from "./exports/index.js";
 import type { RpcRequestMap } from "./types.js";
 
 export const METHODS_NOT_REQUIRING_CONFIRMATION: (keyof RpcRequestMap)[] = [
