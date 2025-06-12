@@ -47,6 +47,8 @@ export type RpcRequestMap = {
     calls: SerializedFunctionCall[];
     /** Contracts required for this call to be simulated */
     registerContracts?: SerializedRegisterContract[];
+    /** `AztecAddress[]` of the senders to register */
+    registerSenders?: string[];
   }) => string[][];
 
   /**

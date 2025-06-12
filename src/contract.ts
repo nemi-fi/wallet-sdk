@@ -18,10 +18,16 @@ import {
   getAllFunctionAbis,
   type FunctionAbi,
 } from "@aztec/stdlib/abi";
+import type { StrictOmit } from "ts-essentials";
 import { DeployMethod, type DeployOptions } from "./contract-deploy.js";
 import type { TransactionRequest } from "./exports/eip1193.js";
-import type { Account } from "./exports/index.js";
-import { DefaultMap, lazyValue, type ParametersExceptFirst } from "./utils.js";
+import type { Account, SimulateTransactionRequest } from "./exports/index.js";
+import {
+  DefaultMap,
+  lazyValue,
+  mergeSimulateTransactionRequest,
+  type ParametersExceptFirst,
+} from "./utils.js";
 
 // TODO: consider changing the API to be more viem-like. I.e., use `contract.write.methodName` and `contract.read.methodName`
 export class ContractBase<T extends AztecContract> {
@@ -237,12 +243,19 @@ export class ContractFunctionInteraction {
     return this.#account.sendTransaction(this.#txRequest());
   }
 
-  async simulate() {
+  async simulate(
+    options: StrictOmit<SimulateTransactionRequest, "calls"> = {},
+  ) {
     const txRequest = await this.#txRequest();
     const results =
       this.#functionAbi.functionType === FunctionType.PUBLIC
         ? await this.#account.simulatePublicCalls(txRequest.calls)
-        : await this.#account.simulateTransaction(txRequest);
+        : await this.#account.simulateTransaction(
+            mergeSimulateTransactionRequest([
+              txRequest,
+              { ...options, calls: [] }, // options should not have calls
+            ]),
+          );
 
     if (results.length !== 1) {
       throw new Error(`invalid results length: ${results.length}`);

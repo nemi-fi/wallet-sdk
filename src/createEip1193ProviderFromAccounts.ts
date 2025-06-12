@@ -124,6 +124,8 @@ export function createEip1193ProviderFromAccounts(
             request.registerContracts ?? [],
           );
 
+          await registerSenders(pxe, request.registerSenders ?? []);
+
           const deserializedCalls = await Promise.all(
             request.calls.map((x) => decodeFunctionCall(pxe, x)),
           );
@@ -354,4 +356,13 @@ async function simulateUtilityEncoded(
         : [decodedResult],
   );
   return result;
+}
+
+async function registerSenders(pxe: PXE, senders: string[]) {
+  await Promise.all(
+    senders.map(
+      async (sender) =>
+        await pxe.registerSender(AztecAddress.fromString(sender)),
+    ),
+  );
 }
