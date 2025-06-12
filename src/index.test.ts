@@ -33,7 +33,7 @@ describe("wallet-sdk", () => {
   test("DeployMethod aztec.js parity", async () => {
     const salt = new Fr(0);
     const deploy = await Router.deployWithOpts({
-      account: Eip1193Account.fromAztec(account, aztecNode, pxe),
+      account: await Eip1193Account.fromAztec(account, aztecNode, pxe),
       contractAddressSalt: salt,
     }).request();
     const deployAztec = await RouterContract.deploy(account).request({
