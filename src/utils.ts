@@ -113,11 +113,14 @@ export function mergeTransactionRequests(
 export async function getAztecChainId(aztecNode: AztecNode) {
   const l1ChainId = await aztecNode.getChainId();
   switch (l1ChainId) {
-    case 1115511:
+    case 1115511: {
       return 418719321; // keccak256('aztec-testnet')[0:4]
-    case 31337:
+    }
+    case 31337: {
       return 147120760; // keccak256('aztec-sandbox')[0:4]
-    default:
+    }
+    default: {
       throw new Error(`Unsupported L1 chain ID: ${l1ChainId}`);
+    }
   }
 }
