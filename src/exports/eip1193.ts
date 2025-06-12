@@ -12,11 +12,13 @@ import {
   type Wallet,
 } from "@aztec/aztec.js";
 import type { ContractInstance } from "@aztec/stdlib/contract";
+import { Hex } from "ox";
 import { BaseAccount } from "../account.js";
 import {
   LiteralArtifactStrategy,
   type IArtifactStrategy,
 } from "../artifacts.js";
+import type { AvmChain } from "../chains.js";
 import type { Contract, IntentAction } from "../contract.js";
 import { createEip1193ProviderFromAccounts } from "../createEip1193ProviderFromAccounts.js";
 import {
@@ -25,6 +27,7 @@ import {
   encodeRegisterContracts,
 } from "../serde.js";
 import type { Eip1193Provider, TypedEip1193Provider } from "../types.js";
+import { getAvmChain } from "../utils.js";
 
 export { BatchCall, Contract } from "../contract.js";
 
@@ -37,6 +40,7 @@ export class Eip1193Account extends BaseAccount {
     provider: Eip1193Provider,
     aztecNode: AztecNode,
     private readonly artifactStrategy: IArtifactStrategy,
+    private readonly avmChain: AvmChain,
   ) {
     super(address, aztecNode);
     this.provider = provider as TypedEip1193Provider;
@@ -52,6 +56,7 @@ export class Eip1193Account extends BaseAccount {
         method: "aztec_sendTransaction",
         params: [
           {
+            chainId: Hex.fromNumber(this.avmChain.id),
             from: this.address.toString(),
             calls: txRequest_.calls.map(encodeFunctionCall),
             authWitnesses: (txRequest_?.authWitnesses ?? []).map((x) => ({
@@ -84,6 +89,7 @@ export class Eip1193Account extends BaseAccount {
       method: "aztec_call",
       params: [
         {
+          chainId: Hex.fromNumber(this.avmChain.id),
           from: this.address.toString(),
           calls: txRequest.calls.map((x) => encodeFunctionCall(x)),
           registerContracts: await encodeRegisterContracts({
@@ -101,16 +107,18 @@ export class Eip1193Account extends BaseAccount {
   /**
    * @deprecated only use to convert aztec.js account to `Eip1193Account` for compatibility reasons
    */
-  static fromAztec(
+  static async fromAztec(
     account: Wallet,
     aztecNode: AztecNode,
     pxe: PXE,
     paymentMethod?: FeePaymentMethod,
-  ): Eip1193Account {
+  ): Promise<Eip1193Account> {
+    const avmChain = await getAvmChain(aztecNode);
     const provider = createEip1193ProviderFromAccounts(
       aztecNode,
       pxe,
       [account],
+      avmChain,
       paymentMethod,
     );
     const artifactStrategy = new LiteralArtifactStrategy();
@@ -119,6 +127,7 @@ export class Eip1193Account extends BaseAccount {
       provider,
       aztecNode,
       artifactStrategy,
+      avmChain,
     );
   }
 }

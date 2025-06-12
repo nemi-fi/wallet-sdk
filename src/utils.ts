@@ -1,5 +1,6 @@
 import type { AztecNode } from "@aztec/aztec.js";
 import type { AztecNodeInput } from "./base.js";
+import { chains } from "./chains.js";
 import type { TransactionRequest } from "./exports/index.js";
 import type { RpcRequestMap } from "./types.js";
 
@@ -96,4 +97,19 @@ export function mergeTransactionRequests(
     capsules: requests.flatMap((r) => r.capsules ?? []),
     registerContracts: requests.flatMap((r) => r.registerContracts ?? []),
   };
+}
+
+export async function getAvmChain(aztecNode: AztecNode) {
+  const l1ChainId = await aztecNode.getChainId();
+  switch (l1ChainId) {
+    case 1115511: {
+      return chains.testnet;
+    }
+    case 31337: {
+      return chains.sandbox;
+    }
+    default: {
+      throw new Error(`Unsupported L1 chain ID: ${l1ChainId}`);
+    }
+  }
 }
