@@ -32,6 +32,7 @@ import {
   ContractFunctionInteraction,
   UnsafeContract,
   type ContractInfo,
+  type FunctionCallWithOptions,
 } from "./contract.js";
 import type { TransactionRequest } from "./exports/eip1193.js";
 import type { Account } from "./exports/index.js";
@@ -95,8 +96,14 @@ export class DeployMethod<TContract extends AztecContract> {
       }
 
       return mergeTransactionRequests([
-        deployment,
-        bootstrap,
+        {
+          calls: deployment.calls.map((c) => c.call),
+          capsules: deployment.capsules,
+        },
+        {
+          calls: bootstrap.calls.map((c) => c.call),
+          capsules: bootstrap.capsules,
+        },
         {
           calls: [],
           registerContracts: [await this.#contract()],
@@ -122,7 +129,7 @@ export class DeployMethod<TContract extends AztecContract> {
   }
 
   async #getDeploymentFunctionCalls() {
-    const calls: FunctionCall[] = [];
+    const calls: FunctionCallWithOptions[] = [];
     const capsules: Capsule[] = [];
 
     const contract = await this.#contract();
@@ -157,7 +164,7 @@ export class DeployMethod<TContract extends AztecContract> {
 
   async #getInitializeFunctionCalls() {
     const contract = await this.#contract();
-    const calls: FunctionCall[] = [];
+    const calls: FunctionCallWithOptions[] = [];
     const capsules: Capsule[] = [];
     if (this.#constructorArtifact && !this.options.skipInitialization) {
       const constructorCall = new ContractFunctionInteraction(
