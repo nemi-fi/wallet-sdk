@@ -8,7 +8,7 @@ export interface AvmChain {
 }
 
 export interface AvmChainRpcUrls {
-  http: readonly string[];
+  http: readonly [string, ...string[]];
 }
 
 export const chains = {
