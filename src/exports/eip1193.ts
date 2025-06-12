@@ -90,6 +90,7 @@ export class Eip1193Account extends BaseAccount {
             contracts: txRequest.registerContracts ?? [],
             artifactStrategy: this.artifactStrategy,
           }),
+          registerSenders: txRequest.registerSenders?.map((x) => x.toString()),
         },
       ],
     });
@@ -132,7 +133,9 @@ export type TransactionRequest = {
 export type SimulateTransactionRequest = Pick<
   TransactionRequest,
   "calls" | "registerContracts"
->;
+> & {
+  registerSenders?: AztecAddress[];
+};
 
 export type RegisterContract =
   // for easy API

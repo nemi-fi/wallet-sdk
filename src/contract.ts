@@ -237,12 +237,19 @@ export class ContractFunctionInteraction {
     return this.#account.sendTransaction(this.#txRequest());
   }
 
-  async simulate() {
+  async simulate(
+    options: {
+      registerSenders?: AztecAddress[];
+    } = {},
+  ) {
     const txRequest = await this.#txRequest();
     const results =
       this.#functionAbi.functionType === FunctionType.PUBLIC
         ? await this.#account.simulatePublicCalls(txRequest.calls)
-        : await this.#account.simulateTransaction(txRequest);
+        : await this.#account.simulateTransaction({
+            ...txRequest,
+            registerSenders: options.registerSenders,
+          });
 
     if (results.length !== 1) {
       throw new Error(`invalid results length: ${results.length}`);
