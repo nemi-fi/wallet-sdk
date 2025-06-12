@@ -161,13 +161,13 @@ export class AztecWalletSdk {
   async #toAccount(address: string) {
     const { AztecAddress } = await import("@aztec/aztec.js");
     const { Eip1193Account } = await import("./exports/eip1193.js");
-    const aztecChain = await getAvmChain(await this.#aztecNode());
+    const avmChain = await getAvmChain(await this.#aztecNode());
     return new Eip1193Account(
       AztecAddress.fromString(address),
       this.#provider,
       await this.#aztecNode(),
       this.#connector?.artifactStrategy ?? new LiteralArtifactStrategy(),
-      aztecChain,
+      avmChain,
     );
   }
 }
