@@ -144,7 +144,7 @@ export class AztecWalletSdk {
     return get(this.#connectors).map((x) => ({ ...x.info })); // clone
   }
 
-  get aztecNode() {
+  aztecNode() {
     return this.#aztecNode;
   }
 
@@ -162,11 +162,13 @@ export class AztecWalletSdk {
   async #toAccount(address: string) {
     const { AztecAddress } = await import("@aztec/aztec.js");
     const { Eip1193Account } = await import("./exports/eip1193.js");
+    const aztecChainId = await getAztecChainId(await this.#aztecNode());
     return new Eip1193Account(
       AztecAddress.fromString(address),
       this.#provider,
       await this.#aztecNode(),
       this.#connector?.artifactStrategy ?? new LiteralArtifactStrategy(),
+      aztecChainId,
     );
   }
 }

@@ -4,18 +4,9 @@ import { joinURL } from "ufo";
 import { persisted } from "svelte-persisted-store";
 import { derived, type Readable, type Writable } from "svelte/store";
 import type { IArtifactStrategy } from "./artifacts.js";
-import type {
-  AztecNodeInput,
-  Eip6963ProviderInfo,
-  IConnector,
-} from "./base.js";
+import type { Eip6963ProviderInfo, IConnector } from "./base.js";
 import type { TypedEip1193Provider } from "./types.js";
-import {
-  getAztecChainId,
-  METHODS_NOT_REQUIRING_CONFIRMATION,
-  resolveAztecNode,
-} from "./utils.js";
-import type { AztecNode } from "@aztec/aztec.js";
+import { METHODS_NOT_REQUIRING_CONFIRMATION } from "./utils.js";
 
 export class ObsidionBridgeConnector implements IConnector {
   readonly info: Eip6963ProviderInfo;
@@ -39,16 +30,15 @@ export class ObsidionBridgeConnector implements IConnector {
   readonly accountObservable: Readable<string | undefined>;
   readonly artifactStrategy: IArtifactStrategy;
   readonly walletUrl: string;
-  readonly #aztecNode: Promise<AztecNode>;
+  readonly chainId: () => Promise<number>;
   readonly #fallbackOpenPopup?: FallbackOpenPopup;
-  #aztecChainId: string | null = null;
 
   constructor(params: ObsidionBridgeConnectorOptions) {
     this.info = { uuid: params.uuid, name: params.name, icon: params.icon };
     this.walletUrl = joinURL(params.walletUrl, "/sign");
     this.artifactStrategy = params.artifactStrategy;
     this.#fallbackOpenPopup = params.fallbackOpenPopup;
-    this.#aztecNode = params.aztecNode;
+    this.chainId = params.chainId;
 
     // Initialize the persisted stores
     this.#connectedAccountAddress = persisted<string | null>(
@@ -130,7 +120,8 @@ export class ObsidionBridgeConnector implements IConnector {
 
   async connect() {
     try {
-      const aztecChainId = await getAztecChainId(await this.#aztecNode);
+      // const aztecChainId = await getAztecChainId(await this.#aztecNode);
+      const aztecChainId = await this.chainId();
 
       const result = await this.provider.request({
         method: "aztec_requestAccounts",
@@ -557,7 +548,7 @@ export interface ObsidionBridgeConnectorOptions {
   /** Fallback open popup function */
   fallbackOpenPopup?: FallbackOpenPopup;
 
-  readonly aztecNode: Promise<AztecNode>;
+  readonly chainId: () => Promise<number>;
 }
 
 export type FallbackOpenPopup = (

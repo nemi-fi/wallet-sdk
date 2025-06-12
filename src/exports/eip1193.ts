@@ -30,19 +30,18 @@ import {
   encodeRegisterContracts,
 } from "../serde.js";
 import type { Eip1193Provider, TypedEip1193Provider } from "../types.js";
-import { getAztecChainId } from "../utils.js";
 export { BatchCall, Contract } from "../contract.js";
 
 export class Eip1193Account extends BaseAccount {
   /** The RPC provider to send requests to the wallet. */
   readonly provider: TypedEip1193Provider;
-  aztecChainId: string | null = null;
 
   constructor(
     address: AztecAddress,
     provider: Eip1193Provider,
     aztecNode: AztecNode,
     private readonly artifactStrategy: IArtifactStrategy,
+    private readonly aztecChainId: number,
   ) {
     super(address, aztecNode);
     this.provider = provider as TypedEip1193Provider;
@@ -59,13 +58,11 @@ export class Eip1193Account extends BaseAccount {
       txRequest_.authWitnesses = options.authWitnesses ?? [];
       txRequest_.capsules = options.capsules ?? [];
 
-      const chainId = await getAztecChainId(this.aztecNode);
-
       return this.provider.request({
         method: "aztec_sendTransaction",
         params: [
           {
-            chainId,
+            chainId: this.aztecChainId,
             from: this.address.toString(),
             calls: txRequest_.calls.map(encodeFunctionCall),
             authWitnesses: (txRequest_?.authWitnesses ?? []).map((x) => ({
@@ -98,13 +95,13 @@ export class Eip1193Account extends BaseAccount {
     txRequest.registerContracts = options.registerContracts ?? [];
     txRequest.registerSenders = options.registerSenders ?? [];
 
-    const chainId = await getAztecChainId(this.aztecNode);
+    // const chainId = await getAztecChainId(this.aztecNode);
 
     const results = await this.provider.request({
       method: "aztec_call",
       params: [
         {
-          chainId,
+          chainId: this.aztecChainId,
           from: this.address.toString(),
           calls: txRequest.calls.map((x) => encodeFunctionCall(x)),
           registerContracts: await encodeRegisterContracts({
@@ -119,14 +116,6 @@ export class Eip1193Account extends BaseAccount {
     return results.map((result) => result.map((x) => new Fr(BigInt(x))));
   }
 
-  async getAztecChainId() {
-    if (this.aztecChainId) {
-      return this.aztecChainId;
-    }
-    this.aztecChainId = await getAztecChainId(this.aztecNode);
-    return this.aztecChainId;
-  }
-
   /**
    * @deprecated only use to convert aztec.js account to `Eip1193Account` for compatibility reasons
    */
@@ -134,6 +123,7 @@ export class Eip1193Account extends BaseAccount {
     account: Wallet,
     aztecNode: AztecNode,
     pxe: PXE,
+    aztecChainId: number,
     paymentMethod?: FeePaymentMethod,
   ): Eip1193Account {
     const provider = createEip1193ProviderFromAccounts(
@@ -148,6 +138,7 @@ export class Eip1193Account extends BaseAccount {
       provider,
       aztecNode,
       artifactStrategy,
+      aztecChainId,
     );
   }
 }
