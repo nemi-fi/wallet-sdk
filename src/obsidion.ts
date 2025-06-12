@@ -120,12 +120,9 @@ export class ObsidionBridgeConnector implements IConnector {
 
   async connect() {
     try {
-      // const aztecChainId = await getAztecChainId(await this.#aztecNode);
-      const aztecChainId = await this.chainId();
-
       const result = await this.provider.request({
         method: "aztec_requestAccounts",
-        params: [aztecChainId],
+        params: [await this.chainId()],
       });
 
       const [address] = result;
@@ -363,13 +360,8 @@ export class ObsidionBridgeConnector implements IConnector {
     timeoutMs: number = 200000,
   ): Promise<any> {
     const requestId = `${bridgeConnection.getPublicKey()}-${rpcRequest.id}`;
-    try {
-      await bridgeConnection.sendMessage("WALLET_RPC", rpcRequest);
-    } catch (error) {
-      console.error("Failed to send request:", error);
-    }
 
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       // Register this request with the message router
       this.#registerRequest(
         requestId,
@@ -378,6 +370,13 @@ export class ObsidionBridgeConnector implements IConnector {
         reject,
         timeoutMs,
       );
+
+      try {
+        await bridgeConnection.sendMessage("WALLET_RPC", rpcRequest);
+      } catch (error) {
+        console.error("Failed to send request:", error);
+        reject(error);
+      }
     });
   }
 
