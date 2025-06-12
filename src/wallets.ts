@@ -4,7 +4,6 @@ import {
   type ObsidionBridgeConnectorOptions,
   ObsidionBridgeConnector,
 } from "./obsidion.js";
-import { getAztecChainId } from "./utils.js";
 
 type PartialObsidionPopupConnectorOptions = Partial<
   Pick<ObsidionBridgeConnectorOptions, "walletUrl" | "artifactStrategy">
@@ -22,9 +21,5 @@ export function obsidion(params: PartialObsidionPopupConnectorOptions = {}) {
       uuid: "obsidion",
       name: "Obsidion",
       icon: "https://pbs.twimg.com/profile_images/1849068253685116928/MzTzv03r_400x400.jpg",
-      chainId: async () => {
-        const aztecNode = sdk.aztecNode();
-        return await getAztecChainId(await aztecNode());
-      },
     });
 }

@@ -12,6 +12,7 @@ import {
   type Wallet,
 } from "@aztec/aztec.js";
 import type { ContractInstance } from "@aztec/stdlib/contract";
+import { Hex } from "ox";
 import { BaseAccount } from "../account.js";
 import {
   LiteralArtifactStrategy,
@@ -62,7 +63,7 @@ export class Eip1193Account extends BaseAccount {
         method: "aztec_sendTransaction",
         params: [
           {
-            chainId: this.aztecChainId,
+            chainId: Hex.fromNumber(this.aztecChainId),
             from: this.address.toString(),
             calls: txRequest_.calls.map(encodeFunctionCall),
             authWitnesses: (txRequest_?.authWitnesses ?? []).map((x) => ({
@@ -95,13 +96,11 @@ export class Eip1193Account extends BaseAccount {
     txRequest.registerContracts = options.registerContracts ?? [];
     txRequest.registerSenders = options.registerSenders ?? [];
 
-    // const chainId = await getAztecChainId(this.aztecNode);
-
     const results = await this.provider.request({
       method: "aztec_call",
       params: [
         {
-          chainId: this.aztecChainId,
+          chainId: Hex.fromNumber(this.aztecChainId),
           from: this.address.toString(),
           calls: txRequest.calls.map((x) => encodeFunctionCall(x)),
           registerContracts: await encodeRegisterContracts({

@@ -1,8 +1,8 @@
 import { Bridge, type BridgeInterface, type KeyPair } from "@obsidion/bridge";
 import { Bytes } from "ox";
-import { joinURL } from "ufo";
 import { persisted } from "svelte-persisted-store";
 import { derived, type Readable, type Writable } from "svelte/store";
+import { joinURL } from "ufo";
 import type { IArtifactStrategy } from "./artifacts.js";
 import type { Eip6963ProviderInfo, IConnector } from "./base.js";
 import type { TypedEip1193Provider } from "./types.js";
@@ -30,7 +30,6 @@ export class ObsidionBridgeConnector implements IConnector {
   readonly accountObservable: Readable<string | undefined>;
   readonly artifactStrategy: IArtifactStrategy;
   readonly walletUrl: string;
-  readonly chainId: () => Promise<number>;
   readonly #fallbackOpenPopup?: FallbackOpenPopup;
 
   constructor(params: ObsidionBridgeConnectorOptions) {
@@ -38,7 +37,6 @@ export class ObsidionBridgeConnector implements IConnector {
     this.walletUrl = joinURL(params.walletUrl, "/sign");
     this.artifactStrategy = params.artifactStrategy;
     this.#fallbackOpenPopup = params.fallbackOpenPopup;
-    this.chainId = params.chainId;
 
     // Initialize the persisted stores
     this.#connectedAccountAddress = persisted<string | null>(
@@ -122,7 +120,7 @@ export class ObsidionBridgeConnector implements IConnector {
     try {
       const result = await this.provider.request({
         method: "aztec_requestAccounts",
-        params: [await this.chainId()],
+        params: [],
       });
 
       const [address] = result;
@@ -546,8 +544,6 @@ export interface ObsidionBridgeConnectorOptions {
   readonly artifactStrategy: IArtifactStrategy;
   /** Fallback open popup function */
   fallbackOpenPopup?: FallbackOpenPopup;
-
-  readonly chainId: () => Promise<number>;
 }
 
 export type FallbackOpenPopup = (
