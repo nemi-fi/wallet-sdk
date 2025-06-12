@@ -1,4 +1,5 @@
 export * from "../base.js";
+export * from "../chains.js";
 export type {
   DeployMethod,
   DeployOptions,

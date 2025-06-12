@@ -19,7 +19,7 @@ import type { FallbackOpenPopup } from "./Communicator.js";
 import type { Account } from "./exports/index.js";
 import { InjectedConnector, requestEip6963Providers } from "./injected.js";
 import type { Eip1193Provider, RpcRequestMap } from "./types.js";
-import { resolveAztecNode } from "./utils.js";
+import { getAvmChain, resolveAztecNode } from "./utils.js";
 
 export class AztecWalletSdk {
   readonly #aztecNode: () => Promise<AztecNode>;
@@ -143,6 +143,10 @@ export class AztecWalletSdk {
     return get(this.#connectors).map((x) => ({ ...x.info })); // clone
   }
 
+  aztecNode() {
+    return this.#aztecNode;
+  }
+
   get #connector() {
     return get(this.#currentConnector);
   }
@@ -157,11 +161,13 @@ export class AztecWalletSdk {
   async #toAccount(address: string) {
     const { AztecAddress } = await import("@aztec/aztec.js");
     const { Eip1193Account } = await import("./exports/eip1193.js");
+    const aztecChain = await getAvmChain(await this.#aztecNode());
     return new Eip1193Account(
       AztecAddress.fromString(address),
       this.#provider,
       await this.#aztecNode(),
       this.#connector?.artifactStrategy ?? new LiteralArtifactStrategy(),
+      aztecChain,
     );
   }
 }
