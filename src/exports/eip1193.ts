@@ -31,6 +31,7 @@ import {
   encodeRegisterContracts,
 } from "../serde.js";
 import type { Eip1193Provider, TypedEip1193Provider } from "../types.js";
+import { getAztecChainId } from "../utils.js";
 export { BatchCall, Contract } from "../contract.js";
 
 export class Eip1193Account extends BaseAccount {
@@ -118,13 +119,12 @@ export class Eip1193Account extends BaseAccount {
   /**
    * @deprecated only use to convert aztec.js account to `Eip1193Account` for compatibility reasons
    */
-  static fromAztec(
+  static async fromAztec(
     account: Wallet,
     aztecNode: AztecNode,
     pxe: PXE,
-    aztecChainId: number,
     paymentMethod?: FeePaymentMethod,
-  ): Eip1193Account {
+  ): Promise<Eip1193Account> {
     const provider = createEip1193ProviderFromAccounts(
       aztecNode,
       pxe,
@@ -132,6 +132,7 @@ export class Eip1193Account extends BaseAccount {
       paymentMethod,
     );
     const artifactStrategy = new LiteralArtifactStrategy();
+    const aztecChainId = await getAztecChainId(aztecNode);
     return new this(
       account.getAddress(),
       provider,

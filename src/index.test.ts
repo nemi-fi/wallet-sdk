@@ -13,7 +13,6 @@ import { RouterContract } from "@aztec/noir-contracts.js/Router";
 import { beforeAll, describe, expect, test } from "vitest";
 import { Contract } from "./contract.js";
 import { Eip1193Account } from "./exports/eip1193.js";
-import { getAztecChainId } from "./utils.js";
 
 class Router extends Contract.fromAztec(RouterContract) {}
 
@@ -33,9 +32,8 @@ describe("wallet-sdk", () => {
 
   test("DeployMethod aztec.js parity", async () => {
     const salt = new Fr(0);
-    const aztecChainId = await getAztecChainId(aztecNode);
     const deploy = await Router.deployWithOpts({
-      account: Eip1193Account.fromAztec(account, aztecNode, pxe, aztecChainId),
+      account: await Eip1193Account.fromAztec(account, aztecNode, pxe),
       contractAddressSalt: salt,
     }).request();
     const deployAztec = await RouterContract.deploy(account).request({
