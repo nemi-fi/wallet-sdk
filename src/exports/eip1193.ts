@@ -17,7 +17,12 @@ import {
   LiteralArtifactStrategy,
   type IArtifactStrategy,
 } from "../artifacts.js";
-import type { Contract, IntentAction } from "../contract.js";
+import type {
+  Contract,
+  IntentAction,
+  SendOptions,
+  SimulateOptions,
+} from "../contract.js";
 import { createEip1193ProviderFromAccounts } from "../createEip1193ProviderFromAccounts.js";
 import {
   encodeCapsules,
@@ -44,7 +49,8 @@ export class Eip1193Account extends BaseAccount {
 
   // TODO: return a promise that resolves to `SentTxWithHash`
   sendTransaction(
-    txRequest: TransactionRequest | Promise<TransactionRequest>,
+    txRequest: SendTransactionRequest | Promise<SendTransactionRequest>,
+    options: SendOptions,
   ): SentTx {
     const txHashPromise = (async () => {
       const txRequest_ = await txRequest;
@@ -74,6 +80,7 @@ export class Eip1193Account extends BaseAccount {
   // TODO: rename to either `call` or `view` or `readContract` or something more descriptive
   async simulateTransaction(
     txRequest: SimulateTransactionRequest,
+    options: SimulateOptions,
   ): Promise<Fr[][]> {
     // avoid unnecessary calls
     if (txRequest.calls.length === 0) {
@@ -128,6 +135,11 @@ export type TransactionRequest = {
   capsules?: Capsule[];
   registerContracts?: RegisterContract[];
 };
+
+export type SendTransactionRequest = Pick<
+  TransactionRequest,
+  "calls" | "authWitnesses" | "capsules" | "registerContracts"
+>;
 
 export type SimulateTransactionRequest = Pick<
   TransactionRequest,

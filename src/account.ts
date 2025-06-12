@@ -14,7 +14,10 @@ import { getCanonicalAuthRegistry } from "@aztec/protocol-contracts/auth-registr
 import type { ABIParameterVisibility } from "@aztec/stdlib/abi";
 import type { BlockHeader } from "@aztec/stdlib/tx";
 import { assert } from "ts-essentials";
-import { ContractFunctionInteraction } from "./contract.js";
+import {
+  ContractFunctionInteraction,
+  type SimulateOptions,
+} from "./contract.js";
 import type {
   IntentAction,
   SendOptions,
@@ -23,6 +26,7 @@ import type {
 } from "./exports/index.js";
 import { lazyValue } from "./utils.js";
 import { ContractClassLogFields } from "@aztec/stdlib/logs";
+import type { SendTransactionRequest } from "./exports/eip1193.js";
 
 export abstract class BaseAccount {
   constructor(
@@ -33,11 +37,13 @@ export abstract class BaseAccount {
   ) {}
 
   abstract sendTransaction(
-    txRequest: TransactionRequest | Promise<TransactionRequest>,
+    txRequest: SendTransactionRequest | Promise<SendTransactionRequest>,
+    options?: SendOptions,
   ): SentTx;
 
   abstract simulateTransaction(
-    request: SimulateTransactionRequest,
+    request: SendTransactionRequest,
+    options?: SimulateOptions,
   ): Promise<Fr[][]>;
 
   async simulatePublicCalls(calls: FunctionCall[]): Promise<Fr[][]> {
@@ -81,7 +87,6 @@ export abstract class BaseAccount {
       this,
       getSetAuthorizedAbi(),
       [messageHash, authorized],
-      options,
     );
   }
 
