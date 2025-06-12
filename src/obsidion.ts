@@ -1,5 +1,6 @@
 import { Bridge, type BridgeInterface, type KeyPair } from "@obsidion/bridge";
 import { Bytes } from "ox";
+import { joinURL } from "ufo";
 import { persisted } from "svelte-persisted-store";
 import { derived, type Readable, type Writable } from "svelte/store";
 import type { IArtifactStrategy } from "./artifacts.js";
@@ -21,6 +22,7 @@ export class ObsidionBridgeConnector implements IConnector {
     method: string,
     resolve: any,
     reject: any,
+    timeout?: number,
   ) => void = () => {};
 
   // Use persisted stores for connection state
@@ -32,7 +34,7 @@ export class ObsidionBridgeConnector implements IConnector {
 
   constructor(params: ObsidionBridgeConnectorOptions) {
     this.info = { uuid: params.uuid, name: params.name, icon: params.icon };
-    this.walletUrl = params.walletUrl + "/sign";
+    this.walletUrl = joinURL(params.walletUrl, "/sign");
     this.artifactStrategy = params.artifactStrategy;
     this.#fallbackOpenPopup = params.fallbackOpenPopup;
 
@@ -241,7 +243,6 @@ export class ObsidionBridgeConnector implements IConnector {
     request: any,
   ): Promise<any> {
     const isRequestAccount = request.method === "aztec_requestAccounts";
-
     try {
       // Open the popup with the bridge URL and topic in the query parameters
       this.#openPopupWithBridgeUrl(
@@ -262,7 +263,11 @@ export class ObsidionBridgeConnector implements IConnector {
       }
 
       // Wait for the response promise to resolve and return its value
-      return await this.#createResponsePromise(bridgeConnection, request);
+      return await this.#createResponsePromise(
+        bridgeConnection,
+        request,
+        200000,
+      );
     } catch (error) {
       console.error("Failed to send popup request:", error);
       throw error;
@@ -278,7 +283,11 @@ export class ObsidionBridgeConnector implements IConnector {
   ): Promise<any> {
     try {
       // Send the request
-      return await this.#createResponsePromise(bridgeConnection, request);
+      return await this.#createResponsePromise(
+        bridgeConnection,
+        request,
+        60000,
+      );
     } finally {
       this.#pendingRequestsCount--;
     }
@@ -290,7 +299,6 @@ export class ObsidionBridgeConnector implements IConnector {
     // Wait for the secure channel to be established first
     await new Promise<void>((resolve) => {
       bridgeConnection.onSecureChannelEstablished(() => {
-        // saveRemotePublicKey(bridgeConnection.getRemotePublicKey())
         saveBridgeSession(
           bridgeConnection.getKeyPair(),
           Bytes.fromHex(`0x${bridgeConnection.getRemotePublicKey()}`),
@@ -347,18 +355,24 @@ export class ObsidionBridgeConnector implements IConnector {
   async #createResponsePromise(
     bridgeConnection: BridgeInterface,
     rpcRequest: any,
+    timeoutMs: number = 200000,
   ): Promise<any> {
     const requestId = `${bridgeConnection.getPublicKey()}-${rpcRequest.id}`;
-
     try {
-      const ret = await bridgeConnection.sendMessage("WALLET_RPC", rpcRequest);
+      await bridgeConnection.sendMessage("WALLET_RPC", rpcRequest);
     } catch (error) {
       console.error("Failed to send request:", error);
     }
 
     return new Promise((resolve, reject) => {
       // Register this request with the message router
-      this.#registerRequest(requestId, rpcRequest.method, resolve, reject);
+      this.#registerRequest(
+        requestId,
+        rpcRequest.method,
+        resolve,
+        reject,
+        timeoutMs,
+      );
     });
   }
 
@@ -457,31 +471,34 @@ export class ObsidionBridgeConnector implements IConnector {
       method: string,
       resolve: any,
       reject: any,
+      timeoutMs: number = 200000,
     ) => {
       const timeout = setTimeout(() => {
+        const timeoutSeconds = timeoutMs / 1000;
         console.error(
-          `Request "${method}" (${id}) timed out after 300 seconds`,
+          `Request "${method}" (${id}) timed out after ${timeoutSeconds} seconds`,
         );
         if (pendingRequests.has(id)) {
           pendingRequests
             .get(id)!
             .reject(
-              new Error(`Request "${method}" timed out after 300 seconds`),
+              new Error(
+                `Request "${method}" timed out after ${timeoutSeconds} seconds`,
+              ),
             );
           pendingRequests.delete(id);
           outgoingRequestIds.delete(id); // Clean up tracking
         }
-      }, 500000);
+      }, timeoutMs);
 
       pendingRequests.set(id, { resolve, reject, method, timeout });
     };
   }
 
-  #openPopupWithBridgeUrl(connectionUrl: string, overrideConnection: boolean) {
+  #openPopupWithBridgeUrl(connectionString: string, isRequestAccount: boolean) {
     const popupUrl = new URL(this.walletUrl);
-    if (overrideConnection) {
-      popupUrl.searchParams.set("uri", connectionUrl);
-    }
+    popupUrl.searchParams.set("uri", connectionString);
+    popupUrl.searchParams.set("is_connect", isRequestAccount.toString());
 
     // Create a wallet URL with the bridge parameters
     const left = (window.innerWidth - POPUP_WIDTH) / 2 + window.screenX;
