@@ -1,7 +1,10 @@
 import type { AztecNode } from "@aztec/aztec.js";
 import type { AztecNodeInput } from "./base.js";
 import { chains } from "./chains.js";
-import type { TransactionRequest } from "./exports/index.js";
+import type {
+  SimulateTransactionRequest,
+  TransactionRequest,
+} from "./exports/index.js";
 import type { RpcRequestMap } from "./types.js";
 
 export const METHODS_NOT_REQUIRING_CONFIRMATION: (keyof RpcRequestMap)[] = [
@@ -96,6 +99,16 @@ export function mergeTransactionRequests(
     authWitnesses: requests.flatMap((r) => r.authWitnesses ?? []),
     capsules: requests.flatMap((r) => r.capsules ?? []),
     registerContracts: requests.flatMap((r) => r.registerContracts ?? []),
+  };
+}
+
+export function mergeSimulateTransactionRequest(
+  requests: SimulateTransactionRequest[],
+): Required<SimulateTransactionRequest> {
+  const txRequest = mergeTransactionRequests(requests);
+  return {
+    ...txRequest,
+    registerSenders: requests.flatMap((r) => r.registerSenders ?? []),
   };
 }
 
