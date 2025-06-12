@@ -126,14 +126,15 @@ export class Eip1193Account extends BaseAccount {
     pxe: PXE,
     paymentMethod?: FeePaymentMethod,
   ): Promise<Eip1193Account> {
+    const avmChain = await getAztecChain(aztecNode);
     const provider = createEip1193ProviderFromAccounts(
       aztecNode,
       pxe,
       [account],
+      avmChain,
       paymentMethod,
     );
     const artifactStrategy = new LiteralArtifactStrategy();
-    const avmChain = await getAztecChain(aztecNode);
     return new this(
       account.getAddress(),
       provider,
