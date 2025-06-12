@@ -53,7 +53,6 @@ export class ContractBase<T extends AztecContract> {
               this.account,
               f,
               args,
-              options,
             );
           },
           {
@@ -204,7 +203,6 @@ export class ContractFunctionInteraction {
     account: Account,
     functionAbi: FunctionAbi,
     args: unknown[],
-    options: SendOptions | undefined,
   ) {
     this.#account = account;
     this.#functionAbi = functionAbi;
@@ -226,24 +224,25 @@ export class ContractFunctionInteraction {
     this.#txRequest = lazyValue(async () => {
       return {
         calls: [await this.#call()],
-        authWitnesses: options?.authWitnesses ?? [],
-        capsules: options?.capsules ?? [],
-        registerContracts: [contract, ...(options?.registerContracts ?? [])],
-        registerSenders: options?.registerSenders ?? [],
+        authWitnesses: [],
+        capsules: [],
+        registerContracts: [contract],
+        registerSenders: [],
       };
     });
   }
 
-  send() {
-    return this.#account.sendTransaction(this.#txRequest());
+  send(options: SendOptions) {
+    return this.#account.sendTransaction(this.#txRequest(), options);
   }
 
-  async simulate() {
+  async simulate(options: SimulateOptions) {
     const txRequest = await this.#txRequest();
+
     const results =
       this.#functionAbi.functionType === FunctionType.PUBLIC
         ? await this.#account.simulatePublicCalls(txRequest.calls)
-        : await this.#account.simulateTransaction(txRequest);
+        : await this.#account.simulateTransaction(txRequest, options);
 
     if (results.length !== 1) {
       throw new Error(`invalid results length: ${results.length}`);
@@ -252,8 +251,11 @@ export class ContractFunctionInteraction {
     return decodeFromAbi(this.#functionAbi.returnTypes, result);
   }
 
-  async request(): Promise<FunctionCall> {
-    return await this.#call();
+  async request(options?: SendOptions): Promise<FunctionCallWithOptions> {
+    return {
+      call: await this.#call(),
+      options: options ?? {},
+    };
   }
 }
 
@@ -262,15 +264,37 @@ export class BatchCall
 {
   constructor(
     readonly account: Account,
-    readonly calls: FunctionCall[],
-    readonly options?: SendOptions,
+    readonly calls: FunctionCallWithOptions[],
   ) {}
 
   send() {
-    return this.account.sendTransaction({
-      ...this.options,
-      calls: this.calls,
-    });
+    // Merge all options from individual calls
+    const mergedOptions: SendOptions = {
+      authWitnesses: [],
+      capsules: [],
+      registerContracts: [],
+    };
+
+    for (const call of this.calls) {
+      if (call.options.authWitnesses) {
+        mergedOptions.authWitnesses!.push(...call.options.authWitnesses);
+      }
+      if (call.options.capsules) {
+        mergedOptions.capsules!.push(...call.options.capsules);
+      }
+      if (call.options.registerContracts) {
+        mergedOptions.registerContracts!.push(
+          ...call.options.registerContracts,
+        );
+      }
+    }
+
+    return this.account.sendTransaction(
+      {
+        calls: this.calls.map((c) => c.call),
+      },
+      mergedOptions,
+    );
   }
 }
 
@@ -279,9 +303,19 @@ export type IntentAction = {
   action: FunctionCall;
 };
 
+export type FunctionCallWithOptions = {
+  call: FunctionCall;
+  options: SendOptions;
+};
+
 export type SendOptions = Pick<
   TransactionRequest,
-  "authWitnesses" | "capsules" | "registerContracts" | "registerSenders"
+  "authWitnesses" | "capsules" | "registerContracts"
+>;
+
+export type SimulateOptions = Pick<
+  TransactionRequest,
+  "registerContracts" | "registerSenders"
 >;
 
 type ContractMethod<T extends AztecContract, K extends keyof T["methods"]> = ((
