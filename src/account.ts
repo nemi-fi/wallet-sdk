@@ -14,7 +14,10 @@ import { getCanonicalAuthRegistry } from "@aztec/protocol-contracts/auth-registr
 import type { ABIParameterVisibility } from "@aztec/stdlib/abi";
 import type { BlockHeader } from "@aztec/stdlib/tx";
 import { assert } from "ts-essentials";
-import { ContractFunctionInteraction } from "./contract.js";
+import {
+  ContractFunctionInteraction,
+  type SimulateOptions,
+} from "./contract.js";
 import type {
   IntentAction,
   SendOptions,
@@ -33,9 +36,13 @@ export abstract class BaseAccount {
 
   abstract sendTransaction(
     txRequest: TransactionRequest | Promise<TransactionRequest>,
+    options?: SendOptions,
   ): SentTx;
 
-  abstract simulateTransaction(request: TransactionRequest): Promise<Fr[][]>;
+  abstract simulateTransaction(
+    request: TransactionRequest,
+    options?: SimulateOptions,
+  ): Promise<Fr[][]>;
 
   async simulatePublicCalls(calls: FunctionCall[]): Promise<Fr[][]> {
     // avoid unnecessary calls to node
@@ -57,7 +64,6 @@ export abstract class BaseAccount {
   async setPublicAuthWit(
     messageHashOrIntent: Fr | Uint8Array | IntentInnerHash | IntentAction,
     authorized: boolean,
-    options?: SendOptions,
   ): Promise<ContractFunctionInteraction> {
     let messageHash: Fr;
     if (messageHashOrIntent instanceof Uint8Array) {
@@ -78,7 +84,6 @@ export abstract class BaseAccount {
       this,
       getSetAuthorizedAbi(),
       [messageHash, authorized],
-      options,
     );
   }
 

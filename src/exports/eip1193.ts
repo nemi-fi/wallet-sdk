@@ -17,7 +17,12 @@ import {
   LiteralArtifactStrategy,
   type IArtifactStrategy,
 } from "../artifacts.js";
-import type { Contract, IntentAction } from "../contract.js";
+import type {
+  Contract,
+  IntentAction,
+  SendOptions,
+  SimulateOptions,
+} from "../contract.js";
 import { createEip1193ProviderFromAccounts } from "../createEip1193ProviderFromAccounts.js";
 import {
   encodeCapsules,
@@ -26,7 +31,6 @@ import {
 } from "../serde.js";
 import type { Eip1193Provider, TypedEip1193Provider } from "../types.js";
 import { getAztecChainId } from "../utils.js";
-
 export { BatchCall, Contract } from "../contract.js";
 
 export class Eip1193Account extends BaseAccount {
@@ -46,15 +50,14 @@ export class Eip1193Account extends BaseAccount {
 
   // TODO: return a promise that resolves to `SentTxWithHash`
   sendTransaction(
-    txRequest: TransactionRequest | Promise<TransactionRequest>,
+    txRequest: SendTransactionRequest | Promise<SendTransactionRequest>,
+    options: SendOptions,
   ): SentTx {
     const txHashPromise = (async () => {
       const txRequest_ = await txRequest;
-      if (txRequest_.registerSenders && txRequest_.registerSenders.length > 0) {
-        throw new Error(
-          "registerSenders is not supported for send() operations.",
-        );
-      }
+      txRequest_.registerContracts = options.registerContracts ?? [];
+      txRequest_.authWitnesses = options.authWitnesses ?? [];
+      txRequest_.capsules = options.capsules ?? [];
 
       const chainId = await getAztecChainId(this.aztecNode);
 
@@ -83,21 +86,17 @@ export class Eip1193Account extends BaseAccount {
   }
 
   // TODO: rename to either `call` or `view` or `readContract` or something more descriptive
-  async simulateTransaction(txRequest: TransactionRequest): Promise<Fr[][]> {
+  async simulateTransaction(
+    txRequest: SimulateTransactionRequest,
+    options: SimulateOptions,
+  ): Promise<Fr[][]> {
     // avoid unnecessary calls
     if (txRequest.calls.length === 0) {
       return [];
     }
 
-    if (txRequest.authWitnesses && txRequest.authWitnesses.length > 0) {
-      throw new Error(
-        "authWitnesses is not supported for simulate() operations.",
-      );
-    }
-
-    if (txRequest.capsules && txRequest.capsules.length > 0) {
-      throw new Error("capsules is not supported for simulate() operations.");
-    }
+    txRequest.registerContracts = options.registerContracts ?? [];
+    txRequest.registerSenders = options.registerSenders ?? [];
 
     const chainId = await getAztecChainId(this.aztecNode);
 
@@ -160,6 +159,16 @@ export type TransactionRequest = {
   registerContracts?: RegisterContract[];
   registerSenders?: AztecAddress[];
 };
+
+export type SendTransactionRequest = Pick<
+  TransactionRequest,
+  "calls" | "authWitnesses" | "capsules" | "registerContracts"
+>;
+
+export type SimulateTransactionRequest = Pick<
+  TransactionRequest,
+  "calls" | "registerContracts" | "registerSenders"
+>;
 
 export type RegisterContract =
   // for easy API
