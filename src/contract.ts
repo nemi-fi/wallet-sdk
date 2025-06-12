@@ -264,8 +264,11 @@ export class ContractFunctionInteraction {
     return decodeFromAbi(this.#functionAbi.returnTypes, result);
   }
 
-  async request(): Promise<FunctionCall> {
-    return await this.#call();
+  async request(options?: SendOptions): Promise<FunctionCallWithOptions> {
+    return {
+      call: await this.#call(),
+      options: options ?? {},
+    };
   }
 }
 
@@ -274,14 +277,35 @@ export class BatchCall
 {
   constructor(
     readonly account: Account,
-    readonly calls: FunctionCall[],
-    readonly options?: SendOptions,
+    readonly calls: FunctionCallWithOptions[],
   ) {}
 
   send() {
+    const mergedOptions: SendOptions = {
+      authWitnesses: [],
+      capsules: [],
+      registerContracts: [],
+    };
+
+    for (const call of this.calls) {
+      if (call.options.authWitnesses) {
+        mergedOptions.authWitnesses!.push(...call.options.authWitnesses);
+      }
+      if (call.options.capsules) {
+        mergedOptions.capsules!.push(...call.options.capsules);
+      }
+      if (call.options.registerContracts) {
+        mergedOptions.registerContracts!.push(
+          ...call.options.registerContracts,
+        );
+      }
+    }
+
     return this.account.sendTransaction({
-      ...this.options,
-      calls: this.calls,
+      calls: this.calls.map((c) => c.call),
+      authWitnesses: mergedOptions.authWitnesses,
+      capsules: mergedOptions.capsules,
+      registerContracts: mergedOptions.registerContracts,
     });
   }
 }
@@ -289,6 +313,11 @@ export class BatchCall
 export type IntentAction = {
   caller: AztecAddress;
   action: FunctionCall;
+};
+
+export type FunctionCallWithOptions = {
+  call: FunctionCall;
+  options: SendOptions;
 };
 
 export type SendOptions = Pick<
