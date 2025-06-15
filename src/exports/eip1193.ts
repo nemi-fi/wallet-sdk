@@ -61,7 +61,7 @@ export class Eip1193Account extends BaseAccount {
             calls: txRequest_.calls.map(encodeFunctionCall),
             authWitnesses: (txRequest_?.authWitnesses ?? []).map((x) => ({
               caller: x.caller.toString(),
-              action: encodeFunctionCall(x.action),
+              action: encodeFunctionCall(x.action.call),
             })),
             capsules: encodeCapsules(txRequest_?.capsules ?? []),
             registerContracts: await encodeRegisterContracts({

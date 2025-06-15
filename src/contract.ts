@@ -312,7 +312,7 @@ export class BatchCall
 
 export type IntentAction = {
   caller: AztecAddress;
-  action: FunctionCall;
+  action: FunctionCallWithOptions;
 };
 
 export type FunctionCallWithOptions = {

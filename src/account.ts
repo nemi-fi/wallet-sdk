@@ -1,5 +1,4 @@
 import {
-  computeAuthWitMessageHash,
   Fr,
   FunctionType,
   type AztecAddress,
@@ -23,6 +22,11 @@ import type {
 } from "./exports/index.js";
 import { lazyValue } from "./utils.js";
 import { ContractClassLogFields } from "@aztec/stdlib/logs";
+import {
+  computeInnerAuthWitHash,
+  computeOuterAuthWitHash,
+} from "@aztec/stdlib/auth-witness";
+import { computeVarArgsHash } from "@aztec/stdlib/hash";
 
 export abstract class BaseAccount {
   constructor(
@@ -210,3 +214,44 @@ async function createTxFromPublicCalls(
     allHashedValues,
   );
 }
+
+export const computeAuthWitMessageHash = async (
+  intent: IntentInnerHash | IntentAction,
+  metadata: IntentMetadata,
+) => {
+  const chainId = metadata.chainId;
+  const version = metadata.version;
+
+  if ("caller" in intent) {
+    const fnCall = intent.action.call;
+    return computeOuterAuthWitHash(
+      fnCall.to,
+      chainId,
+      version,
+      await computeInnerAuthWitHashFromFunctionCall(intent.caller, fnCall),
+    );
+  } else {
+    const inner = Buffer.isBuffer(intent.innerHash)
+      ? Fr.fromBuffer(intent.innerHash)
+      : intent.innerHash;
+    return computeOuterAuthWitHash(intent.consumer, chainId, version, inner);
+  }
+};
+
+export const computeInnerAuthWitHashFromFunctionCall = async (
+  caller: AztecAddress,
+  fnCall: FunctionCall,
+) => {
+  return computeInnerAuthWitHash([
+    caller.toField(),
+    fnCall.selector.toField(),
+    await computeVarArgsHash(fnCall.args),
+  ]);
+};
+
+export type IntentMetadata = {
+  /** The chain id to approve */
+  chainId: Fr;
+  /** The version to approve  */
+  version: Fr;
+};
