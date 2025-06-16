@@ -32,6 +32,7 @@ import {
   ContractFunctionInteraction,
   UnsafeContract,
   type ContractInfo,
+  type FunctionCallWithOptions,
 } from "./contract.js";
 import type { TransactionRequest } from "./exports/eip1193.js";
 import type { Account } from "./exports/index.js";
@@ -97,6 +98,14 @@ export class DeployMethod<TContract extends AztecContract> {
       return mergeTransactionRequests([
         deployment,
         bootstrap,
+        ...(this.options.extraCalls ?? []).map((c) => {
+          return {
+            calls: [c.call],
+            registerContracts: c.options.registerContracts ?? [],
+            authWitnesses: c.options.authWitnesses ?? [],
+            capsules: c.options.capsules ?? [],
+          };
+        }),
         {
           calls: [],
           registerContracts: [await this.#contract()],
@@ -180,7 +189,9 @@ export type DeployOptions = Pick<
   | "skipClassRegistration"
   | "skipPublicDeployment"
   | "skipInitialization"
->;
+> & {
+  extraCalls?: FunctionCallWithOptions[];
+};
 
 export class DeploySentTx<TContract extends AztecContract> extends SentTx {
   constructor(
