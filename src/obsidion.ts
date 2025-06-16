@@ -32,6 +32,10 @@ export class ObsidionBridgeConnector implements IConnector {
   readonly walletUrl: string;
   readonly #fallbackOpenPopup?: FallbackOpenPopup;
 
+  private static readonly BRIDGE_SESSION_STORAGE_KEY =
+    "obsidion-bridge-session";
+  private static readonly SESSION_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
   constructor(params: ObsidionBridgeConnectorOptions) {
     this.info = { uuid: params.uuid, name: params.name, icon: params.icon };
     this.walletUrl = joinURL(params.walletUrl, "/sign");
@@ -48,12 +52,28 @@ export class ObsidionBridgeConnector implements IConnector {
       this.#connectedAccountAddress,
       (x) => x ?? undefined,
     );
+
+    // to enforce auto-expiry
+    const state = this.restoreBridgeSession();
+    if (!state) {
+      let currentAddress: string | null = null;
+      const unsubscribe = this.#connectedAccountAddress.subscribe((value) => {
+        currentAddress = value;
+      });
+      unsubscribe();
+
+      if (currentAddress) {
+        this.clearBridgeSession();
+        this.#connectedAccountAddress.set(null);
+      }
+    }
   }
 
   /**
    * Get or create a bridge connection, with proper synchronization
    */
   async #getOrCreateConnection(): Promise<BridgeInterface> {
+    console.log("getOrCreateConnection");
     // If there's an in-flight connection creation, return that promise
     if (this.#connectionInitPromise) {
       return this.#connectionInitPromise;
@@ -77,7 +97,8 @@ export class ObsidionBridgeConnector implements IConnector {
       }
 
       // Start a new connection creation process
-      const connectionState = restoreBridgeSession();
+      const connectionState = this.restoreBridgeSession();
+      console.log("connectionState", connectionState);
 
       // Create and store the promise before any async operations
       this.#connectionInitPromise = (async () => {
@@ -140,7 +161,7 @@ export class ObsidionBridgeConnector implements IConnector {
 
       this.#connectionInitPromise = null;
       this.#connectedAccountAddress.set(null);
-      clearBridgeSession();
+      this.clearBridgeSession();
 
       // Close and clear the bridge connection
       try {
@@ -198,7 +219,7 @@ export class ObsidionBridgeConnector implements IConnector {
       bridgeConnection.close();
 
       // Remove persisted connection state
-      clearBridgeSession();
+      this.clearBridgeSession();
       this.#bridgeConnection = null;
     } catch (error) {
       console.error("Failed to close bridge connection:", error);
@@ -299,7 +320,7 @@ export class ObsidionBridgeConnector implements IConnector {
     // Wait for the secure channel to be established first
     await new Promise<void>((resolve) => {
       bridgeConnection.onSecureChannelEstablished(() => {
-        saveBridgeSession(
+        this.saveBridgeSession(
           bridgeConnection.getKeyPair(),
           Bytes.fromHex(`0x${bridgeConnection.getRemotePublicKey()}`),
         );
@@ -527,6 +548,99 @@ export class ObsidionBridgeConnector implements IConnector {
         });
     }
   }
+
+  /**
+   * Save bridge session to local storage
+   */
+  private saveBridgeSession(
+    keyPair: KeyPair,
+    remotePublicKey?: Uint8Array,
+  ): void {
+    try {
+      localStorage.setItem(
+        ObsidionBridgeConnector.BRIDGE_SESSION_STORAGE_KEY,
+        JSON.stringify({
+          publicKey: Bytes.toHex(keyPair.publicKey),
+          privateKey: Bytes.toHex(keyPair.privateKey),
+          ...(remotePublicKey
+            ? {
+                remotePublicKey: Bytes.toHex(remotePublicKey),
+              }
+            : {}),
+          timestamp: Date.now(),
+        }),
+      );
+    } catch (error) {
+      console.error("Failed to save bridge session to local storage:", error);
+    }
+  }
+
+  /**
+   * Restore bridge session from local storage
+   */
+  private restoreBridgeSession():
+    | {
+        keyPair: KeyPair;
+        remotePublicKey?: Uint8Array;
+      }
+    | undefined {
+    console.log("restoreBridgeSession");
+    try {
+      const keyPairJson = localStorage.getItem(
+        ObsidionBridgeConnector.BRIDGE_SESSION_STORAGE_KEY,
+      );
+      if (keyPairJson) {
+        const parsedSavedKeyPair = JSON.parse(keyPairJson);
+
+        // Check if session has expired
+        const timestamp = parsedSavedKeyPair.timestamp;
+        console.log("timestamp", timestamp);
+        console.log("Date.now()", Date.now());
+        console.log("Date.now() - timestamp", Date.now() - timestamp);
+        console.log(
+          "ObsidionBridgeConnector.SESSION_EXPIRY_MS",
+          ObsidionBridgeConnector.SESSION_EXPIRY_MS,
+        );
+        if (
+          !timestamp ||
+          Date.now() - timestamp > ObsidionBridgeConnector.SESSION_EXPIRY_MS
+        ) {
+          // Use closeBridge to properly clean up the session
+          this.clearBridgeSession();
+          return undefined;
+        }
+
+        // Convert hex strings back to Uint8Array
+        const keyPair = {
+          publicKey: Bytes.fromHex(parsedSavedKeyPair.publicKey),
+          privateKey: Bytes.fromHex(parsedSavedKeyPair.privateKey),
+        };
+        return {
+          keyPair,
+          ...(parsedSavedKeyPair.remotePublicKey
+            ? {
+                remotePublicKey: Bytes.fromHex(
+                  parsedSavedKeyPair.remotePublicKey,
+                ),
+              }
+            : {}),
+        };
+      }
+    } catch (error) {
+      console.error(
+        "Failed to retrieve bridge session from local storage:",
+        error,
+      );
+    }
+    return;
+  }
+
+  /**
+   * Clear bridge session from local storage
+   */
+  private clearBridgeSession(): void {
+    localStorage.removeItem(ObsidionBridgeConnector.BRIDGE_SESSION_STORAGE_KEY);
+  }
 }
 
 export interface ObsidionBridgeConnectorOptions {
@@ -550,70 +664,3 @@ export type FallbackOpenPopup = (
 
 const POPUP_WIDTH = 420;
 const POPUP_HEIGHT = 540;
-
-// Session storage key for bridge session data
-const BRIDGE_SESSION_STORAGE_KEY = "obsidion-bridge-session";
-
-/**
- * Save bridge session to session storage
- */
-export function saveBridgeSession(
-  keyPair: KeyPair,
-  remotePublicKey?: Uint8Array,
-): void {
-  try {
-    sessionStorage.setItem(
-      BRIDGE_SESSION_STORAGE_KEY,
-      JSON.stringify({
-        publicKey: Array.from(keyPair.publicKey),
-        privateKey: Array.from(keyPair.privateKey),
-        ...(remotePublicKey
-          ? { remotePublicKey: Array.from(remotePublicKey) }
-          : {}),
-      }),
-    );
-  } catch (error) {
-    console.error("Failed to save bridge session to session storage:", error);
-  }
-}
-
-/**
- * Restore bridge session from session storage
- */
-export function restoreBridgeSession():
-  | { keyPair: KeyPair; remotePublicKey?: Uint8Array }
-  | undefined {
-  try {
-    const keyPairJson = sessionStorage.getItem(BRIDGE_SESSION_STORAGE_KEY);
-    if (keyPairJson) {
-      const parsedSavedKeyPair = JSON.parse(keyPairJson);
-      const keyPair = {
-        publicKey: new Uint8Array(parsedSavedKeyPair.publicKey),
-        privateKey: new Uint8Array(parsedSavedKeyPair.privateKey),
-      };
-      return {
-        keyPair,
-        ...(parsedSavedKeyPair.remotePublicKey
-          ? {
-              remotePublicKey: new Uint8Array(
-                parsedSavedKeyPair.remotePublicKey,
-              ),
-            }
-          : {}),
-      };
-    }
-  } catch (error) {
-    console.error(
-      "Failed to retrieve bridge session from session storage:",
-      error,
-    );
-  }
-  return;
-}
-
-/**
- * Clear bridge session from session storage
- */
-export function clearBridgeSession(): void {
-  sessionStorage.removeItem(BRIDGE_SESSION_STORAGE_KEY);
-}
