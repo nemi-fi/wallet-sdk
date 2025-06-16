@@ -73,7 +73,6 @@ export class ObsidionBridgeConnector implements IConnector {
    * Get or create a bridge connection, with proper synchronization
    */
   async #getOrCreateConnection(): Promise<BridgeInterface> {
-    console.log("getOrCreateConnection");
     // If there's an in-flight connection creation, return that promise
     if (this.#connectionInitPromise) {
       return this.#connectionInitPromise;
@@ -98,7 +97,6 @@ export class ObsidionBridgeConnector implements IConnector {
 
       // Start a new connection creation process
       const connectionState = this.restoreBridgeSession();
-      console.log("connectionState", connectionState);
 
       // Create and store the promise before any async operations
       this.#connectionInitPromise = (async () => {
@@ -584,7 +582,6 @@ export class ObsidionBridgeConnector implements IConnector {
         remotePublicKey?: Uint8Array;
       }
     | undefined {
-    console.log("restoreBridgeSession");
     try {
       const keyPairJson = localStorage.getItem(
         ObsidionBridgeConnector.BRIDGE_SESSION_STORAGE_KEY,
@@ -594,13 +591,6 @@ export class ObsidionBridgeConnector implements IConnector {
 
         // Check if session has expired
         const timestamp = parsedSavedKeyPair.timestamp;
-        console.log("timestamp", timestamp);
-        console.log("Date.now()", Date.now());
-        console.log("Date.now() - timestamp", Date.now() - timestamp);
-        console.log(
-          "ObsidionBridgeConnector.SESSION_EXPIRY_MS",
-          ObsidionBridgeConnector.SESSION_EXPIRY_MS,
-        );
         if (
           !timestamp ||
           Date.now() - timestamp > ObsidionBridgeConnector.SESSION_EXPIRY_MS
