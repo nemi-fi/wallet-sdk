@@ -320,6 +320,11 @@ export type FunctionCallWithOptions = {
   options: SendOptions;
 };
 
+export type FunctionCallWithOptions = {
+  call: FunctionCall;
+  options: SendOptions;
+};
+
 export type SendOptions = Pick<
   TransactionRequest,
   "authWitnesses" | "capsules" | "registerContracts"
