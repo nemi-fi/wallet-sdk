@@ -9,6 +9,7 @@ import {
   type FunctionCall,
   type PXE,
   type Wallet,
+  type IntentAction,
 } from "@aztec/aztec.js";
 import { ExecutionPayload } from "@aztec/entrypoints/payload";
 import {
@@ -22,7 +23,6 @@ import type { TxSimulationResult } from "@aztec/stdlib/tx";
 import { Hex } from "ox";
 import { assert } from "ts-essentials";
 import type { AvmChain } from "./chains.js";
-import type { IntentAction } from "./contract.js";
 import {
   decodeCapsules,
   decodeFunctionCall,
