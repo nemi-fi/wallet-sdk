@@ -115,7 +115,7 @@ export function mergeSimulateTransactionRequest(
 export async function getAvmChain(aztecNode: AztecNode) {
   const l1ChainId = await aztecNode.getChainId();
   switch (l1ChainId) {
-    case 1115511: {
+    case 11155111: {
       return chains.testnet;
     }
     case 31337: {
