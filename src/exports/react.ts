@@ -10,7 +10,7 @@ export function useAccount(wallet: Pick<AztecWalletSdk, "accountObservable">) {
       setAccount(account);
     });
     return () => unsubscribe();
-  }, []);
+  }, [wallet.accountObservable]);
 
   return account;
 }
