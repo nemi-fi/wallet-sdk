@@ -5,7 +5,6 @@ import type {
   ContractInstanceWithAddress,
   FunctionAbi,
   FunctionArtifact,
-  FunctionCall,
   PublicKeys,
   TxHash,
   TxReceipt,
@@ -85,23 +84,27 @@ export class DeployMethod<TContract extends AztecContract> {
     });
 
     this.#txRequest = lazyValue(async () => {
-      const deployment = await this.#getDeploymentFunctionCalls();
-      const bootstrap = await this.#getInitializeFunctionCalls();
+      const [deployment, bootstrap] = await Promise.all([
+        this.#getDeploymentFunctionCalls(),
+        this.#getInitializeFunctionCalls(),
+      ]);
 
-      if (deployment.calls.length + bootstrap.calls.length === 0) {
-        throw new Error(
-          `No function calls needed to deploy contract ${artifact.name}`,
-        );
-      }
-
-      return mergeTransactionRequests([
-        deployment,
-        bootstrap,
+      const merged = mergeTransactionRequests([
+        ...deployment,
+        ...bootstrap,
         {
           calls: [],
           registerContracts: [await this.#contract()],
         },
       ]);
+
+      if (merged.calls.length === 0) {
+        throw new Error(
+          `No function calls needed to deploy contract ${artifact.name}`,
+        );
+      }
+
+      return merged;
     });
   }
 
@@ -122,8 +125,7 @@ export class DeployMethod<TContract extends AztecContract> {
   }
 
   async #getDeploymentFunctionCalls() {
-    const calls: FunctionCall[] = [];
-    const capsules: Capsule[] = [];
+    const calls: TransactionRequest[] = [];
 
     const contract = await this.#contract();
 
@@ -138,8 +140,7 @@ export class DeployMethod<TContract extends AztecContract> {
           this.account,
           contract.artifact,
         );
-        calls.push(registering.call);
-        capsules.push(registering.capsule);
+        calls.push(registering);
       }
     }
 
@@ -152,13 +153,12 @@ export class DeployMethod<TContract extends AztecContract> {
       calls.push(await deploymentInteraction.request());
     }
 
-    return { calls, capsules };
+    return calls;
   }
 
   async #getInitializeFunctionCalls() {
     const contract = await this.#contract();
-    const calls: FunctionCall[] = [];
-    const capsules: Capsule[] = [];
+    const calls: TransactionRequest[] = [];
     if (this.#constructorArtifact && !this.options.skipInitialization) {
       const constructorCall = new ContractFunctionInteraction(
         contract,
@@ -169,7 +169,7 @@ export class DeployMethod<TContract extends AztecContract> {
       );
       calls.push(await constructorCall.request());
     }
-    return { calls, capsules };
+    return calls;
   }
 }
 
@@ -233,7 +233,7 @@ async function registerContractClass(
     new Fr(REGISTERER_CONTRACT_BYTECODE_CAPSULE_SLOT),
     encodedBytecode,
   );
-  return { call, capsule };
+  return mergeTransactionRequests([call, { calls: [], capsules: [capsule] }]);
 }
 
 async function deployInstance(

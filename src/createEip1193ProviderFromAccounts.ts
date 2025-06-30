@@ -22,7 +22,6 @@ import type { TxSimulationResult } from "@aztec/stdlib/tx";
 import { Hex } from "ox";
 import { assert } from "ts-essentials";
 import type { AvmChain } from "./chains.js";
-import type { IntentAction } from "./contract.js";
 import {
   decodeCapsules,
   decodeFunctionCall,
@@ -79,7 +78,7 @@ export function createEip1193ProviderFromAccounts(
           );
 
           // approve auth witnesses
-          const authWitRequests: IntentAction[] = await Promise.all(
+          const authWitRequests = await Promise.all(
             request.authWitnesses.map(async (authWitness) => ({
               caller: AztecAddress.fromString(authWitness.caller),
               action: await decodeFunctionCall(pxe, authWitness.action),
