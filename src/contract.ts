@@ -285,9 +285,9 @@ export class BatchCall
   send() {
     return this.account.sendTransaction(
       Promise.all(
-        this.calls.map((c) => {
+        this.calls.map(async (c) => {
           if ("request" in c) {
-            return c.request();
+            return await c.request();
           }
           if ("selector" in c) {
             return { calls: [c] };
@@ -301,7 +301,7 @@ export class BatchCall
 
 export type IntentAction = {
   caller: AztecAddress;
-  action: ContractFunctionInteraction | FunctionCall;
+  action: ContractFunctionInteraction;
 };
 
 export type SendOptions = Pick<

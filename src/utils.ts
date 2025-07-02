@@ -1,4 +1,4 @@
-import type { AztecNode, FunctionCall } from "@aztec/aztec.js";
+import type { AztecNode } from "@aztec/aztec.js";
 import type { AztecNodeInput } from "./base.js";
 import { chains } from "./chains.js";
 import type {
@@ -113,13 +113,7 @@ export function mergeSimulateTransactionRequest(
   };
 }
 
-export async function toAuthWitnessAction(
-  action: ContractFunctionInteraction | FunctionCall,
-) {
-  if (!("request" in action)) {
-    return action;
-  }
-
+export async function toAuthWitnessAction(action: ContractFunctionInteraction) {
   const request = await action.request();
   if (request.calls.length !== 1) {
     throw new Error(
