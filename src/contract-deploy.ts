@@ -150,7 +150,7 @@ export class DeployMethod<TContract extends AztecContract> {
         this.account,
         contract.instance,
       );
-      calls.push(await deploymentInteraction.request());
+      calls.push(deploymentInteraction);
     }
 
     return calls;
@@ -228,6 +228,7 @@ async function registerContractClass(
     publicBytecodeCommitment,
     emitPublicBytecode,
   ).request();
+  call.registerContracts = []; // the canonical registerer contract is already registered in all PXEs. And PXE does not support registering canonical contracts.
   const capsule = new Capsule(
     registerer.address,
     new Fr(REGISTERER_CONTRACT_BYTECODE_CAPSULE_SLOT),
@@ -239,7 +240,7 @@ async function registerContractClass(
 async function deployInstance(
   account: Account,
   instance: ContractInstanceWithAddress,
-): Promise<ContractFunctionInteraction> {
+) {
   const deployerContract = await getDeployerContract(account);
   const { salt, currentContractClassId, publicKeys, deployer } = instance;
   const isUniversalDeploy = deployer.isZero();
@@ -248,13 +249,15 @@ async function deployInstance(
       `Expected deployer ${deployer.toString()} does not match sender account ${account.getAddress().toString()}`,
     );
   }
-  return deployerContract.methods.deploy!(
+  const request = await deployerContract.methods.deploy!(
     salt,
     currentContractClassId,
     instance.initializationHash,
     publicKeys,
     isUniversalDeploy,
-  );
+  ).request();
+  request.registerContracts = []; // the canonical deployer contract is already registered in all PXEs. And PXE does not support registering canonical contracts.
+  return request;
 }
 
 async function getRegistererContract(account: Account) {

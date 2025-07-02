@@ -291,8 +291,18 @@ async function registerContracts(
         // TODO: fails CI without this line. More info: https://discord.com/channels/1144692727120937080/1365069273281724486
         await aztecNode.getNodeInfo();
       }
-      await pxe.registerContract(contract);
-      registerContracts.wasRegistered.add(registeringKey);
+      try {
+        await pxe.registerContract(contract);
+        registerContracts.wasRegistered.add(registeringKey);
+      } catch (e) {
+        console.error(
+          "error registering contract",
+          c.artifact?.name,
+          c.address.toString(),
+          e,
+        );
+        throw e;
+      }
     }),
   );
 }
