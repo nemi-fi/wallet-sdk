@@ -275,14 +275,26 @@ export class BatchCall
 {
   constructor(
     readonly account: Account,
-    readonly calls: ContractFunctionInteraction[],
+    private readonly calls: (
+      | ContractFunctionInteraction
+      | FunctionCall
+      | TransactionRequest
+    )[],
   ) {}
 
   send() {
     return this.account.sendTransaction(
-      Promise.all(this.calls.map((c) => c.request())).then((requests) =>
-        mergeTransactionRequests(requests),
-      ),
+      Promise.all(
+        this.calls.map((c) => {
+          if ("request" in c) {
+            return c.request();
+          }
+          if ("selector" in c) {
+            return { calls: [c] };
+          }
+          return c;
+        }),
+      ).then((requests) => mergeTransactionRequests(requests)),
     );
   }
 }
