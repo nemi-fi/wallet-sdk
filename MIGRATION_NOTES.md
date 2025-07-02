@@ -1,8 +1,8 @@
 # Migration Notes
 
-## Unreleased
+## 0.87.2-next.5
 
-Changes to AuthWitness creation:
+Changes to authWitnesses creation. You no longer need to call `.request()`:
 
 ```diff
   pool.methods.swap(
