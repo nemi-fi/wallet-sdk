@@ -12,6 +12,7 @@ import {
 } from "@aztec/aztec.js";
 import { getCanonicalAuthRegistry } from "@aztec/protocol-contracts/auth-registry/lazy";
 import type { ABIParameterVisibility } from "@aztec/stdlib/abi";
+import { ContractClassLogFields } from "@aztec/stdlib/logs";
 import type { BlockHeader } from "@aztec/stdlib/tx";
 import { assert } from "ts-essentials";
 import { ContractFunctionInteraction } from "./contract.js";
@@ -21,8 +22,7 @@ import type {
   SimulateTransactionRequest,
   TransactionRequest,
 } from "./exports/index.js";
-import { lazyValue } from "./utils.js";
-import { ContractClassLogFields } from "@aztec/stdlib/logs";
+import { lazyValue, toAuthWitnessAction } from "./utils.js";
 
 export abstract class BaseAccount {
   constructor(
@@ -70,7 +70,17 @@ export abstract class BaseAccount {
     } else {
       const chainId = new Fr(await this.aztecNode.getChainId());
       const version = new Fr(await this.aztecNode.getVersion());
-      messageHash = await computeAuthWitMessageHash(messageHashOrIntent, {
+
+      // ugly af but works
+      const messageHashOrIntent2 =
+        "action" in messageHashOrIntent
+          ? {
+              ...messageHashOrIntent,
+              action: await toAuthWitnessAction(messageHashOrIntent.action),
+            }
+          : messageHashOrIntent;
+
+      messageHash = await computeAuthWitMessageHash(messageHashOrIntent2, {
         chainId,
         version,
       });

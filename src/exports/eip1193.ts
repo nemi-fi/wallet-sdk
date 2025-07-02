@@ -27,7 +27,7 @@ import {
   encodeRegisterContracts,
 } from "../serde.js";
 import type { Eip1193Provider, TypedEip1193Provider } from "../types.js";
-import { getAvmChain } from "../utils.js";
+import { getAvmChain, toAuthWitnessAction } from "../utils.js";
 
 export { BatchCall, Contract } from "../contract.js";
 
@@ -59,10 +59,12 @@ export class Eip1193Account extends BaseAccount {
             chainId: Hex.fromNumber(this.avmChain.id),
             from: this.address.toString(),
             calls: txRequest_.calls.map(encodeFunctionCall),
-            authWitnesses: (txRequest_?.authWitnesses ?? []).map((x) => ({
-              caller: x.caller.toString(),
-              action: encodeFunctionCall(x.action),
-            })),
+            authWitnesses: await Promise.all(
+              (txRequest_?.authWitnesses ?? []).map(async (x) => ({
+                caller: x.caller.toString(),
+                action: encodeFunctionCall(await toAuthWitnessAction(x.action)),
+              })),
+            ),
             capsules: encodeCapsules(txRequest_?.capsules ?? []),
             registerContracts: await encodeRegisterContracts({
               contracts: txRequest_?.registerContracts ?? [],

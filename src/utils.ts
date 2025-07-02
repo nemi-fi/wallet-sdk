@@ -2,6 +2,7 @@ import type { AztecNode } from "@aztec/aztec.js";
 import type { AztecNodeInput } from "./base.js";
 import { chains } from "./chains.js";
 import type {
+  ContractFunctionInteraction,
   SimulateTransactionRequest,
   TransactionRequest,
 } from "./exports/index.js";
@@ -110,6 +111,16 @@ export function mergeSimulateTransactionRequest(
     ...txRequest,
     registerSenders: requests.flatMap((r) => r.registerSenders ?? []),
   };
+}
+
+export async function toAuthWitnessAction(action: ContractFunctionInteraction) {
+  const request = await action.request();
+  if (request.calls.length !== 1) {
+    throw new Error(
+      `Expected exactly 1 call for an auth witness, got ${request.calls.length}`,
+    );
+  }
+  return request.calls[0]!;
 }
 
 export async function getAvmChain(aztecNode: AztecNode) {

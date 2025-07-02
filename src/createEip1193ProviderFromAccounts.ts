@@ -22,7 +22,6 @@ import type { TxSimulationResult } from "@aztec/stdlib/tx";
 import { Hex } from "ox";
 import { assert } from "ts-essentials";
 import type { AvmChain } from "./chains.js";
-import type { IntentAction } from "./contract.js";
 import {
   decodeCapsules,
   decodeFunctionCall,
@@ -79,7 +78,7 @@ export function createEip1193ProviderFromAccounts(
           );
 
           // approve auth witnesses
-          const authWitRequests: IntentAction[] = await Promise.all(
+          const authWitRequests = await Promise.all(
             request.authWitnesses.map(async (authWitness) => ({
               caller: AztecAddress.fromString(authWitness.caller),
               action: await decodeFunctionCall(pxe, authWitness.action),
@@ -292,8 +291,18 @@ async function registerContracts(
         // TODO: fails CI without this line. More info: https://discord.com/channels/1144692727120937080/1365069273281724486
         await aztecNode.getNodeInfo();
       }
-      await pxe.registerContract(contract);
-      registerContracts.wasRegistered.add(registeringKey);
+      try {
+        await pxe.registerContract(contract);
+        registerContracts.wasRegistered.add(registeringKey);
+      } catch (e) {
+        console.error(
+          "error registering contract",
+          c.artifact?.name,
+          c.address.toString(),
+          e,
+        );
+        throw e;
+      }
     }),
   );
 }

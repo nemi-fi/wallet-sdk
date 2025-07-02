@@ -26,6 +26,7 @@ import {
   DefaultMap,
   lazyValue,
   mergeSimulateTransactionRequest,
+  mergeTransactionRequests,
   type ParametersExceptFirst,
 } from "./utils.js";
 
@@ -264,8 +265,8 @@ export class ContractFunctionInteraction {
     return decodeFromAbi(this.#functionAbi.returnTypes, result);
   }
 
-  async request(): Promise<FunctionCall> {
-    return await this.#call();
+  async request(): Promise<TransactionRequest> {
+    return await this.#txRequest();
   }
 }
 
@@ -274,21 +275,33 @@ export class BatchCall
 {
   constructor(
     readonly account: Account,
-    readonly calls: FunctionCall[],
-    readonly options?: SendOptions,
+    private readonly calls: (
+      | ContractFunctionInteraction
+      | FunctionCall
+      | TransactionRequest
+    )[],
   ) {}
 
   send() {
-    return this.account.sendTransaction({
-      ...this.options,
-      calls: this.calls,
-    });
+    return this.account.sendTransaction(
+      Promise.all(
+        this.calls.map(async (c) => {
+          if ("request" in c) {
+            return await c.request();
+          }
+          if ("selector" in c) {
+            return { calls: [c] };
+          }
+          return c;
+        }),
+      ).then((requests) => mergeTransactionRequests(requests)),
+    );
   }
 }
 
 export type IntentAction = {
   caller: AztecAddress;
-  action: FunctionCall;
+  action: ContractFunctionInteraction;
 };
 
 export type SendOptions = Pick<
