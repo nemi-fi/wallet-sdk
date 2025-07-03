@@ -304,11 +304,6 @@ export type IntentAction = {
   action: ContractFunctionInteraction;
 };
 
-export type FunctionCallWithOptions = {
-  call: FunctionCall;
-  options: SendOptions;
-};
-
 export type SendOptions = Pick<
   TransactionRequest,
   "authWitnesses" | "capsules" | "registerContracts"
