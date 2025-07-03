@@ -92,7 +92,7 @@ export class DeployMethod<TContract extends AztecContract> {
       const merged = mergeTransactionRequests([
         ...deployment,
         ...bootstrap,
-        ...(this.options.experimental_extraCalls ?? []),
+        ...(this.options.experimental_extraTxRequests ?? []),
         {
           calls: [],
           registerContracts: [await this.#contract()],
@@ -182,7 +182,7 @@ export type DeployOptions = Pick<
   | "skipPublicDeployment"
   | "skipInitialization"
 > & {
-  experimental_extraCalls?: TransactionRequest[];
+  experimental_extraTxRequests?: TransactionRequest[];
 };
 
 export class DeploySentTx<TContract extends AztecContract> extends SentTx {
