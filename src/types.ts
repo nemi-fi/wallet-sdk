@@ -18,6 +18,8 @@ export type RpcRequestMap = {
    * @returns the transaction hash
    */
   aztec_sendTransaction: (request: {
+    /** `number` hex string */
+    chainId: string;
     /** `AztecAddress` of the account that will send the transaction */
     from: string;
     /** `FunctionCall[]` to be executed in the transaction */
@@ -37,12 +39,16 @@ export type RpcRequestMap = {
    * @returns an array of return values (each being `Fr[]`) of the calls
    */
   aztec_call: (request: {
+    /** `number` hex string */
+    chainId: string;
     /** `AztecAddress` of the account that will the call will be simulated from */
     from: string;
     /** `FunctionCall[]` to be simulated */
     calls: SerializedFunctionCall[];
     /** Contracts required for this call to be simulated */
     registerContracts?: SerializedRegisterContract[];
+    /** `AztecAddress[]` of the senders to register */
+    registerSenders?: string[];
   }) => string[][];
 
   /**
@@ -53,7 +59,8 @@ export type RpcRequestMap = {
       // TODO: is this type namespaced enough? Could this clash with other chains which names start with "A"? E.g., Aleo also has an "ARC20" standard
       type: "ARC20";
       options: {
-        // TODO: add chainId
+        /** `number` hex string */
+        chainId: string;
         address: string;
         decimals: number;
         symbol: string;

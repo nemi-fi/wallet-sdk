@@ -19,8 +19,9 @@ import {
 } from "@aztec/stdlib/abi";
 import { GasSettings } from "@aztec/stdlib/gas";
 import type { TxSimulationResult } from "@aztec/stdlib/tx";
+import { Hex } from "ox";
 import { assert } from "ts-essentials";
-import type { IntentAction } from "./contract.js";
+import type { AvmChain } from "./chains.js";
 import {
   decodeCapsules,
   decodeFunctionCall,
@@ -37,11 +38,19 @@ export function createEip1193ProviderFromAccounts(
   aztecNode: AztecNode,
   pxe: PXE,
   accounts: Wallet[],
+  avmChain: AvmChain,
   paymentMethod?: FeePaymentMethod,
 ) {
-  function getAccount(address: string) {
-    const account = accounts.find((a) => a.getAddress().toString() === address);
-    assert(account, `no account found for ${address}`);
+  function getAccount(params: { from: string; chainId: string }) {
+    const account = accounts.find(
+      (a) => a.getAddress().toString() === params.from,
+    );
+    assert(account, `no account found for ${params.from}`);
+    const avmChainId = Hex.toNumber(params.chainId as `0x${string}`);
+    assert(
+      avmChainId === avmChain.id,
+      `chainId mismatch: ${avmChainId} !== ${avmChain.id}`,
+    );
     return account;
   }
   const provider: TypedEip1193Provider = {
@@ -54,7 +63,7 @@ export function createEip1193ProviderFromAccounts(
         ) => Promise<ReturnType<RpcRequestMap[K]>>;
       } = {
         aztec_sendTransaction: async (request) => {
-          const account = getAccount(request.from);
+          const account = getAccount(request);
 
           // register contracts
           await registerContracts(
@@ -69,7 +78,7 @@ export function createEip1193ProviderFromAccounts(
           );
 
           // approve auth witnesses
-          const authWitRequests: IntentAction[] = await Promise.all(
+          const authWitRequests = await Promise.all(
             request.authWitnesses.map(async (authWitness) => ({
               caller: AztecAddress.fromString(authWitness.caller),
               action: await decodeFunctionCall(pxe, authWitness.action),
@@ -105,7 +114,7 @@ export function createEip1193ProviderFromAccounts(
           return txHash.toString();
         },
         aztec_call: async (request) => {
-          const account = getAccount(request.from);
+          const account = getAccount(request);
 
           // register contracts
           await registerContracts(
@@ -113,6 +122,8 @@ export function createEip1193ProviderFromAccounts(
             pxe,
             request.registerContracts ?? [],
           );
+
+          await registerSenders(pxe, request.registerSenders ?? []);
 
           const deserializedCalls = await Promise.all(
             request.calls.map((x) => decodeFunctionCall(pxe, x)),
@@ -280,8 +291,18 @@ async function registerContracts(
         // TODO: fails CI without this line. More info: https://discord.com/channels/1144692727120937080/1365069273281724486
         await aztecNode.getNodeInfo();
       }
-      await pxe.registerContract(contract);
-      registerContracts.wasRegistered.add(registeringKey);
+      try {
+        await pxe.registerContract(contract);
+        registerContracts.wasRegistered.add(registeringKey);
+      } catch (e) {
+        console.error(
+          "error registering contract",
+          c.artifact?.name,
+          c.address.toString(),
+          e,
+        );
+        throw e;
+      }
     }),
   );
 }
@@ -344,4 +365,13 @@ async function simulateUtilityEncoded(
         : [decodedResult],
   );
   return result;
+}
+
+async function registerSenders(pxe: PXE, senders: string[]) {
+  await Promise.all(
+    senders.map(
+      async (sender) =>
+        await pxe.registerSender(AztecAddress.fromString(sender)),
+    ),
+  );
 }

@@ -1,6 +1,11 @@
 import type { AztecNode } from "@aztec/aztec.js";
 import type { AztecNodeInput } from "./base.js";
-import type { TransactionRequest } from "./exports/index.js";
+import { chains } from "./chains.js";
+import type {
+  ContractFunctionInteraction,
+  SimulateTransactionRequest,
+  TransactionRequest,
+} from "./exports/index.js";
 import type { RpcRequestMap } from "./types.js";
 
 export const METHODS_NOT_REQUIRING_CONFIRMATION: (keyof RpcRequestMap)[] = [
@@ -96,4 +101,39 @@ export function mergeTransactionRequests(
     capsules: requests.flatMap((r) => r.capsules ?? []),
     registerContracts: requests.flatMap((r) => r.registerContracts ?? []),
   };
+}
+
+export function mergeSimulateTransactionRequest(
+  requests: SimulateTransactionRequest[],
+): Required<SimulateTransactionRequest> {
+  const txRequest = mergeTransactionRequests(requests);
+  return {
+    ...txRequest,
+    registerSenders: requests.flatMap((r) => r.registerSenders ?? []),
+  };
+}
+
+export async function toAuthWitnessAction(action: ContractFunctionInteraction) {
+  const request = await action.request();
+  if (request.calls.length !== 1) {
+    throw new Error(
+      `Expected exactly 1 call for an auth witness, got ${request.calls.length}`,
+    );
+  }
+  return request.calls[0]!;
+}
+
+export async function getAvmChain(aztecNode: AztecNode) {
+  const l1ChainId = await aztecNode.getChainId();
+  switch (l1ChainId) {
+    case 11155111: {
+      return chains.testnet;
+    }
+    case 31337: {
+      return chains.sandbox;
+    }
+    default: {
+      throw new Error(`Unsupported L1 chain ID: ${l1ChainId}`);
+    }
+  }
 }

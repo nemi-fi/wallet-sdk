@@ -48,5 +48,5 @@ const aztecNode = createAztecNodeClient(sandboxUrl);
 const pxe = createPXEClient(sandboxUrl);
 const [wallet] = await getDeployedTestAccountsWallets(pxe);
 
-const account: Account = Eip1193Account.fromAztec(wallet, aztecNode, pxe);
+const account: Account = await Eip1193Account.fromAztec(wallet, aztecNode, pxe);
 ```
