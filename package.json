@@ -1,6 +1,6 @@
 {
   "name": "@nemi-fi/wallet-sdk",
-  "version": "0.87.2-next.5",
+  "version": "0.87.2-next.6",
   "type": "module",
   "exports": {
     ".": "./src/exports/index.ts",
