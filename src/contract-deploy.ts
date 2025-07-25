@@ -191,7 +191,7 @@ export class DeploySentTx<TContract extends AztecContract> extends SentTx {
     txHash: Promise<TxHash>,
     private contract: () => Promise<Contract<TContract>>,
   ) {
-    super(aztecNode, txHash);
+    super(aztecNode, () => txHash);
   }
 
   async deployed(options?: WaitOpts) {

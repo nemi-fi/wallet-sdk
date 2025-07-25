@@ -107,8 +107,7 @@ export function createEip1193ProviderFromAccounts(
             txRequest,
             simulatedTx.privateExecutionResult,
           );
-          const txHash = await new SentTx(
-            account,
+          const txHash = await new SentTx(account, () =>
             account.sendTx(tx.toTx()),
           ).getTxHash();
           return txHash.toString();

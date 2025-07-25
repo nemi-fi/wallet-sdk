@@ -198,8 +198,8 @@ async function createTxFromPublicCalls(
       info.rollupVersion,
       GasSettings.default({
         maxFeesPerGas: GasFees.from({
-          feePerDaGas: new Fr(Fr.MODULUS - 1n),
-          feePerL2Gas: new Fr(Fr.MODULUS - 1n),
+          feePerDaGas: Fr.MODULUS - 1n,
+          feePerL2Gas: Fr.MODULUS - 1n,
         }),
       }),
     ),
