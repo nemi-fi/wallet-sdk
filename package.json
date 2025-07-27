@@ -32,7 +32,7 @@
     "prepublishOnly": "turbo test && turbo build"
   },
   "devDependencies": {
-    "@aztec/accounts": "^1.1.2",
+    "@aztec/accounts": "1.1.2",
     "@aztec/noir-contracts.js": "^1.1.2",
     "@types/lodash-es": "^4.17.12",
     "@types/react": "^18.3.11",
