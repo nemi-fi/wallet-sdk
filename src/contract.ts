@@ -176,6 +176,7 @@ export class Contract<T extends AztecContract> extends ContractBase<T> {
         );
       }
 
+      static original: TClass = original;
       static artifact: TClass["artifact"] = artifact;
       static events: TClass["events"] = original.events ?? {};
       static notes: TClass["notes"] = original.notes ?? {};
