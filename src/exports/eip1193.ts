@@ -75,7 +75,7 @@ export class Eip1193Account extends BaseAccount {
       });
     })().then((x) => TxHash.fromString(x));
 
-    return new SentTx(this.aztecNode, txHashPromise);
+    return new SentTx(this.aztecNode, () => txHashPromise);
   }
 
   // TODO: rename to either `call` or `view` or `readContract` or something more descriptive

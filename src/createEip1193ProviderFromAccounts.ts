@@ -107,8 +107,7 @@ export function createEip1193ProviderFromAccounts(
             txRequest,
             simulatedTx.privateExecutionResult,
           );
-          const txHash = await new SentTx(
-            account,
+          const txHash = await new SentTx(account, () =>
             account.sendTx(tx.toTx()),
           ).getTxHash();
           return txHash.toString();
@@ -286,12 +285,6 @@ async function registerContracts(
         },
         artifact,
       };
-
-      // TODO: re-enable this if the CI starts failing again
-      // if (typeof process !== "undefined" && process.env.CI) {
-      //   // TODO: fails CI without this line. More info: https://discord.com/channels/1144692727120937080/1365069273281724486
-      //   await aztecNode.getNodeInfo();
-      // }
 
       try {
         await pxe.registerContract(contract);
