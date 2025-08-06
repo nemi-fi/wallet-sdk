@@ -2,6 +2,8 @@
 
 Connect your Aztec app to any Aztec wallet.
 
+> See [MIGRATION_NOTES.md](./MIGRATION_NOTES.md) for breaking changes.
+
 ## EIP-1193 RPC docs
 
 ```ts
