@@ -24,7 +24,6 @@
     "src"
   ],
   "scripts": {
-    "dev": "tsc -w",
     "build": "rm -rf dist && tsc",
     "test:unit": "vitest run",
     "test:lint": "tsc --noEmit --emitDeclarationOnly false && prettier --check .",

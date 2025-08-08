@@ -1,8 +1,8 @@
 import { Bridge, type BridgeInterface, type KeyPair } from "@obsidion/bridge";
 import { Bytes } from "ox";
-import { joinURL } from "ufo";
 import { persisted } from "svelte-persisted-store";
 import { derived, type Readable, type Writable } from "svelte/store";
+import { joinURL } from "ufo";
 import type { IArtifactStrategy } from "./artifacts.js";
 import type { Eip6963ProviderInfo, IConnector } from "./base.js";
 import type { TypedEip1193Provider } from "./types.js";
@@ -282,11 +282,7 @@ export class ObsidionBridgeConnector implements IConnector {
       }
 
       // Wait for the response promise to resolve and return its value
-      return await this.#createResponsePromise(
-        bridgeConnection,
-        request,
-        200000,
-      );
+      return await this.#createResponsePromise(bridgeConnection, request);
     } catch (error) {
       console.error("Failed to send popup request:", error);
       throw error;
