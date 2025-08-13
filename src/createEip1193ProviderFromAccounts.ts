@@ -14,6 +14,7 @@ import { ExecutionPayload } from "@aztec/entrypoints/payload";
 import {
   decodeFromAbi,
   FunctionType,
+  isBoundedVecStruct,
   type ABIParameter,
   type FunctionAbi,
 } from "@aztec/stdlib/abi";
@@ -333,7 +334,7 @@ async function simulateUtilityEncoded(
     argsIndex === call.args.length,
     `argsIndex & length mismatch: ${argsIndex} !== ${call.args.length}`,
   );
-  const { result: decodedResult } = await account.simulateUtility(
+  let { result: decodedResult } = await account.simulateUtility(
     call.name,
     decodedArgs,
     call.to,
@@ -342,22 +343,29 @@ async function simulateUtilityEncoded(
   );
 
   const firstReturnType = call.returnTypes[0];
+
   const isTuple = firstReturnType?.kind === "tuple";
   if (isTuple) {
     call.returnTypes = firstReturnType.fields;
   }
+
+  const isVec = firstReturnType && isBoundedVecStruct(firstReturnType);
+  if (isVec) {
+    const boundedVec = decodedResult as { storage: Array<any>; len: bigint };
+    decodedResult = [boundedVec.storage, boundedVec.len];
+  }
+
   const paramsAbi: ABIParameter[] = call.returnTypes.map((type, i) => ({
     type,
     name: `result${i}`,
     visibility: "public",
   }));
+
   const result = encodeArguments(
     { parameters: paramsAbi } as FunctionAbi,
-    isTuple || firstReturnType?.kind === "array"
-      ? [decodedResult]
-      : Array.isArray(decodedResult)
-        ? decodedResult
-        : [decodedResult],
+    (isTuple || isVec) && Array.isArray(decodedResult)
+      ? decodedResult
+      : [decodedResult],
   );
   return result;
 }
