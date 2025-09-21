@@ -1,6 +1,6 @@
 {
   "name": "@nemi-fi/wallet-sdk",
-  "version": "1.0.0",
+  "version": "1.1.2",
   "type": "module",
   "exports": {
     ".": "./src/exports/index.ts",
@@ -25,7 +25,7 @@
   ],
   "scripts": {
     "build": "rm -rf dist && tsc",
-    "test:unit": "vitest run",
+    "test:runtime": "vitest run",
     "test:lint": "tsc --noEmit --emitDeclarationOnly false && prettier --check .",
     "test:lint:fix": "prettier --write .",
     "prepublishOnly": "turbo test && turbo build"
@@ -41,13 +41,13 @@
     "vitest": "^3.0.7"
   },
   "dependencies": {
-    "@aztec/aztec.js": "^1.1.2",
-    "@aztec/constants": "^1.1.2",
-    "@aztec/entrypoints": "^1.1.2",
-    "@aztec/foundation": "^1.1.2",
-    "@aztec/protocol-contracts": "^1.1.2",
-    "@aztec/noir-protocol-circuits-types": "^1.1.2",
-    "@aztec/stdlib": "^1.1.2",
+    "@aztec/aztec.js": "1.1.2",
+    "@aztec/constants": "1.1.2",
+    "@aztec/entrypoints": "1.1.2",
+    "@aztec/foundation": "1.1.2",
+    "@aztec/protocol-contracts": "1.1.2",
+    "@aztec/noir-protocol-circuits-types": "1.1.2",
+    "@aztec/stdlib": "1.1.2",
     "@obsidion/bridge": "0.10.2",
     "lodash-es": "^4.17.21",
     "ox": "^0.8.5",
