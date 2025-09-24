@@ -12,7 +12,6 @@ import {
 } from "@aztec/aztec.js";
 import { getCanonicalAuthRegistry } from "@aztec/protocol-contracts/auth-registry/lazy";
 import type { ABIParameterVisibility } from "@aztec/stdlib/abi";
-import { ContractClassLogFields } from "@aztec/stdlib/logs";
 import type { BlockHeader } from "@aztec/stdlib/tx";
 import { assert } from "ts-essentials";
 import { ContractFunctionInteraction } from "./contract.js";
@@ -141,8 +140,6 @@ async function createTxFromPublicCalls(
   );
   const { PublicCallRequest } = await import("@aztec/stdlib/kernel");
   const { ClientIvcProof } = await import("@aztec/stdlib/proofs");
-  const { ContractClassLog } = await import("@aztec/stdlib/logs");
-  const { RollupValidationRequests } = await import("@aztec/stdlib/kernel");
   const { Gas, GasFees, GasSettings } = await import("@aztec/stdlib/gas");
   const { TxConstantData, TxContext } = await import("@aztec/stdlib/tx");
   const { makeTuple } = await import("@aztec/foundation/array");
@@ -207,16 +204,19 @@ async function createTxFromPublicCalls(
     protocolContractTreeRoot,
   );
 
-  return new Tx(
+  const privateKernelTailCircuitPublicInputs =
     new PrivateKernelTailCircuitPublicInputs(
       constants,
-      RollupValidationRequests.empty(),
-      Gas.empty(),
-      AztecAddress.zero(),
+      /*gasUsed=*/ new Gas(0, 0),
+      /*feePayer=*/ AztecAddress.zero(),
+      /*includeByTimestamp=*/ 0n,
       forPublic,
-    ),
-    ClientIvcProof.empty(),
-    [ContractClassLogFields.empty()],
-    allHashedValues,
-  );
+    );
+
+  return Tx.create({
+    data: privateKernelTailCircuitPublicInputs,
+    clientIvcProof: ClientIvcProof.empty(),
+    contractClassLogFields: [],
+    publicFunctionCalldata: allHashedValues,
+  });
 }

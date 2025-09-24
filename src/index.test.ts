@@ -37,6 +37,7 @@ describe("wallet-sdk", () => {
       contractAddressSalt: salt,
     }).request();
     const deployAztec = await RouterContract.deploy(account).request({
+      from: account.getAddress(),
       contractAddressSalt: salt,
     });
 
