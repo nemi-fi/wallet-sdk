@@ -17,7 +17,7 @@ export const chains = {
     name: "Aztec Testnet",
     rpcUrls: {
       default: {
-        http: ["https://full-node.alpha-testnet.aztec.network"],
+        http: ["https://aztec-alpha-testnet-fullnode.zkv.xyz/"],
       },
     },
   },

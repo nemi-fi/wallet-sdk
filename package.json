@@ -25,7 +25,7 @@
   ],
   "scripts": {
     "build": "rm -rf dist && tsc",
-    "test:unit": "vitest run",
+    "test:runtime": "vitest run",
     "test:lint": "tsc --noEmit --emitDeclarationOnly false && prettier --check .",
     "test:lint:fix": "prettier --write .",
     "prepublishOnly": "turbo test && turbo build"
