@@ -1,6 +1,6 @@
 {
   "name": "@nemi-fi/wallet-sdk",
-  "version": "2.0.0",
+  "version": "2.0.3",
   "type": "module",
   "exports": {
     ".": "./src/exports/index.ts",
@@ -41,13 +41,13 @@
     "vitest": "^3.0.7"
   },
   "dependencies": {
-    "@aztec/aztec.js": "^2.0.0",
-    "@aztec/constants": "^2.0.0",
-    "@aztec/entrypoints": "^2.0.0",
-    "@aztec/foundation": "^2.0.0",
-    "@aztec/protocol-contracts": "^2.0.0",
-    "@aztec/noir-protocol-circuits-types": "^2.0.0",
-    "@aztec/stdlib": "^2.0.0",
+    "@aztec/aztec.js": "2.0.3",
+    "@aztec/constants": "2.0.3",
+    "@aztec/entrypoints": "2.0.3",
+    "@aztec/foundation": "2.0.3",
+    "@aztec/protocol-contracts": "2.0.3",
+    "@aztec/noir-protocol-circuits-types": "2.0.3",
+    "@aztec/stdlib": "2.0.3",
     "@obsidion/bridge": "0.10.5",
     "lodash-es": "^4.17.21",
     "ox": "^0.8.5",
