@@ -15,16 +15,14 @@ import {
   Capsule,
   Fr,
   getContractClassFromArtifact,
-  getContractInstanceFromDeployParams,
+  getContractInstanceFromInstantiationParams,
   SentTx,
 } from "@aztec/aztec.js";
 import {
+  CONTRACT_CLASS_REGISTRY_BYTECODE_CAPSULE_SLOT,
   MAX_PACKED_PUBLIC_BYTECODE_SIZE_IN_FIELDS,
-  REGISTERER_CONTRACT_BYTECODE_CAPSULE_SLOT,
 } from "@aztec/constants";
 import { ProtocolContractAddress } from "@aztec/protocol-contracts";
-import { getCanonicalClassRegisterer } from "@aztec/protocol-contracts/class-registerer";
-import { getCanonicalInstanceDeployer } from "@aztec/protocol-contracts/instance-deployer";
 import { bufferAsFields, getInitializer } from "@aztec/stdlib/abi";
 import {
   Contract,
@@ -35,6 +33,8 @@ import {
 import type { TransactionRequest } from "./exports/eip1193.js";
 import type { Account } from "./exports/index.js";
 import { lazyValue, mergeTransactionRequests } from "./utils.js";
+import { getCanonicalClassRegistry } from "@aztec/protocol-contracts/class-registry";
+import { getCanonicalInstanceRegistry } from "@aztec/protocol-contracts/instance-registry";
 
 export class DeployMethod<TContract extends AztecContract> {
   #contract: () => Promise<ContractInfo>;
@@ -58,15 +58,18 @@ export class DeployMethod<TContract extends AztecContract> {
       constructorNameOrArtifact,
     );
     this.#contract = lazyValue(async () => {
-      const instance = await getContractInstanceFromDeployParams(artifact, {
-        constructorArgs: args,
-        salt: options.contractAddressSalt,
-        publicKeys,
-        constructorArtifact: this.#constructorArtifact,
-        deployer: options.universalDeploy
-          ? AztecAddress.ZERO
-          : this.account.getAddress(),
-      });
+      const instance = await getContractInstanceFromInstantiationParams(
+        artifact,
+        {
+          constructorArgs: args,
+          salt: options.contractAddressSalt,
+          publicKeys,
+          constructorArtifact: this.#constructorArtifact,
+          deployer: options.universalDeploy
+            ? AztecAddress.ZERO
+            : this.account.getAddress(),
+        },
+      );
 
       // Obtain contract class from artifact and check it matches the reported one by the instance.
       const contractClass = await getContractClassFromArtifact(artifact);
@@ -131,27 +134,28 @@ export class DeployMethod<TContract extends AztecContract> {
     const contract = await this.#contract();
 
     // Register the contract class if it hasn't been published already.
-    if (!this.options.skipClassRegistration) {
+    if (!this.options.skipClassPublication) {
       const alreadyRegistered =
         (await this.account.aztecNode.getContractClass(
           contract.instance.currentContractClassId,
         )) != null;
       if (!alreadyRegistered) {
-        const registering = await registerContractClass(
+        const publishing = await publishContractClass(
           this.account,
           contract.artifact,
         );
-        calls.push(registering);
+
+        calls.push(publishing);
       }
     }
 
     // Deploy the contract via the instance deployer.
-    if (!this.options.skipPublicDeployment) {
-      const deploymentInteraction = await deployInstance(
+    if (!this.options.skipInstancePublication) {
+      const instancePublication = await publishInstance(
         this.account,
         contract.instance,
       );
-      calls.push(deploymentInteraction);
+      calls.push(instancePublication);
     }
 
     return calls;
@@ -178,8 +182,8 @@ export type DeployOptions = Pick<
   import("@aztec/aztec.js").DeployOptions,
   | "contractAddressSalt"
   | "universalDeploy"
-  | "skipClassRegistration"
-  | "skipPublicDeployment"
+  | "skipClassPublication"
+  | "skipInstancePublication"
   | "skipInitialization"
 > & {
   experimental_extraTxRequests?: TransactionRequest[];
@@ -209,7 +213,7 @@ export class DeploySentTx<TContract extends AztecContract> extends SentTx {
 }
 
 /** Sets up a call to register a contract class given its artifact. */
-async function registerContractClass(
+async function publishContractClass(
   account: Account,
   artifact: ContractArtifact,
 ) {
@@ -224,8 +228,8 @@ async function registerContractClass(
     packedBytecode,
     MAX_PACKED_PUBLIC_BYTECODE_SIZE_IN_FIELDS,
   );
-  const registerer = await getRegistererContract(account);
-  const call = await registerer.methods.register!(
+  const registerer = await getClassRegistryContract(account);
+  const call = await registerer.methods.publish!(
     artifactHash,
     privateFunctionsRoot,
     publicBytecodeCommitment,
@@ -234,17 +238,17 @@ async function registerContractClass(
   call.registerContracts = []; // the canonical registerer contract is already registered in all PXEs. And PXE does not support registering canonical contracts.
   const capsule = new Capsule(
     registerer.address,
-    new Fr(REGISTERER_CONTRACT_BYTECODE_CAPSULE_SLOT),
+    new Fr(CONTRACT_CLASS_REGISTRY_BYTECODE_CAPSULE_SLOT),
     encodedBytecode,
   );
   return mergeTransactionRequests([call, { calls: [], capsules: [capsule] }]);
 }
 
-async function deployInstance(
+async function publishInstance(
   account: Account,
   instance: ContractInstanceWithAddress,
 ) {
-  const deployerContract = await getDeployerContract(account);
+  const deployerContract = await getInstanceRegistryContract(account);
   const { salt, currentContractClassId, publicKeys, deployer } = instance;
   const isUniversalDeploy = deployer.isZero();
   if (!isUniversalDeploy && !account.getAddress().equals(deployer)) {
@@ -252,7 +256,7 @@ async function deployInstance(
       `Expected deployer ${deployer.toString()} does not match sender account ${account.getAddress().toString()}`,
     );
   }
-  const request = await deployerContract.methods.deploy!(
+  const request = await deployerContract.methods.publish_for_public_execution!(
     salt,
     currentContractClassId,
     instance.initializationHash,
@@ -263,16 +267,16 @@ async function deployInstance(
   return request;
 }
 
-async function getRegistererContract(account: Account) {
+async function getClassRegistryContract(account: Account) {
   return await getProtocolContract(
-    ProtocolContractAddress.ContractClassRegisterer,
+    ProtocolContractAddress.ContractClassRegistry,
     account,
   );
 }
 
-async function getDeployerContract(account: Account) {
+async function getInstanceRegistryContract(account: Account) {
   return await getProtocolContract(
-    ProtocolContractAddress.ContractInstanceDeployer,
+    ProtocolContractAddress.ContractInstanceRegistry,
     account,
   );
 }
@@ -294,8 +298,8 @@ async function getProtocolContract(address: AztecAddress, account: Account) {
 async function fetchProtocolContractArtifact(contractClassId: Fr) {
   // TODO: a more robust way to fetch protocol contract artifacts. This does not account for upgrades
   const contracts = await Promise.all([
-    getCanonicalClassRegisterer(),
-    getCanonicalInstanceDeployer(),
+    getCanonicalClassRegistry(),
+    getCanonicalInstanceRegistry(),
   ]);
   return contracts.find((c) => c.contractClass.id.equals(contractClassId))
     ?.artifact;
