@@ -144,7 +144,7 @@ export class AztecWalletSdk {
   }
 
   aztecNode() {
-    return this.#aztecNode;
+    return this.#aztecNode();
   }
 
   get #connector() {

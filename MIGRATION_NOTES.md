@@ -1,5 +1,9 @@
 # Migration Notes
 
+## TBD
+
+1. Fixed a bug: `walletSdk.aztecNode()()` -> `walletSdk.aztecNode()`
+
 ## 0.87.2-next.5
 
 Changes to authWitnesses creation. You no longer need to call `.request()`:
