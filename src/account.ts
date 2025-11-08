@@ -1,17 +1,18 @@
+import type { AztecAddress } from "@aztec/aztec.js/addresses";
 import {
   computeAuthWitMessageHash,
-  Fr,
+  type IntentInnerHash,
+} from "@aztec/aztec.js/authorization";
+import type { SentTx } from "@aztec/aztec.js/contracts";
+import { Fr } from "@aztec/aztec.js/fields";
+import type { AztecNode, NodeInfo } from "@aztec/aztec.js/node";
+import { getCanonicalAuthRegistry } from "@aztec/protocol-contracts/auth-registry/lazy";
+import {
   FunctionType,
-  type AztecAddress,
-  type AztecNode,
+  type ABIParameterVisibility,
   type FunctionAbi,
   type FunctionCall,
-  type IntentInnerHash,
-  type NodeInfo,
-  type SentTx,
-} from "@aztec/aztec.js";
-import { getCanonicalAuthRegistry } from "@aztec/protocol-contracts/auth-registry/lazy";
-import type { ABIParameterVisibility } from "@aztec/stdlib/abi";
+} from "@aztec/stdlib/abi";
 import type { BlockHeader } from "@aztec/stdlib/tx";
 import { assert } from "ts-essentials";
 import { ContractFunctionInteraction } from "./contract.js";
@@ -129,19 +130,19 @@ async function createTxFromPublicCalls(
   { info, blockHeader }: { info: NodeInfo; blockHeader: BlockHeader },
   calls: FunctionCall[],
 ) {
-  const { Tx, AztecAddress, Fr, HashedValues } = await import(
-    "@aztec/aztec.js"
-  );
+  const { Tx } = await import("@aztec/aztec.js/tx");
+  const { AztecAddress } = await import("@aztec/aztec.js/addresses");
+  const { Fr } = await import("@aztec/aztec.js/fields");
   const { getVKTreeRoot } = await import(
     "@aztec/noir-protocol-circuits-types/vk-tree"
   );
-  const { protocolContractTreeRoot } = await import(
-    "@aztec/protocol-contracts"
-  );
+  const { protocolContractsHash } = await import("@aztec/protocol-contracts");
   const { PublicCallRequest } = await import("@aztec/stdlib/kernel");
   const { ClientIvcProof } = await import("@aztec/stdlib/proofs");
   const { Gas, GasFees, GasSettings } = await import("@aztec/stdlib/gas");
-  const { TxConstantData, TxContext } = await import("@aztec/stdlib/tx");
+  const { TxConstantData, TxContext, HashedValues } = await import(
+    "@aztec/stdlib/tx"
+  );
   const { makeTuple } = await import("@aztec/foundation/array");
   const {
     PrivateKernelTailCircuitPublicInputs,
@@ -201,7 +202,7 @@ async function createTxFromPublicCalls(
       }),
     ),
     getVKTreeRoot(),
-    protocolContractTreeRoot,
+    protocolContractsHash,
   );
 
   const privateKernelTailCircuitPublicInputs =

@@ -1,27 +1,30 @@
-import {
-  decodeFromAbi,
-  encodeArguments,
-  FunctionSelector,
-  PublicKeys,
-  type AztecAddress,
-  type Contract as AztecContract,
-  type DeployMethod as AztecDeployMethod,
-  type AztecNode,
-  type ContractArtifact,
-  type ContractInstanceWithAddress,
-  type FunctionCall,
-  type Wallet,
-} from "@aztec/aztec.js";
+import type {
+  Contract as AztecContract,
+  DeployMethod as AztecDeployMethod,
+} from "@aztec/aztec.js/contracts";
+import type { AztecNode } from "@aztec/aztec.js/node";
 import {
   ContractArtifactSchema,
+  decodeFromAbi,
+  encodeArguments,
+  FunctionCall,
+  FunctionSelector,
   FunctionType,
   getAllFunctionAbis,
+  type ContractArtifact,
   type FunctionAbi,
 } from "@aztec/stdlib/abi";
+import type { AztecAddress } from "@aztec/stdlib/aztec-address";
+import type { ContractInstanceWithAddress } from "@aztec/stdlib/contract";
+import { PublicKeys } from "@aztec/stdlib/keys";
 import type { StrictOmit } from "ts-essentials";
 import { DeployMethod, type DeployOptions } from "./contract-deploy.js";
 import type { TransactionRequest } from "./exports/eip1193.js";
-import type { Account, SimulateTransactionRequest } from "./exports/index.js";
+import type {
+  Account,
+  SimulateTransactionRequest,
+  Wallet,
+} from "./exports/index.js";
 import {
   DefaultMap,
   lazyValue,

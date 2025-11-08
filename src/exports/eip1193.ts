@@ -1,17 +1,11 @@
-import {
-  AztecAddress,
-  Fr,
-  SentTx,
-  TxHash,
-  type AztecNode,
-  type Capsule,
-  type ContractArtifact,
-  type FeePaymentMethod,
-  type FunctionCall,
-  type PXE,
-  type Wallet,
-} from "@aztec/aztec.js";
+import { SentTx } from "@aztec/aztec.js/contracts";
+import type { FeePaymentMethod } from "@aztec/aztec.js/fee";
+import type { AztecNode } from "@aztec/aztec.js/node";
+import { Fr } from "@aztec/foundation/fields";
+import type { ContractArtifact, FunctionCall } from "@aztec/stdlib/abi";
+import type { AztecAddress } from "@aztec/stdlib/aztec-address";
 import type { ContractInstance } from "@aztec/stdlib/contract";
+import { Capsule, TxHash } from "@aztec/stdlib/tx";
 import { Hex } from "ox";
 import { BaseAccount } from "../account.js";
 import {
@@ -26,7 +20,11 @@ import {
   encodeFunctionCall,
   encodeRegisterContracts,
 } from "../serde.js";
-import type { Eip1193Provider, TypedEip1193Provider } from "../types.js";
+import type {
+  Eip1193Provider,
+  TypedEip1193Provider,
+  Wallet,
+} from "../types.js";
 import { getAvmChain, toAuthWitnessAction } from "../utils.js";
 
 export { BatchCall, Contract } from "../contract.js";

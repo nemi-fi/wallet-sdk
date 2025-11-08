@@ -1,4 +1,5 @@
-import type { ContractArtifact, Fr } from "@aztec/aztec.js";
+import type { Fr } from "@aztec/foundation/fields";
+import type { ContractArtifact } from "@aztec/stdlib/abi";
 import { joinURL } from "ufo";
 import type { SerializedContractArtifact } from "./types.js";
 import { lazyValue, request } from "./utils.js";
