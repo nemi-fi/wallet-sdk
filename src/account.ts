@@ -68,11 +68,22 @@ export abstract class BaseAccount {
     } else if (messageHashOrIntent instanceof Fr) {
       messageHash = messageHashOrIntent;
     } else {
-      // NOTE: Intent-based auth witness computation is not supported in the current implementation
-      // due to type incompatibilities between wallet-sdk and aztec.js ContractFunctionInteraction types
-      throw new Error(
-        "Intent-based auth witness (IntentInnerHash | IntentAction) is not supported. Please pass a Fr or Uint8Array message hash directly.",
-      );
+      const chainId = new Fr(await this.aztecNode.getChainId());
+      const version = new Fr(await this.aztecNode.getVersion());
+
+      // ugly af but works
+      const messageHashOrIntent2 =
+        "action" in messageHashOrIntent
+          ? {
+              caller: messageHashOrIntent.caller,
+              call: await toAuthWitnessAction(messageHashOrIntent.action),
+            }
+          : messageHashOrIntent;
+
+      messageHash = await computeAuthWitMessageHash(messageHashOrIntent2, {
+        chainId,
+        version,
+      });
     }
 
     return new ContractFunctionInteraction(
