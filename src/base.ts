@@ -1,4 +1,4 @@
-import type { AztecNode } from "@aztec/aztec.js";
+import type { AztecNode } from "@aztec/aztec.js/node";
 import { uniqBy } from "lodash-es";
 import { persisted } from "svelte-persisted-store";
 import { reactive } from "svelte-reactive";
@@ -159,7 +159,7 @@ export class AztecWalletSdk {
   }
 
   async #toAccount(address: string) {
-    const { AztecAddress } = await import("@aztec/aztec.js");
+    const { AztecAddress } = await import("@aztec/aztec.js/addresses");
     const { Eip1193Account } = await import("./exports/eip1193.js");
     const avmChain = await getAvmChain(await this.#aztecNode());
     return new Eip1193Account(

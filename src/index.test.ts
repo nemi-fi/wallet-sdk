@@ -1,15 +1,12 @@
-import { getInitialTestAccountsWallets } from "@aztec/accounts/testing";
 import {
-  AztecAddress,
-  createAztecNodeClient,
-  createPXEClient,
-  Fr,
-  waitForNode,
   type AztecNode,
-  type PXE,
-  type Wallet,
-} from "@aztec/aztec.js";
+  createAztecNodeClient,
+  waitForNode,
+} from "@aztec/aztec.js/node";
+import { Fr } from "@aztec/foundation/fields";
 import { RouterContract } from "@aztec/noir-contracts.js/Router";
+import { AztecAddress } from "@aztec/stdlib/aztec-address";
+import type { Wallet } from "ox/RpcSchema";
 import { beforeAll, describe, expect, test } from "vitest";
 import { Contract } from "./contract.js";
 import { Eip1193Account } from "./exports/eip1193.js";

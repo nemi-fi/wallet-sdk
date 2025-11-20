@@ -1,4 +1,4 @@
-import type { AztecNode } from "@aztec/aztec.js";
+import type { AztecNode } from "@aztec/aztec.js/node";
 import type { AztecNodeInput } from "./base.js";
 import { chains } from "./chains.js";
 import type {
@@ -37,7 +37,7 @@ export function resolveAztecNode(
   const getAztecNodeFn =
     typeof getAztecNode === "function" ? getAztecNode : () => getAztecNode;
   return lazyValue(async () => {
-    const { createAztecNodeClient } = await import("@aztec/aztec.js");
+    const { createAztecNodeClient } = await import("@aztec/aztec.js/node");
     let aztecNode = getAztecNodeFn();
     if (typeof aztecNode === "string" || aztecNode instanceof URL) {
       aztecNode = createAztecNodeClient(new URL(aztecNode).href);

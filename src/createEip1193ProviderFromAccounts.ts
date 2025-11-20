@@ -1,23 +1,18 @@
-import {
-  AztecAddress,
-  encodeArguments,
-  FeeJuicePaymentMethod,
-  Fr,
-  SentTx,
-  type AztecNode,
-  type FeePaymentMethod,
-  type FunctionCall,
-  type PXE,
-  type Wallet,
-} from "@aztec/aztec.js";
+import { SentTx } from "@aztec/aztec.js/contracts";
+import type { FeePaymentMethod } from "@aztec/aztec.js/fee";
+import type { AztecNode } from "@aztec/aztec.js/node";
 import { ExecutionPayload } from "@aztec/entrypoints/payload";
+import type { Fr } from "@aztec/foundation/fields";
 import {
   decodeFromAbi,
+  encodeArguments,
+  FunctionCall,
   FunctionType,
   isBoundedVecStruct,
   type ABIParameter,
   type FunctionAbi,
 } from "@aztec/stdlib/abi";
+import { AztecAddress } from "@aztec/stdlib/aztec-address";
 import { GasSettings } from "@aztec/stdlib/gas";
 import type { TxSimulationResult } from "@aztec/stdlib/tx";
 import { Hex } from "ox";
@@ -33,6 +28,7 @@ import type {
   RpcRequestMap,
   SerializedRegisterContract,
   TypedEip1193Provider,
+  Wallet,
 } from "./types.js";
 
 export function createEip1193ProviderFromAccounts(
