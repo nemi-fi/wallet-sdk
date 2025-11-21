@@ -1,16 +1,11 @@
-import {
-  AztecAddress,
-  Fr,
-  SentTx,
-  TxHash,
-  type AztecNode,
-  type Capsule,
-  type ContractArtifact,
-  type FeePaymentMethod,
-  type FunctionCall,
-  type PXE,
-  type Wallet,
-} from "@aztec/aztec.js";
+import { AztecAddress } from "@aztec/aztec.js/addresses";
+import { Fr } from "@aztec/aztec.js/fields";
+import { TxHash, type Capsule } from "@aztec/aztec.js/tx";
+import { SentTx } from "@aztec/aztec.js/contracts";
+import { type AztecNode } from "@aztec/aztec.js/node";
+import { type ContractArtifact, type FunctionCall } from "@aztec/aztec.js/abi";
+import { type FeePaymentMethod } from "@aztec/aztec.js/fee";
+import { type Wallet } from "@aztec/aztec.js/wallet";
 import type { ContractInstance } from "@aztec/stdlib/contract";
 import { Hex } from "ox";
 import { BaseAccount } from "../account.js";
@@ -20,7 +15,6 @@ import {
 } from "../artifacts.js";
 import type { AvmChain } from "../chains.js";
 import type { Contract, IntentAction } from "../contract.js";
-import { createEip1193ProviderFromAccounts } from "../createEip1193ProviderFromAccounts.js";
 import {
   encodeCapsules,
   encodeFunctionCall,
@@ -106,32 +100,7 @@ export class Eip1193Account extends BaseAccount {
     return results.map((result) => result.map((x) => new Fr(BigInt(x))));
   }
 
-  /**
-   * @deprecated only use to convert aztec.js account to `Eip1193Account` for compatibility reasons
-   */
-  static async fromAztec(
-    account: Wallet,
-    aztecNode: AztecNode,
-    pxe: PXE,
-    paymentMethod?: FeePaymentMethod,
-  ): Promise<Eip1193Account> {
-    const avmChain = await getAvmChain(aztecNode);
-    const provider = createEip1193ProviderFromAccounts(
-      aztecNode,
-      pxe,
-      [account],
-      avmChain,
-      paymentMethod,
-    );
-    const artifactStrategy = new LiteralArtifactStrategy();
-    return new this(
-      account.getAddress(),
-      provider,
-      aztecNode,
-      artifactStrategy,
-      avmChain,
-    );
-  }
+  // Note: fromAztec method removed as PXE is no longer exported from aztec.js
 }
 
 export type TransactionRequest = {

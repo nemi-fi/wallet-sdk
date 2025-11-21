@@ -1,15 +1,16 @@
 import {
   computeAuthWitMessageHash,
-  Fr,
+  type IntentInnerHash,
+} from "@aztec/aztec.js/authorization";
+import { Fr } from "@aztec/aztec.js/fields";
+import {
   FunctionType,
-  type AztecAddress,
-  type AztecNode,
   type FunctionAbi,
   type FunctionCall,
-  type IntentInnerHash,
-  type NodeInfo,
-  type SentTx,
-} from "@aztec/aztec.js";
+} from "@aztec/aztec.js/abi";
+import { type AztecAddress } from "@aztec/aztec.js/addresses";
+import { type AztecNode, type NodeInfo } from "@aztec/aztec.js/node";
+import { type SentTx } from "@aztec/aztec.js/contracts";
 import { getCanonicalAuthRegistry } from "@aztec/protocol-contracts/auth-registry/lazy";
 import type { ABIParameterVisibility } from "@aztec/stdlib/abi";
 import type { BlockHeader } from "@aztec/stdlib/tx";
@@ -74,8 +75,8 @@ export abstract class BaseAccount {
       const messageHashOrIntent2 =
         "action" in messageHashOrIntent
           ? {
-              ...messageHashOrIntent,
-              action: await toAuthWitnessAction(messageHashOrIntent.action),
+              caller: messageHashOrIntent.caller,
+              call: await toAuthWitnessAction(messageHashOrIntent.action),
             }
           : messageHashOrIntent;
 
@@ -101,42 +102,15 @@ export abstract class BaseAccount {
   });
 }
 
-function getSetAuthorizedAbi(): FunctionAbi {
-  return {
-    name: "set_authorized",
-    isInitializer: false,
-    functionType: FunctionType.PUBLIC,
-    isInternal: true,
-    isStatic: false,
-    parameters: [
-      {
-        name: "message_hash",
-        type: { kind: "field" },
-        visibility: "private" as ABIParameterVisibility,
-      },
-      {
-        name: "authorize",
-        type: { kind: "boolean" },
-        visibility: "private" as ABIParameterVisibility,
-      },
-    ],
-    returnTypes: [],
-    errorTypes: {},
-  };
-}
-
 async function createTxFromPublicCalls(
   { info, blockHeader }: { info: NodeInfo; blockHeader: BlockHeader },
   calls: FunctionCall[],
 ) {
-  const { Tx, AztecAddress, Fr, HashedValues } = await import(
-    "@aztec/aztec.js"
-  );
+  const { Tx, HashedValues } = await import("@aztec/aztec.js/tx");
+  const { AztecAddress } = await import("@aztec/aztec.js/addresses");
+  const { Fr } = await import("@aztec/aztec.js/fields");
   const { getVKTreeRoot } = await import(
     "@aztec/noir-protocol-circuits-types/vk-tree"
-  );
-  const { protocolContractTreeRoot } = await import(
-    "@aztec/protocol-contracts"
   );
   const { PublicCallRequest } = await import("@aztec/stdlib/kernel");
   const { ClientIvcProof } = await import("@aztec/stdlib/proofs");
@@ -201,15 +175,15 @@ async function createTxFromPublicCalls(
       }),
     ),
     getVKTreeRoot(),
-    protocolContractTreeRoot,
+    Fr.zero(), // Use Fr.zero() instead of protocolContractTreeRoot
   );
 
   const privateKernelTailCircuitPublicInputs =
     new PrivateKernelTailCircuitPublicInputs(
       constants,
-      /*gasUsed=*/ new Gas(0, 0),
-      /*feePayer=*/ AztecAddress.zero(),
-      /*includeByTimestamp=*/ 0n,
+      new Gas(0, 0), // gasUsed
+      AztecAddress.zero(), // feePayer
+      0n, // includeByTimestamp
       forPublic,
     );
 
@@ -219,4 +193,28 @@ async function createTxFromPublicCalls(
     contractClassLogFields: [],
     publicFunctionCalldata: allHashedValues,
   });
+}
+
+function getSetAuthorizedAbi(): FunctionAbi {
+  return {
+    name: "set_authorized",
+    isInitializer: false,
+    functionType: FunctionType.PUBLIC,
+    isInternal: true,
+    isStatic: false,
+    parameters: [
+      {
+        name: "message_hash",
+        type: { kind: "field" },
+        visibility: "private" as ABIParameterVisibility,
+      },
+      {
+        name: "authorize",
+        type: { kind: "boolean" },
+        visibility: "private" as ABIParameterVisibility,
+      },
+    ],
+    returnTypes: [],
+    errorTypes: {},
+  };
 }

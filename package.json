@@ -1,6 +1,6 @@
 {
   "name": "@nemi-fi/wallet-sdk",
-  "version": "2.0.3",
+  "version": "3.0.0-devnet.2",
   "type": "module",
   "exports": {
     ".": "./src/exports/index.ts",
@@ -31,8 +31,8 @@
     "prepublishOnly": "turbo test && turbo build"
   },
   "devDependencies": {
-    "@aztec/accounts": "2.0.3",
-    "@aztec/noir-contracts.js": "2.0.3",
+    "@aztec/accounts": "3.0.0-devnet.2",
+    "@aztec/noir-contracts.js": "3.0.0-devnet.2",
     "@types/lodash-es": "^4.17.12",
     "@types/react": "^18.3.11",
     "prettier": "^3.5.3",
@@ -41,13 +41,14 @@
     "vitest": "^3.0.7"
   },
   "dependencies": {
-    "@aztec/aztec.js": "2.0.3",
-    "@aztec/constants": "2.0.3",
-    "@aztec/entrypoints": "2.0.3",
-    "@aztec/foundation": "2.0.3",
-    "@aztec/protocol-contracts": "2.0.3",
-    "@aztec/noir-protocol-circuits-types": "2.0.3",
-    "@aztec/stdlib": "2.0.3",
+    "@aztec/aztec.js": "3.0.0-devnet.2",
+    "@aztec/constants": "3.0.0-devnet.2",
+    "@aztec/entrypoints": "3.0.0-devnet.2",
+    "@aztec/foundation": "3.0.0-devnet.2",
+    "@aztec/protocol-contracts": "3.0.0-devnet.2",
+    "@aztec/pxe": "3.0.0-devnet.2",
+    "@aztec/noir-protocol-circuits-types": "3.0.0-devnet.2",
+    "@aztec/stdlib": "3.0.0-devnet.2",
     "@obsidion/bridge": "0.10.5",
     "lodash-es": "^4.17.21",
     "ox": "^0.8.5",

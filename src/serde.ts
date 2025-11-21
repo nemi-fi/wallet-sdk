@@ -1,11 +1,9 @@
+import type { Capsule } from "@aztec/aztec.js/tx";
 import type {
-  AztecAddress,
-  Capsule,
   ContractArtifact,
   FunctionCall,
   FunctionSelector,
-  PXE,
-} from "@aztec/aztec.js";
+} from "@aztec/aztec.js/abi";
 import type { ContractInstance } from "@aztec/stdlib/contract";
 import { Hex } from "ox";
 import type { IArtifactStrategy } from "./artifacts.js";
@@ -17,6 +15,8 @@ import type {
   SerializedFunctionCall,
   SerializedRegisterContract,
 } from "./types.js";
+import type { PXE } from "@aztec/pxe/server";
+import type { AztecAddress } from "@aztec/stdlib/aztec-address";
 import { request } from "./utils.js";
 
 export function encodeFunctionCall(call: FunctionCall) {
@@ -28,9 +28,9 @@ export function encodeFunctionCall(call: FunctionCall) {
 }
 
 export async function decodeFunctionCall(pxe: PXE, fc: SerializedFunctionCall) {
-  const { AztecAddress, FunctionSelector, Fr } = await import(
-    "@aztec/aztec.js"
-  );
+  const { AztecAddress } = await import("@aztec/aztec.js/addresses");
+  const { FunctionSelector } = await import("@aztec/aztec.js/abi");
+  const { Fr } = await import("@aztec/aztec.js/fields");
 
   const to = AztecAddress.fromString(fc.to);
   const selector = FunctionSelector.fromString(fc.selector);
@@ -43,6 +43,7 @@ export async function decodeFunctionCall(pxe: PXE, fc: SerializedFunctionCall) {
     selector,
     args,
     name: artifact.name,
+    hideMsgSender: false,
     type: artifact.functionType,
     isStatic: artifact.isStatic,
     returnTypes: artifact.returnTypes,
@@ -61,7 +62,9 @@ export function encodeCapsules(capsules: Capsule[]): SerializedCapsule[] {
 export async function decodeCapsules(
   capsules: SerializedCapsule[],
 ): Promise<Capsule[]> {
-  const { Capsule, Fr, AztecAddress } = await import("@aztec/aztec.js");
+  const { Capsule } = await import("@aztec/aztec.js/tx");
+  const { Fr } = await import("@aztec/aztec.js/fields");
+  const { AztecAddress } = await import("@aztec/aztec.js/addresses");
   return capsules.map(
     (capsule) =>
       new Capsule(
@@ -77,8 +80,8 @@ export async function getContractFunctionAbiFromPxe(
   address: AztecAddress,
   selector: FunctionSelector,
 ) {
-  const { FunctionSelector, getAllFunctionAbis } = await import(
-    "@aztec/aztec.js"
+  const { getAllFunctionAbis, FunctionSelector } = await import(
+    "@aztec/stdlib/abi"
   );
 
   const instance = await pxe.getContractMetadata(address);
@@ -132,7 +135,7 @@ export async function encodeRegisterContracts({
 }
 
 export async function decodeRegisterContract(data: SerializedRegisterContract) {
-  const { AztecAddress } = await import("@aztec/aztec.js");
+  const { AztecAddress } = await import("@aztec/aztec.js/addresses");
   return {
     address: AztecAddress.fromString(data.address),
     instance: data.instance
@@ -167,7 +170,9 @@ function encodeContractInstance(
 export async function decodeContractInstance(
   data: SerializedContractInstance,
 ): Promise<ContractInstance> {
-  const { AztecAddress, Fr, PublicKeys } = await import("@aztec/aztec.js");
+  const { AztecAddress } = await import("@aztec/aztec.js/addresses");
+  const { Fr } = await import("@aztec/aztec.js/fields");
+  const { PublicKeys } = await import("@aztec/aztec.js/keys");
   return {
     version: Hex.toNumber(
       data.version satisfies string as Hex.Hex,
@@ -198,7 +203,6 @@ export async function decodeContractArtifact(
       literal: artifact,
     };
   }
-
   const { ContractArtifactSchema } = await import("@aztec/stdlib/abi");
   return ContractArtifactSchema.parse(data.literal);
 }

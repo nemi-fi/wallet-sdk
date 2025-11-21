@@ -1,23 +1,24 @@
 import type {
   Contract as AztecContract,
-  AztecNode,
-  ContractArtifact,
   ContractInstanceWithAddress,
+  WaitOpts,
+} from "@aztec/aztec.js/contracts";
+import type { AztecNode } from "@aztec/aztec.js/node";
+import type {
+  ContractArtifact,
   FunctionAbi,
   FunctionArtifact,
-  PublicKeys,
-  TxHash,
-  TxReceipt,
-  WaitOpts,
-} from "@aztec/aztec.js";
+} from "@aztec/aztec.js/abi";
+import type { PublicKeys } from "@aztec/aztec.js/keys";
+import type { TxHash, TxReceipt } from "@aztec/aztec.js/tx";
+import { AztecAddress } from "@aztec/aztec.js/addresses";
+import { Capsule } from "@aztec/aztec.js/tx";
+import { Fr } from "@aztec/aztec.js/fields";
 import {
-  AztecAddress,
-  Capsule,
-  Fr,
   getContractClassFromArtifact,
   getContractInstanceFromInstantiationParams,
   SentTx,
-} from "@aztec/aztec.js";
+} from "@aztec/aztec.js/contracts";
 import {
   CONTRACT_CLASS_REGISTRY_BYTECODE_CAPSULE_SLOT,
   MAX_PACKED_PUBLIC_BYTECODE_SIZE_IN_FIELDS,
@@ -62,7 +63,7 @@ export class DeployMethod<TContract extends AztecContract> {
         artifact,
         {
           constructorArgs: args,
-          salt: options.contractAddressSalt,
+          salt: options.contractAddressSalt ?? Fr.random(),
           publicKeys,
           constructorArtifact: this.#constructorArtifact,
           deployer: options.universalDeploy
@@ -178,13 +179,15 @@ export class DeployMethod<TContract extends AztecContract> {
   }
 }
 
-export type DeployOptions = Pick<
-  import("@aztec/aztec.js").DeployOptions,
-  | "contractAddressSalt"
-  | "universalDeploy"
-  | "skipClassPublication"
-  | "skipInstancePublication"
-  | "skipInitialization"
+export type DeployOptions = Partial<
+  Pick<
+    import("@aztec/aztec.js/contracts").DeployOptions,
+    | "contractAddressSalt"
+    | "universalDeploy"
+    | "skipClassPublication"
+    | "skipInstancePublication"
+    | "skipInitialization"
+  >
 > & {
   experimental_extraTxRequests?: TransactionRequest[];
 };

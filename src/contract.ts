@@ -2,16 +2,18 @@ import {
   decodeFromAbi,
   encodeArguments,
   FunctionSelector,
-  PublicKeys,
-  type AztecAddress,
+  type ContractArtifact,
+  type FunctionCall,
+} from "@aztec/aztec.js/abi";
+import { PublicKeys } from "@aztec/aztec.js/keys";
+import { type AztecAddress } from "@aztec/aztec.js/addresses";
+import {
   type Contract as AztecContract,
   type DeployMethod as AztecDeployMethod,
-  type AztecNode,
-  type ContractArtifact,
   type ContractInstanceWithAddress,
-  type FunctionCall,
-  type Wallet,
-} from "@aztec/aztec.js";
+} from "@aztec/aztec.js/contracts";
+import { type AztecNode } from "@aztec/aztec.js/node";
+import { type Wallet } from "@aztec/aztec.js/wallet";
 import {
   ContractArtifactSchema,
   FunctionType,
@@ -227,6 +229,7 @@ export class ContractFunctionInteraction {
         ),
         type: this.#functionAbi.functionType,
         to: contract.address,
+        hideMsgSender: false,
         isStatic: this.#functionAbi.isStatic,
         returnTypes: this.#functionAbi.returnTypes,
       };
